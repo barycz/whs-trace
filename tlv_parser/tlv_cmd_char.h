@@ -100,6 +100,17 @@ namespace tlv {
 
 		void Encode (TLV const & tlv)
 		{
+			// Woody: Replace unwanted 0x0d and 0x0a anywhere in the string. It would later destroy exported .CSV
+			// TODO: Remove this code once implemeted to TraceServer CSV export. We can't compile it yet
+			for(size_t i = tlv.m_len; i--;)
+			{
+				if((tlv.m_val[i] == 0x0d) ||
+					 (tlv.m_val[i] == 0x0a))
+				{
+					((char*)tlv.m_val)[i] = ' ';
+				}
+			}
+
 			output.write(reinterpret_cast<char const * >(&tlv.m_tag), sizeof(tag_t));
 			output.write(reinterpret_cast<char const * >(&tlv.m_len), sizeof(len_t));
 			output.write(reinterpret_cast<char const * >(&tlv.m_val[0]), tlv.len());
