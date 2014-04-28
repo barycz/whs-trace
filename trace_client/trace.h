@@ -182,10 +182,12 @@
  *	@brief		sets application name that will be sent to server to identify
  **/
 #	define TRACE_APPNAME(name) trace::SetAppName(name)
+
 /**	@macro		TRACE_CONNECT
  *	@brief		connects to server and sends application name to server
  **/
 #	define TRACE_CONNECT() trace::Connect()
+
 /**	@macro		TRACE_DISCONNECT
  *	@brief		disconnects from server
  **/
@@ -195,6 +197,7 @@
  *	@brief		switch level to another value
  **/
 #	define TRACE_SETLEVEL(n) trace::SetRuntimeLevel(n)
+
 /**	@macro		TRACE_SETBUFFERED
  *	@brief		switch between buffered/unbuffered
  **/
@@ -213,11 +216,20 @@
 /** @macro		TRACE_FLUSH
  *  @brief      forces flush of all buffers into socket
  *				comes handy when you expect crash and want the data to be sent
- *				out immeadiately.
+ *				out immediately.
  *				typical usage would be logging of a text from assert for example
  */
 #	define TRACE_FLUSH()		trace::Flush()
 
+/** @macro		TRACE_ADD_CALLBACK
+ *  @brief      adds callback. To this callback are sent all messages.
+ */
+#	define TRACE_ADD_CALLBACK(callback)	trace::AddCallback(callback)
+
+/** @macro		TRACE_ADD_CALLBACK
+ *  @brief      removes callback. To this callback are sent all messages.
+ */
+#	define TRACE_REMOVE_CALLBACK(callback)	trace::RemoveCallback(callback)
 
 
 	namespace trace {
@@ -263,6 +275,16 @@
 			return (level <= GetRuntimeLevel() && ((context & GetRuntimeContextMask()) != 0));
 		}
 		
+		class I_TraceCallback
+		{
+		public:
+			virtual ~I_TraceCallback() {};
+			virtual void Write (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, va_list args) =0;
+		};
+
+		TRACE_API void AddCallback (I_TraceCallback*);
+		TRACE_API void RemoveCallback (I_TraceCallback*);
+
 		/**@fn		Write to log
 		 * @brief	write to log of the form (fmt, va_list)
 		 **/
@@ -401,5 +423,7 @@
 
 #else // no tracing at all
 # include "trace_dummy.h"
+#	define TRACE_ADD_CALLBACK(callback)	((void)0)
+#	define TRACE_REMOVE_CALLBACK(callback)	((void)0)
 #endif // !TRACE_ENABLED
 

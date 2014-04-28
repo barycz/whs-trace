@@ -1,6 +1,8 @@
 #include "trace.h"
 #include <stdarg.h>
 #include <sysfn/time_query.h>
+#include <list>
+#include <algorithm>
 
 	namespace sys {
 		hptimer_t g_Start = 0, g_Freq = 1000000;
@@ -13,6 +15,9 @@
 		context_t    g_RuntimeContextMask = ~(0U);
 		char const * g_AppName            = "trace_client";
 		bool         g_RuntimeBuffering   = true;
+
+		typedef std::list<I_TraceCallback*> T_Callbacks;
+		T_Callbacks	g_Callbacks;
 
 
 		// setup and utils
@@ -36,13 +41,32 @@
 			SetCustomUserDictionnary(ptr, n);
 		}
 
+		void AddCallback (I_TraceCallback* pCallback)
+		{
+			if(std::find(g_Callbacks.begin(), g_Callbacks.end(), pCallback) == g_Callbacks.end())
+			{
+				g_Callbacks.push_back(pCallback);
+			}
+		}
+
+		void RemoveCallback (I_TraceCallback* pCallback)
+		{
+			g_Callbacks.remove(pCallback);
+		}
+
 		// message logging
 		void WriteLog (level_t level, context_t context, char const * file, int, char const *, char const *, va_list);
 		void WriteVA (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, va_list args)
 		{
 			if (RuntimeFilterPredicate(level, context))
 				WriteLog(level, context, file, line, fn, fmt, args);
+
+			for(T_Callbacks::iterator it = g_Callbacks.begin(); it != g_Callbacks.end(); ++it)
+			{
+				(*it)->Write(level, context, file, line, fn, fmt, args);
+			}
 		}
+
 		void Write (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...)
 		{
 			va_list args;
