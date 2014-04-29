@@ -14,6 +14,12 @@ Toolset selection:
 	bjam --toolset=msvc-11.0 address-model=64 --build-type=complete stage
 
 
+A0. Pre-build binaries
+----------------------
+You can download pre-build binaries for various boost versions from:
+
+	http://sourceforge.net/projects/boost/files/boost-binaries/1.54.0/
+
 A1. 32b build
 -------------
 
