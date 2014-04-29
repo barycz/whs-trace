@@ -332,7 +332,7 @@ add_executable(trace_server WIN32
 		${trace_server_SOURCES})
 
 
-include_directories(${QT_USE_FILE})
+include_directories(${QT_USE_FILE} ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 add_definitions(${QT_DEFINITIONS})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${trace_server_SOURCE_DIR})
