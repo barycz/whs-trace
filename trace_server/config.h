@@ -1,43 +1,93 @@
 #pragma once
 #include "types.h"
+#include "constants.h"
 #include "history.h"
-#include <boost/serialization/nvp.hpp>
+#include <QDir>
 
 struct GlobalConfig {
-	unsigned m_hotkey;
-	bool m_hidden;
-	bool m_was_maximized;
-	bool m_dump_mode;
-	QList<QString> m_app_names;					/// registered applications
-	//OBSOLETTEQList<columns_setup_t> m_columns_setup;		/// column setup for each registered application
-	//OBSOLETTEQList<columns_sizes_t> m_columns_sizes;		/// column sizes for each registered application
-	//OBSOLETTEQList<columns_align_t> m_columns_align;		/// column align for each registered application
-	//OBSOLETTEQList<columns_elide_t> m_columns_elide;		/// column elide for each registered application
-	QList<QColor> m_thread_colors;				/// predefined coloring of threads
-	//QList<QString> m_registry_pnames;			/// legacy preset names from registry
-	//OBSOLETTEQString m_last_search;
-	History<QString> m_search_history;
-	History<QString> m_preset_history;
-	History<QString> m_multitab_preset_history;
-
-	QString m_trace_addr;
+	unsigned  m_hotkey;
+	bool	  m_hidden;
+	bool	  m_was_maximized;
+	bool	  m_dump_mode;
+	bool	  m_auto_scroll;
+	bool	  m_buffered;
+	bool	  m_on_top;
+	int		  m_level;
+	int		  m_logs_recv_level;
+	int		  m_plots_recv_level;
+	int		  m_tables_recv_level;
+	int		  m_gantts_recv_level;
+	QString	  m_time_units_str;
+	float	  m_time_units;
+	QString	  m_font;
+	int		  m_fontsize;
+	QString	  m_trace_addr;
 	unsigned short m_trace_port;
-	QString m_profiler_addr;
+	QString	  m_profiler_addr;
 	unsigned short m_profiler_port;
-	QString m_appdir;
+	QString	  m_appdir;
+
+	History<QString> m_preset_history;
 
 	GlobalConfig ()
 		: m_hotkey(0x91 /*VK_SCROLL*/)
 		, m_hidden(false)
 		, m_was_maximized(false)
 		, m_dump_mode(false)
-		, m_search_history(16)
+		, m_auto_scroll(false)
+		, m_buffered(true)
+		, m_on_top(false)
+		, m_level(3)
+		, m_logs_recv_level(2)
+		, m_plots_recv_level(0)
+		, m_tables_recv_level(0)
+		, m_gantts_recv_level(0)
+		, m_time_units_str("ms")
+		, m_time_units(stringToUnitsValue(m_time_units_str))
+		, m_font("Verdana")
+		, m_fontsize(10)
+		, m_trace_addr("127.0.0.1")
+		, m_trace_port(g_defaultPort)
+		, m_profiler_addr("127.0.0.1")
+		, m_profiler_port(13147)
+		, m_appdir(QDir::homePath() + "/" + g_traceServerDirName)
 		, m_preset_history(16)
-		, m_multitab_preset_history(16)
 	{ }
 
-	void loadHistory ();
-	void saveHistory () const;
+	void loadHistory (QString const & path);
+	void saveHistory (QString const & path) const;
+
+	void fillDefaultConfig ()
+	{
+		*this = GlobalConfig();
+	}
+
+	template <class ArchiveT>
+	void serialize (ArchiveT & ar, unsigned const version)
+	{
+		ar & boost::serialization::make_nvp("hotkey", m_hotkey);
+		ar & boost::serialization::make_nvp("hidden", m_hidden);
+		ar & boost::serialization::make_nvp("was_maximized", m_was_maximized);
+		ar & boost::serialization::make_nvp("dump_mode", m_dump_mode);
+		ar & boost::serialization::make_nvp("autoscroll", m_auto_scroll);
+		ar & boost::serialization::make_nvp("buffered", m_buffered);
+		ar & boost::serialization::make_nvp("on_top", m_on_top);
+		ar & boost::serialization::make_nvp("level", m_level);
+		ar & boost::serialization::make_nvp("m_logs_recv_level", m_logs_recv_level);
+		ar & boost::serialization::make_nvp("m_plots_recv_level", m_plots_recv_level);
+		ar & boost::serialization::make_nvp("m_tables_recv_level", m_tables_recv_level);
+		ar & boost::serialization::make_nvp("m_gantts_recv_level", m_gantts_recv_level);
+		ar & boost::serialization::make_nvp("time_units_str", m_time_units_str);
+		ar & boost::serialization::make_nvp("time_units", m_time_units);
+		ar & boost::serialization::make_nvp("font", m_font);
+		ar & boost::serialization::make_nvp("fontsize", m_fontsize);
+
+		ar & boost::serialization::make_nvp("trace_addr", m_trace_addr);
+		ar & boost::serialization::make_nvp("trace_port", m_trace_port);
+		ar & boost::serialization::make_nvp("profiler_addr", m_profiler_addr);
+		ar & boost::serialization::make_nvp("profiler_port", m_profiler_port);
+		//ar & boost::serialization::make_nvp("appdir", m_appdir); // do not want this probably
+	}
 };
 
 struct TreeModelItem {

@@ -26,7 +26,7 @@ Server::Server (QString ip, unsigned short port, QObject * parent, bool quit_del
 		m_server_status = tr("Unable to start server! Reason: %1").arg(errorString());
 		if (quit_delay)
 		{
-			QMessageBox::critical(0, tr("ee"), m_server_status, QMessageBox::Ok, QMessageBox::Ok);
+			QMessageBox::critical(0, tr("Error"), m_server_status, QMessageBox::Ok, QMessageBox::Ok);
 			QTimer::singleShot(0, qApp, SLOT(quit()));
 		}
 		else
@@ -37,6 +37,7 @@ Server::Server (QString ip, unsigned short port, QObject * parent, bool quit_del
 		return;
 	}
 	m_server_status = tr("Server running at %1 port: %2").arg(serverAddress().toString()).arg(serverPort());
+	emit statusChanged(m_server_status);
 }
 
 void Server::incomingConnection (qintptr socketDescriptor)
@@ -47,34 +48,12 @@ void Server::incomingConnection (qintptr socketDescriptor)
 	QObject::connect(connection->m_tcpstream, SIGNAL(readyRead()), connection, SLOT(processReadyRead()));
 	QObject::connect(connection->m_tcpstream, SIGNAL(disconnected()), connection, SLOT(onDisconnected()));
 	emit newConnection(connection);
-	
+	emit statusChanged("New connection from remote application!");
+
 	// this is supposed to use blocking reads in own thread
 	/*Connection * connection = createNewTableView ();
 	connection->setSocketDescriptor(socketDescriptor);
-    connect(connection, SIGNAL(finished()), connection, SLOT(deleteLater()));
+	connect(connection, SIGNAL(finished()), connection, SLOT(deleteLater()));
 	connection->start();*/
 }
-
-// @FIXME: hmmm... iterates over ALL connections, that is not the intent
-/*void Server::onShowPlots ()
-{
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		it->second->onShowPlots();
-}
-void Server::onHidePlots ()
-{
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		it->second->onHidePlots();
-}
-void Server::onShowTables ()
-{
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		it->second->onShowTables();
-}
-void Server::onHideTables ()
-{
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		it->second->onHideTables();
-}*/
-
 

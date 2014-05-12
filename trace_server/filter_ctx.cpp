@@ -62,7 +62,7 @@ void FilterCtx::saveConfig (QString const & path)
 
 void FilterCtx::setConfigToUI ()
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 	{
 		QStandardItem * root = m_model->invisibleRootItem();
 		QStandardItem * child = findChildByText(root, m_data[i].m_ctx_str);
@@ -122,7 +122,7 @@ void FilterCtx::destroyModel ()
 
 bool FilterCtx::isCtxPresent (QString const & item, bool & enabled) const
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data.at(i).m_ctx_str == item)
 		{
 			FilteredContext const & fc = m_data.at(i);
@@ -133,7 +133,7 @@ bool FilterCtx::isCtxPresent (QString const & item, bool & enabled) const
 }
 void FilterCtx::appendCtxFilter (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_ctx_str == item)
 		{
 			FilteredContext & fc = m_data[i];
@@ -146,7 +146,7 @@ void FilterCtx::appendCtxFilter (QString const & item)
 }
 void FilterCtx::removeCtxFilter (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_ctx_str == item)
 		{
 			FilteredContext & fc = m_data[i];

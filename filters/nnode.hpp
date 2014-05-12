@@ -256,7 +256,7 @@ struct NNode
 
 		NNode * * child = &children;
 		NNode * prev = 0;
-		for (size_t i = 0; i < count; ++i)
+		for (int i = 0; i < static_cast<int>(count); ++i)
 		{
 			a & boost::serialization::make_nvp("child", *child);
 			(*child)->parent = this;

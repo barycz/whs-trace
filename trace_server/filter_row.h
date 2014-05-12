@@ -1,10 +1,8 @@
 #pragma once
 #include "filterbase.h"
 #include "ui_filter_row.h"
-#include <boost/serialization/nvp.hpp>
 
 #include "config.h"
-#include <QList>
 #include <QObject>
 #include <QStandardItemModel>
 #include <QStyledItemDelegate>
@@ -76,7 +74,7 @@ struct FilterRow : FilterBase
 	QTreeView const * getWidget () const { return m_ui->view; }
 	void locateItem (QString const & item, bool scrollto, bool expand);
 
-	typedef QList<FilteredRow> row_filters_t;
+	typedef std::vector<FilteredRow> row_filters_t;
 	row_filters_t			m_data;
 	QStandardItemModel *	m_model;
 	QStyledItemDelegate *   m_delegate;

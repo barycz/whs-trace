@@ -11,6 +11,7 @@ enum E_ActionHandleType {
 enum E_ActionType {
 	  e_Visibility = 0
 	, e_InCentralWidget
+	, e_Close
 	, e_SyncGroup
 	, e_Select
 	, e_AlignH
@@ -43,17 +44,16 @@ struct ActionAble {
 
 	QStringList m_path;
 	QString m_joined_path;
-	QModelIndex m_idx;
 
-	ActionAble (QStringList const & path) : m_path(path), m_joined_path(path.join("/")), m_idx() { }
-	ActionAble (QStringList const & path, QModelIndex const & idx) : m_path(path), m_joined_path(path.join("/")), m_idx(idx) { }
+	ActionAble (QStringList const & path) : m_path(path), m_joined_path(path.join("/")) { }
+	ActionAble (QStringList const & path, QModelIndex const & idx) : m_path(path), m_joined_path(path.join("/")) { }
 	virtual ~ActionAble () { }
 
 	virtual bool handleAction (Action * a, E_ActionHandleType sync) = 0;
+	virtual QWidget * controlWidget () = 0;
 
 	QStringList const & path () const { return m_path; }
 	QString const & joinedPath () const { return m_joined_path; }
-	QModelIndex const & index () const { return m_idx; }
 };
 
 

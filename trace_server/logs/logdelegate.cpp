@@ -33,11 +33,11 @@ namespace logs {
 			long long const ref_dt = value.toString().toULongLong() - ref_value;
 
 			option4.text.clear();
-			if (m_log_widget.getConfig().m_dt_enabled)
+			if (m_log_widget.config().m_dt_enabled)
 			{
 				if (ref_dt >= 0)
 				{
-					QAbstractItemModel const * model = m_log_widget.model();
+					QAbstractItemModel const * model = m_log_widget.m_tableview->model();
 					
 					int const col_idx = const_cast<logs::LogWidget &>(m_log_widget).findColumn4Tag(tlv::tag_dt);
 					
@@ -76,7 +76,7 @@ namespace logs {
 				QString const & val = option4.text;
 				float const t_us = val.toFloat();
 				float const t_natural_units = 1000000.0f; // microseconds
-				float const t = t_us / t_natural_units / m_log_widget.getConfig().m_time_units;
+				float const t = t_us / t_natural_units / m_log_widget.config().m_time_units;
 				option4.text = QString::number(t, 'f', 3);
 			}
 
@@ -136,14 +136,14 @@ namespace logs {
 		QStyleOptionViewItemV4 option4 = option;
 		initStyleOption(&option4, index);
 
-		QVector<QString> const & column_aligns = m_log_widget.getConfig().m_columns_align;
+		std::vector<QString> const & column_aligns = m_log_widget.config().m_columns_align;
 		if (index.column() < column_aligns.size())
 		{
 			E_Align const align = stringToAlign(column_aligns[index.column()].at(0).toLatin1());
 			option4.displayAlignment = static_cast<Qt::Alignment>(1 << align);
 		}
 
-		QVector<QString> const & column_elides = m_log_widget.getConfig().m_columns_elide;
+		std::vector<QString> const & column_elides = m_log_widget.config().m_columns_elide;
 		if (index.column() < column_elides.size())
 		{
 			E_Elide const elide = stringToElide(column_elides[index.column()].at(0).toLatin1());
@@ -152,14 +152,14 @@ namespace logs {
 
 		LogWidget & lw = const_cast<LogWidget &>(m_log_widget); // hm
 
-		if (m_log_widget.getConfig().m_cut_path && index.column() == lw.findColumn4Tag(tlv::tag_file))
+		if (m_log_widget.config().m_cut_path && index.column() == lw.findColumn4Tag(tlv::tag_file))
 		{
-			int level = m_log_widget.getConfig().m_cut_path_level;
+			int level = m_log_widget.config().m_cut_path_level;
 			paintTokenized(painter, option4, index, QString("[:/\\\\]"), "/", level);
 		}
-		else if (m_log_widget.getConfig().m_cut_namespaces && index.column() == lw.findColumn4Tag(tlv::tag_func))
+		else if (m_log_widget.config().m_cut_namespaces && index.column() == lw.findColumn4Tag(tlv::tag_func))
 		{
-			int level = m_log_widget.getConfig().m_cut_namespaces;
+			int level = m_log_widget.config().m_cut_namespaces;
 			paintTokenized(painter, option4, index, QString("[::]"), "::", level);
 		}
 		else if (m_app_data.getDictCtx().m_names.size() && index.column() == lw.findColumn4Tag(tlv::tag_ctx))

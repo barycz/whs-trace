@@ -16,7 +16,7 @@ struct ItemInfo
 	ItemInfo () : m_ref_count(0), m_hash(0) { }
 
 	ItemInfo (typename boost::call_traits<KeyT>::param_type key)
-		: m_ref_count(0), m_hash(hash<KeyT>()(key)), m_key(key) { }
+		: m_ref_count(0), m_hash(static_cast<unsigned>(hash<KeyT>()(key))), m_key(key) { }
 
 	friend bool operator< (ItemInfo const & lhs, ItemInfo const & rhs)
 	{
@@ -59,7 +59,7 @@ struct History
 
 	void insert (typename boost::call_traits<KeyT>::param_type key)
 	{
-		unsigned const key_hash = hash<KeyT>()(key);
+		unsigned const key_hash = static_cast<unsigned>(hash<KeyT>()(key));
 		for (size_t i = 0, ie = m_dict.size(); i < ie; ++i)
 		{
 			if (m_dict[i].m_hash == key_hash && m_dict[i].m_key == key)
@@ -85,7 +85,7 @@ struct History
 
 	bool find (typename boost::call_traits<KeyT>::param_type key)
 	{
-		unsigned const key_hash = hash<KeyT>()(key);
+		unsigned const key_hash = static_cast<unsigned>(hash<KeyT>()(key));
 		for (size_t i = 0, ie = m_dict.size(); i < ie; ++i)
 			if (m_dict[i].m_hash == key_hash && m_dict[i].m_key == key)
 				return true;

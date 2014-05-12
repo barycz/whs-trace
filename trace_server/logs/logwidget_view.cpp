@@ -128,7 +128,7 @@ void LogWidget::onGotoPrevColor()
 	if (l.size())
 	{
 		QModelIndex const & curr_idx = l.at(0);
-		QModelIndex const idx = model()->index(curr_idx.row() - 1, curr_idx.column(), QModelIndex());
+		QModelIndex const idx = m_tableview->model()->index(curr_idx.row() - 1, curr_idx.column(), QModelIndex());
 		if (!idx.isValid())
 		{
 			noMoreMatches();
@@ -139,7 +139,7 @@ void LogWidget::onGotoPrevColor()
 		/// ????
 		for (int i = curr_idx.row(); i --> 0; )
 		{
-			QModelIndex const idx = model()->index(i, 0, QModelIndex());
+			QModelIndex const idx = m_tableview->model()->index(i, 0, QModelIndex());
 			QModelIndex src_idx = idx;
 			if (isModelProxy())
 				src_idx = m_proxy_model->mapToSource(idx);
@@ -157,19 +157,19 @@ void LogWidget::onGotoPrevColor()
 		}
 		else
 		{
-			QItemSelectionModel * selection_model = selectionModel();
+			QItemSelectionModel * selection_model = m_tableview->selectionModel();
 			QItemSelection selection;
 			foreach(QModelIndex index, next)
 			{
-				QModelIndex left = model()->index(index.row(), 0);
-				QModelIndex right = model()->index(index.row(), model()->columnCount() - 1);
+				QModelIndex left = m_tableview->model()->index(index.row(), 0);
+				QModelIndex right = m_tableview->model()->index(index.row(), m_tableview->model()->columnCount() - 1);
 
 				QItemSelection sel(left, right);
 				selection.merge(sel, QItemSelectionModel::Select);
 			}
 			selection_model->clearSelection();
 			selection_model->select(selection, QItemSelectionModel::Select);
-			scrollTo(next.at(0), QTableView::PositionAtCenter);
+			m_tableview->scrollTo(next.at(0), QTableView::PositionAtCenter);
 		}
 	}
 
@@ -187,10 +187,10 @@ void LogWidget::onGotoNextColor()
 	if (l.size())
 		curr_idx = l.at(l.size() - 1);
 	else
-		curr_idx = model()->index(0, 0, QModelIndex());
+		curr_idx = m_tableview->model()->index(0, 0, QModelIndex());
 
 
-	QModelIndex const next_idx = model()->index(curr_idx.row() + 1, curr_idx.column(), QModelIndex());
+	QModelIndex const next_idx = m_tableview->model()->index(curr_idx.row() + 1, curr_idx.column(), QModelIndex());
 	if (!next_idx.isValid())
 	{
 		noMoreMatches();
@@ -198,10 +198,10 @@ void LogWidget::onGotoNextColor()
 	}
 
 	QModelIndexList next;
-	for (int i = next_idx.row(), ie = model()->rowCount(); i < ie; ++i)
+	for (int i = next_idx.row(), ie = m_tableview->model()->rowCount(); i < ie; ++i)
 	{
 		// source ? proxy index?
-		QModelIndex const idx = model()->index(i, 0, QModelIndex());
+		QModelIndex const idx = m_tableview->model()->index(i, 0, QModelIndex());
 
 		QModelIndex src_idx = idx;
 		if (isModelProxy())
@@ -220,19 +220,19 @@ void LogWidget::onGotoNextColor()
 	}
 	else
 	{
-		QItemSelectionModel * selection_model = selectionModel();
+		QItemSelectionModel * selection_model = m_tableview->selectionModel();
 		QItemSelection selection;
 		foreach(QModelIndex index, next)
 		{
-			QModelIndex left = model()->index(index.row(), 0);
-			QModelIndex right = model()->index(index.row(), model()->columnCount() - 1);
+			QModelIndex left = m_tableview->model()->index(index.row(), 0);
+			QModelIndex right = m_tableview->model()->index(index.row(), m_tableview->model()->columnCount() - 1);
 
 			QItemSelection sel(left, right);
 			selection.merge(sel, QItemSelectionModel::Select);
 		}
 		selection_model->clearSelection();
 		selection_model->select(selection, QItemSelectionModel::Select);
-		scrollTo(next.at(0), QTableView::PositionAtCenter);
+		m_tableview->scrollTo(next.at(0), QTableView::PositionAtCenter);
 	}
 
 }

@@ -30,7 +30,7 @@ void FilterTid::doneUI ()
 
 bool FilterTid::isPresent (QString const & item, bool & enabled) const
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data.at(i).m_tid_str == item)
 		{
 			FilteredTid const & l = m_data.at(i);
@@ -115,7 +115,7 @@ void FilterTid::destroyModel ()
 
 void FilterTid::append (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_tid_str == item)
 		{
 			FilteredTid & l = m_data[i];
@@ -129,7 +129,7 @@ void FilterTid::append (QString const & item)
 }
 void FilterTid::remove (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_tid_str == item)
 		{
 			FilteredTid & l = m_data[i];

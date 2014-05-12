@@ -76,7 +76,7 @@ struct FilterCtx : FilterBase
 	QTreeView * getWidget () { return m_ui->view; }
 	QTreeView const * getWidget () const { return m_ui->view; }
 
-	typedef QList<FilteredContext> ctx_filters_t;
+	typedef std::vector<FilteredContext> ctx_filters_t;
 	ctx_filters_t			m_data;
 	QStandardItemModel *	m_model;
 

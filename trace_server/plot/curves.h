@@ -53,6 +53,7 @@ namespace plot {
 
 		QString const & getName () { return m_config.m_tag; }
 
+		virtual QWidget * controlWidget () { return 0; }
 		virtual bool handleAction (Action * a, E_ActionHandleType sync)
 		{
 			switch (a->type())

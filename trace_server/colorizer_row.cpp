@@ -65,7 +65,7 @@ bool ColorizerRow::action (DecodedCommand const & cmd)
 		bool const is_match = ct.m_row == cmd.m_src_row;
 		if (!is_match)
 			continue;
-		for (size_t i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
+		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
 		{
 			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
 
@@ -343,7 +343,7 @@ void ColorizerRow::recompile ()
 		if (!is_match)
 			return;
 
-		for (size_t i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
+		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
 		{
 			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
 
@@ -361,7 +361,7 @@ void ColorizerRow::recompile ()
 		if (!is_match)
 			return;
 
-		for (size_t i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
+		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
 		{
 			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
 

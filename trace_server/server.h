@@ -33,13 +33,14 @@ class Server : public QTcpServer
 {
 	Q_OBJECT
 public:
-	static unsigned short const default_port = 13127;
 	explicit Server (QString addr, unsigned short port, QObject * parent = 0, bool quit_delay = true);
 
 	QString const & getStatus () const { return m_server_status; }
+	void stop () { close(); }
 
 signals:
 	void newConnection (Connection * connection);
+	void statusChanged (QString const & status);
 
 public slots:
 	void incomingConnection (qintptr socketDescriptor);

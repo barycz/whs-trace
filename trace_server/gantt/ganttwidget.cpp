@@ -9,17 +9,17 @@
 #include "frameview.h"
 #include "ganttctxmenu.h"
 #include <syncwidgets.h>
+#include <serialize.h>
 #include <connection.h>
 
 namespace gantt {
 
-	GanttWidget::GanttWidget (Connection * oparent, QWidget * wparent, GanttConfig & cfg, QString const & fname, QStringList const & path)
-		: QFrame(wparent), ActionAble(path)
+	GanttWidget::GanttWidget (Connection * conn, GanttConfig const & cfg, QString const & fname, QStringList const & path)
+		: QFrame(0), DockedWidgetBase(conn->getMainWindow(), path)
 		, m_config(cfg)
-		, m_config_ui(new CtxGanttConfig(cfg, this))
+		, m_config_ui(new CtxGanttConfig(m_config, this))
 		, m_fname(fname)
-		, m_connection(oparent)
-        , m_dwb(0)
+		, m_connection(conn)
 	{
 		//qDebug("%s this=0x%08x", __FUNCTION__, this);
 
@@ -137,7 +137,7 @@ namespace gantt {
 
 		unsigned long long from, to;
 		gv->appendFrameEnd(dd, from, to);
-		(*fv_it)->widget().appendFrame(from, to);
+		(*fv_it)->appendFrame(from, to);
 	}
 
 
@@ -189,6 +189,12 @@ namespace gantt {
 	bool GanttWidget::handleAction (Action * a, E_ActionHandleType sync)
 	{
 		return false;
+	}
+
+	void GanttWidget::setVisible (bool visible)
+	{
+		m_dockwidget->setVisible(visible);
+		QFrame::setVisible(visible);
 	}
 
 	void GanttWidget::commitCommands (E_ReceiveMode mode)
@@ -455,15 +461,17 @@ namespace gantt {
 
 	void GanttWidget::applyConfig ()
 	{
-		m_config = m_config2;
 		applyConfig(m_config);
 	}
 
 	void GanttWidget::loadConfig (QString const & path)
 	{
 		QString const fname = path + "/" + g_GanttTag + "/" + m_config.m_tag;
-		m_config2.clear();
-		gantt::loadConfig(m_config2, fname);
+		GanttConfig config2;
+		if (::loadConfigTemplate(config2, fname))
+			m_config.fillDefaultConfig();
+		else
+			m_config = config2;
 		filterMgr()->loadConfig(fname);
 	}
 

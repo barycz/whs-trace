@@ -14,24 +14,29 @@
 
 class QwtPlotCurve;
 class QwtPlotMarker;
+class QwtLegend;
 
 namespace plot {
 
-	class PlotWidget : public QwtPlot, public ActionAble
+	class PlotWidget : public QwtPlot, public DockedWidgetBase
 	{
 		Q_OBJECT
 	public:
+		enum { e_type = e_data_plot };
 		typedef QMap<QString, Curve *> curves_t;
 
-		PlotWidget (Connection * oparent, QWidget * wparent, PlotConfig & cfg, QString const & fname, QStringList const & path);
+		PlotWidget (Connection * conn, PlotConfig const & cfg, QString const & fname, QStringList const & path);
 		virtual ~PlotWidget ();
 
+		virtual E_DataWidgetType type () const { return e_data_plot; }
+		virtual QWidget * controlWidget () { return 0; }
+		PlotConfig & config () { return m_config; }
+		PlotConfig const & config () const { return m_config; }
 		void loadConfig (QString const & path);
 		void saveConfig (QString const & path);
 		void loadAuxConfigs ();
 		void saveAuxConfigs ();
 		void applyConfig ();
-		void setDockedWidget (DockedWidgetBase * dwb) { m_dwb = dwb; }
 		QString getCurrentWidgetPath () const;
 		void exportStorageToCSV (QString const & filename) { } //TODO
 
@@ -43,6 +48,7 @@ namespace plot {
 		void commitCommands (E_ReceiveMode mode);
 
 		virtual bool handleAction (Action * a, E_ActionHandleType sync);
+		virtual void setVisible (bool visible);
 
 		void stopUpdate ();
 
@@ -90,11 +96,11 @@ namespace plot {
 		Connection * m_connection;
 		curves_t m_curves;
 		int m_timer;
-		PlotConfig & m_config;
+		PlotConfig m_config;
 		plot::CtxPlotConfig m_config_ui;
 		QList<QColor> m_colors;
 		QString m_fname;
-		DockedWidgetBase * m_dwb;
+		QwtLegend * m_legend;
 		//std::vector<QwtPlotMarker *> m_markers;
 	};
 }

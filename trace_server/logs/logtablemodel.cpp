@@ -9,17 +9,18 @@
 #include <sysfn/time_query.h>
 
 LogTableModel::LogTableModel (QObject * parent, logs::LogWidget & lw)
-	: TableModel(parent, lw.m_config.m_columns_setup, lw.m_config.m_columns_sizes)
+	: BaseTableModel(parent, lw.m_config.m_columns_setup, lw.m_config.m_columns_sizes)
 	, m_log_widget(lw)
 	, m_filter_state(lw.m_filter_state)
 {
+	qDebug("%s this=0x%08x", __FUNCTION__, this);
 	size_t const prealloc_size = 128 * 1024;
 	m_rows.reserve(prealloc_size); // @TODO: magic const!
 }
 
 LogTableModel::~LogTableModel ()
 {
-	qDebug("%s", __FUNCTION__);
+	qDebug("%s this=0x%08x", __FUNCTION__, this);
 }
 
 void LogTableModel::resizeToCfg (logs::LogConfig const & config)
@@ -30,7 +31,7 @@ void LogTableModel::resizeToCfg (logs::LogConfig const & config)
 	//@TODO: dedup: logtablemodel, findproxy, filterproxy
 	if (config.m_columns_setup.size() > m_column_count)
 	{
-		int const last = config.m_columns_setup.size() - 1;
+		int const last = static_cast<int>(config.m_columns_setup.size()) - 1;
 		beginInsertColumns(QModelIndex(), m_column_count, last);
 		insertColumns(m_column_count, last);
 		m_column_count = last + 1;
@@ -38,7 +39,7 @@ void LogTableModel::resizeToCfg (logs::LogConfig const & config)
 	}
 	else if (config.m_columns_setup.size() < m_column_count)
 	{
-		int const last = config.m_columns_setup.size() + 1;
+		int const last = static_cast<int>(config.m_columns_setup.size()) + 1;
 		beginRemoveColumns(QModelIndex(), last, m_column_count);
 		removeColumns(last, m_column_count);
 		m_column_count = last - 1;
@@ -48,20 +49,25 @@ void LogTableModel::resizeToCfg (logs::LogConfig const & config)
 	//endResetModel();
 }
 
-void LogTableModel::commitCommands (E_ReceiveMode mode)
+void LogTableModel::postProcessBatch (int from, int to, BatchCmd const & batch)
 {
-	commitBatchToModel();
-}
-
-void LogTableModel::handleCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
-{
-	parseCommand(cmd, mode, m_batch);
-	if (mode == e_RecvSync)
+	size_t const rows = batch.m_rows.size();
+	for (size_t r = 0, re = rows; r < re; ++r)
 	{
-		commitBatchToModel();
+		DecodedCommand const & cmd = m_dcmds[from + r];
+		m_log_widget.appendToColorizers(cmd);
 	}
-}
 
+	FilterProxyModel * flt_pxy = m_log_widget.m_proxy_model;
+	if (m_proxy && m_proxy == flt_pxy)
+		flt_pxy->commitBatchToModel(static_cast<int>(from), static_cast<int>(to), batch);
+
+	FindProxyModel * fnd_pxy = m_log_widget.m_find_proxy_model;
+	if (m_proxy && m_proxy == fnd_pxy)
+		fnd_pxy->commitBatchToModel(from, to, batch);
+
+	m_log_widget.commitBatchToLinkedWidgets(from, to, batch);  
+}
 
 void LogTableModel::reloadModelAccordingTo (logs::LogConfig & config)
 {
@@ -75,7 +81,7 @@ void LogTableModel::reloadModelAccordingTo (logs::LogConfig & config)
   //emit headerDataChanged(Qt::Horizontal, 0, 10);// TODO TODO TODO TST
 }
 
-LogTableModel * LogTableModel::cloneToNewModel ()
+/*LogTableModel * LogTableModel::cloneToNewModel ()
 {
 	LogTableModel * new_model = new LogTableModel(this, m_log_widget);
 	new_model->m_rows = m_rows;
@@ -86,11 +92,11 @@ LogTableModel * LogTableModel::cloneToNewModel ()
 	new_model->m_col_times = m_col_times;
 	new_model->m_column_count = m_column_count;
 	return new_model;
-}
+}*/
 
-LogTableModel * LogTableModel::cloneToNewModel (FindConfig const & fc)
+LogTableModel * LogTableModel::cloneToNewModel (logs::LogWidget * parent, FindConfig const & fc)
 {
-	LogTableModel * new_model = new LogTableModel(this, m_log_widget);
+	LogTableModel * new_model = new LogTableModel(parent, *parent);
 	for (size_t r = 0, re = m_rows.size(); r < re; ++r)
 	{
 		DecodedCommand const & dcmd = m_dcmds[r];
@@ -119,44 +125,6 @@ LogTableModel * LogTableModel::cloneToNewModel (FindConfig const & fc)
 	return new_model;
 }
 
-void LogTableModel::commitBatchToModel ()
-{
-	int const rows = m_batch.m_rows.size();
-	int const from = m_rows.size();
-	m_dcmds.resize(from + rows);
-	m_rows.resize(from + rows);
-	m_row_ctimes.resize(from + rows);
-	m_row_stimes.resize(from + rows);
-	int const to = from + rows - 1;
-	beginInsertRows(QModelIndex(), from, to);
-	for (int r = 0, re = m_batch.m_rows.size(); r < re; ++r)
-	{
-		m_rows[from + r] = m_batch.m_rows[r];
-		m_dcmds[from + r] = m_batch.m_dcmds[r];
-		m_dcmds[from + r].m_src_row = from + r;
-		m_row_ctimes[from + r] = m_batch.m_row_ctimes[r];
-		m_row_stimes[from + r] = m_batch.m_row_stimes[r];
-	}
-	endInsertRows();
-
-	for (int r = 0, re = rows; r < re; ++r)
-	{
-		DecodedCommand const & cmd = m_dcmds[from + r];
-		m_log_widget.appendToColorizers(cmd);
-	}
-
-	FilterProxyModel * flt_pxy = m_log_widget.m_proxy_model;
-	if (m_proxy == flt_pxy)
-		flt_pxy->commitBatchToModel(from, to + 1, m_batch);
-
-	FindProxyModel * fnd_pxy = m_log_widget.m_find_proxy_model;
-	if (m_proxy == fnd_pxy)
-		fnd_pxy->commitBatchToModel(from, to + 1, m_batch);
-
-  m_log_widget.commitBatchToLinkedWidgets(from, to + 1, m_batch);  
-
-	m_batch.clear();
-}
 
 void LogTableModel::parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode, BatchCmd & batch)
 {
@@ -261,8 +229,8 @@ void LogTableModel::parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode
 
 		m_log_widget.getTLS().setLastTime(thread_idx, t);
 
-		m_batch.m_row_ctimes.push_back(t);
-		m_batch.m_row_stimes.push_back(now);
+		batch.m_row_ctimes.push_back(t);
+		batch.m_row_stimes.push_back(now);
 
 		// stime
 		int sti = m_log_widget.findColumn4Tag(tlv::tag_stime);
@@ -274,6 +242,33 @@ void LogTableModel::parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode
 		}
 	}
 }
+
+void LogTableModel::commitBatchToModel (BatchCmd & batch)
+{
+	size_t const rows = batch.m_rows.size();
+	size_t const from = m_rows.size();
+	m_dcmds.resize(from + rows);
+	m_rows.resize(from + rows);
+	m_row_ctimes.resize(from + rows);
+	m_row_stimes.resize(from + rows);
+	int const to = static_cast<int>(from) + static_cast<int>(rows) - 1;
+	beginInsertRows(QModelIndex(), static_cast<int>(from), to);
+	for (size_t r = 0, re = batch.m_rows.size(); r < re; ++r)
+	{
+		m_rows[from + r] = batch.m_rows[r];
+		m_dcmds[from + r] = batch.m_dcmds[r];
+		m_dcmds[from + r].m_src_row = from + r;
+		m_row_ctimes[from + r] = batch.m_row_ctimes[r];
+		m_row_stimes[from + r] = batch.m_row_stimes[r];
+	}
+	endInsertRows();
+
+	postProcessBatch(from, to + 1, batch); // hook to linked models
+
+	batch.clear();
+}
+
+
 
 /*
 
@@ -349,134 +344,6 @@ QVariant LogTableModel::headerData (int section, Qt::Orientation orientation, in
 		}
 	}
 	return QVariant();
-}
-
-void LogTableModel::appendCommand (QAbstractProxyModel * filter, tlv::StringCommand const & cmd)
-{
-	int column_index = -1;
-	int thread_idx = -1;
-	for (size_t i=0, ie=cmd.tvs.size(); i < ie; ++i)
-		if (cmd.tvs[i].m_tag == tlv::tag_tid)
-			thread_idx = m_log_widget.getTLS().findThreadId(cmd.tvs[i].m_val);
-
-	int indent = 0;
-	QString qindent;
-	if (m_log_widget.m_config.m_indent)
-	{
-		if (thread_idx >= 0)
-			indent = m_log_widget.getTLS().m_indents[thread_idx];
-
-		if (indent > 0)
-			for(int j = 0; j < indent; ++j)
-				qindent.append("  ");	// @TODO: ugh
-	}
-
-	m_rows.push_back(columns_t(cmd.tvs.size()));
-	m_tree_node_ptrs.push_back(0);
-	m_layers.push_back(indent);
-	m_rowTypes.push_back(cmd.hdr.cmd);
-	columns_t & columns = m_rows.back();
-	columns.reserve(cmd.tvs.size());
-
-	size_t n = cmd.tvs.size();
-	if (cmd.hdr.cmd == tlv::cmd_scope_entry || (cmd.hdr.cmd == tlv::cmd_scope_exit))
-		n = n + 1;
-	
-	//if (m_main_window->dtEnabled())
-		n = n + 1;
-
-	columns.resize(n);
-
-	QString file;
-	QString line;
-	QString func;
-	QString time;
-	QString msg;
-	for (size_t i = 0, ie = cmd.tvs.size(); i < ie; ++i)
-	{
-		tlv::tag_t const tag = cmd.tvs[i].m_tag;
-		QString const & val = cmd.tvs[i].m_val;
-		if (tag == tlv::tag_file) file = val;
-		if (tag == tlv::tag_line) line = val;
-		if (tag == tlv::tag_func) func = val;
-		if (tag == tlv::tag_ctime) time = val;
-
-		QString qval;
-		if (tag == tlv::tag_msg)
-		{
-			msg = val;
-			qval.append(qindent);
-		}
-
-		qval.append(val);
-		column_index = m_log_widget.findColumn4Tag(tag);
-		if (column_index < 0)
-		{
-			column_index = m_log_widget.appendColumn(tag);
-
-			if (filter)
-			{
-				filter->insertColumn(column_index);
-			}
-		}
-		columns[column_index] = qval;
-	}
-
-	//if (m_main_window->dtEnabled())
-	{
-		int const tag = tlv::tag_max_value + 1;
-		int ci = m_log_widget.findColumn4Tag(static_cast<tlv::tag_t>(tag));
-		if (ci < 0)
-		{
-			ci = m_log_widget.appendColumn(tag);
-			if (filter)
-			{
-				filter->insertColumn(ci);
-			}
-		}
-
-		unsigned long long const last_t = m_log_widget.getTLS().lastTime(thread_idx);
-		unsigned long long const t = time.toULongLong();
-		long long const dt = t - last_t;
-		columns[ci] = tr("%1").arg(dt);
-		m_log_widget.getTLS().setLastTime(thread_idx, t);
-	}
-
-	if (cmd.hdr.cmd == tlv::cmd_scope_entry)
-	{
-		int column_index = m_log_widget.findColumn4Tag(tlv::tag_msg);
-		if (column_index >= 0)
-		{
-			QString qindent_old;
-			if (indent > 1)
-				for(int j = 0; j < indent - 1; ++j)
-					qindent_old.append("  "); // @TODO: ugh
-			columns[column_index] = qindent_old + QString("{ ") + msg;
-		}
-	}
-
-	if (cmd.hdr.cmd == tlv::cmd_scope_exit)
-	{
-		int column_index = m_log_widget.findColumn4Tag(tlv::tag_msg);
-		if (column_index >= 0)
-		{
-			columns[column_index] = qindent + QString("} ") + msg;
-		}
-	}
-
-	if (filter)
-	{
-		int const row = filter->rowCount();
-		filter->insertRow(row);
-	}
-	else
-	{
-		int const row = rowCount();
-		insertRow(row);
-	}
-
-	void const * node = m_log_widget.filterWidget()->fileModel()->insertItem(file + "/" + line);
-	m_tree_node_ptrs.back() = node;
 }
 
 void LogTableModel::appendCommandCSV (QAbstractProxyModel * filter, tlv::StringCommand const & cmd)

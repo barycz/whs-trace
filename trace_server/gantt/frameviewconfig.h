@@ -1,7 +1,7 @@
 #pragma once
 #include <QString>
 #include <QColor>
-#include <QVector>
+#include <vector>
 #include "frameviewconfig.h"
 #include "dockedconfig.h"
 
@@ -11,7 +11,7 @@
 	{
 		QString m_tag;
 		QString m_title;
-		QVector<FrameViewConfig> m_gvcfg;
+		std::vector<FrameViewConfig> m_gvcfg;
 		float m_begin;
 		float m_end;
 		float m_val1;

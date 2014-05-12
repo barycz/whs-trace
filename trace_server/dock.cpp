@@ -2,18 +2,23 @@
 #include <QCloseEvent>
 #include <QMainWindow>
 #include "mainwindow.h"
+#include "dockwidget.h"
+#include <QApplication>
 
-DockWidget::DockWidget (DockManager & mgr, QString const & name, QMainWindow * const window)
-	: QDockWidget(name, window)
-	, m_mgr(mgr)
-{ }
-
-void DockWidget::closeEvent (QCloseEvent * event)
+DockedWidgetBase::DockedWidgetBase (MainWindow * mw, QStringList const & path)
+	: ActionAble(path)
+	, m_main_window(mw)
+	, m_dockwidget(0)
 {
-	qDebug("%s", __FUNCTION__);
-	static_cast<QMainWindow *>(parent())->removeDockWidget(this);
-	setWidget(0);
-	m_mgr.onWidgetClosed(this);
-	event->accept();
+	qDebug("%s this=0x%08x", __FUNCTION__, this);
+}
+
+DockedWidgetBase::~DockedWidgetBase ()
+{
+	qDebug("%s this=0x%08x", __FUNCTION__, this);
+	m_main_window->dockManager().removeActionAble(*this);
+	m_dockwidget->setWidget(0);
+	delete m_dockwidget;
+	m_dockwidget = 0;
 }
 

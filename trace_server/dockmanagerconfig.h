@@ -13,7 +13,7 @@ struct DockManagerConfig
 	QString 		m_font;
 	int 			m_fontsize;
 	int 			m_row_width;
-	QVector<int> 	m_columns_sizes;		/// column sizes for each registered application
+	std::vector<int> 	m_columns_sizes;		/// column sizes for each registered application
 	bool 			m_show;
 	typedef tree_filter<DockedInfo> data_filters_t;
 	data_filters_t	m_data;
@@ -55,6 +55,7 @@ struct DockManagerConfig
 		m_show = true;
 		m_columns_sizes.clear();
 		m_columns_sizes.push_back(128);
+		m_columns_sizes.push_back(32);
 		m_columns_sizes.push_back(512);
 	}
 };

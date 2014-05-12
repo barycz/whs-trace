@@ -62,7 +62,7 @@ struct Application : QApplication, public QAbstractNativeEventFilter
 
 	virtual bool notify (QObject * receiver, QEvent * e)
 	{
-		if (e->type() == QKeyEvent::KeyPress)
+		/*if (e->type() == QKeyEvent::KeyPress)
 		{
 			QKeyEvent * ke = static_cast<QKeyEvent *>(e);
 			if (ke->key() == Qt::Key_Tab || ke->key() == Qt::Key_Backtab)
@@ -70,7 +70,7 @@ struct Application : QApplication, public QAbstractNativeEventFilter
 				if (m_main_window->handleTab(ke))
 					return true;
 			}
-		}
+		}*/
 
 		try
 		{
@@ -135,7 +135,8 @@ void qDebugHandler (QtMsgType type, QMessageLogContext const & ctx, QString cons
 int main (int argc, char * argv[])
 {
 	sys::setTimeStart();
-	QString const log_name = QString("%1.%2").arg(argv[0]).arg("log");
+	QFileInfo fi(argv[0]);
+	QString const log_name = QString("%1.%2").arg(fi.completeBaseName()).arg("log");
 	g_LogRedirect = fopen(log_name.toLatin1(), "a");
 	bool quit_delay = true;
 	bool start_hidden = false;

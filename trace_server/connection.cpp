@@ -1,31 +1,30 @@
 #include "connection.h"
 #include <QtNetwork>
-#include <tlv_parser/tlv_encoder.h>
-#include <trace_client/trace.h>
 #include "utils.h"
-#include "utils_qstandarditem.h"
 #include "utils_boost.h"
 #include "types.h"
 #include "server.h"
-//#include "statswindow.h"
-#include "delegates.h"
-#include "tableview.h"
+#include "mainwindow.h"
+#include "serialize.h"
+#include "controlbarcommon.h"
+#include <ui_controlbarcommon.h>
 
 GlobalConfig const & Connection::getGlobalConfig () const { return m_main_window->getConfig(); }
 
-Connection::Connection (QObject * parent)
+Connection::Connection (QString const & app_name, QObject * parent)
 	: QThread(parent)
+	, ActionAble(QStringList(qobject_cast<MainWindow *>(parent)->dockManager().path()) << app_name)
+	, m_app_name(app_name)
 	, m_main_window(qobject_cast<MainWindow *>(parent))
 	, m_src_stream(e_Stream_TCP)
 	, m_src_protocol(e_Proto_TLV)
+	, m_config()
 	, m_app_data()
-	, m_app_idx(-1)
 	, m_storage_idx(-2)
-	, m_app_name()
 	, m_recv_bytes(0)
 	, m_marked_for_close(false)
 	, m_curr_preset()
-	, m_tab_widget(0)
+	, m_control_bar(0)
 	, m_file_tlv_stream(0)
 	, m_file_csv_stream(0)
 	, m_buffer(e_ringbuff_size)
@@ -35,13 +34,38 @@ Connection::Connection (QObject * parent)
 	, m_storage(0)
 	, m_tcp_dump_stream(0)
 	, m_tcpstream(0)
-	//, m_statswindow(0)
 {
 	qDebug("Connection::Connection() this=0x%08x", this);
+
+	m_control_bar = new ControlBarCommon();
+
+	//m_main_window->dockManager().addActionTreeItem(*this, true); // TODO: m_config.m_show
+	m_config.m_auto_scroll = getGlobalConfig().m_auto_scroll;
+	m_config.m_level = getGlobalConfig().m_level;
+	m_config.m_buffered = getGlobalConfig().m_buffered;
+	m_config.m_time_units_str = getGlobalConfig().m_time_units_str;
+	m_config.m_time_units = getGlobalConfig().m_time_units;
+	m_config.m_font = getGlobalConfig().m_font;
+	m_config.m_fontsize = getGlobalConfig().m_fontsize;
 
 	static int counter = 0;
 	m_storage_idx = counter;
 	++counter;
+
+	setConfigValuesToUI(m_config);
+
+	connect(m_control_bar->ui->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onLevelValueChanged(int)));
+	connect(m_control_bar->ui->buffCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onBufferingStateChanged(int)));
+	connect(m_control_bar->ui->presetComboBox, SIGNAL(activated(int)), this, SLOT(onPresetChanged(int)));
+	connect(m_control_bar->ui->activatePresetButton, SIGNAL(clicked()), this, SLOT(onPresetApply()));
+	connect(m_control_bar->ui->presetSaveButton, SIGNAL(clicked()), this, SLOT(onPresetSave()));
+	connect(m_control_bar->ui->presetAddButton, SIGNAL(clicked()), this, SLOT(onPresetAdd()));
+	connect(m_control_bar->ui->presetRmButton, SIGNAL(clicked()), this, SLOT(onPresetRm()));
+	connect(m_control_bar->ui->presetResetButton, SIGNAL(clicked()), this, SLOT(onPresetReset()));
+	connect(m_control_bar->ui->logSlider, SIGNAL(valueChanged(int)), this, SLOT(onLogsStateChanged(int)));
+	connect(m_control_bar->ui->plotSlider, SIGNAL(valueChanged(int)), this, SLOT(onPlotsStateChanged(int)));
+	connect(m_control_bar->ui->tableSlider, SIGNAL(valueChanged(int)), this, SLOT(onTablesStateChanged(int)));
+	connect(m_control_bar->ui->ganttSlider, SIGNAL(valueChanged(int)), this, SLOT(onGanttsStateChanged(int)));
 }
 
 namespace {
@@ -52,10 +76,8 @@ namespace {
 		for (typename ContainerT::iterator it = c.begin(), ite = c.end(); it != ite; ++it)
 		{
 			typename ContainerT::iterator::value_type ptr = *it;
-            mainwin.dockManager().removeDockable(ptr->path().join("/"));
-            mainwin.dockManager().removeActionAble(ptr->path().join("/"));
+			mainwin.dockManager().removeActionAble(*ptr);
 		}
-		//c.clear(); toto je spatne!
 	}
 }
 
@@ -67,37 +89,34 @@ struct UnregisterDockedWidgets {
 	template <typename T>
 	void operator() (T & t)
 	{
+		m_main_window.dockManager().removeActionAble(t);
 		unregisterDockedWidgets(t, m_main_window);
 	}
 };
 
 void Connection::destroyDockedWidget (DockedWidgetBase * dwb)
 {
-    switch (dwb->type())
-    {
-        case e_data_log:
-            m_main_window->dockManager().removeDockable(dwb->path().join("/"));
-            m_main_window->dockManager().removeActionAble(dwb->path().join("/"));
-            removeDockWidget<e_data_log>(static_cast<DataLog *>(dwb));
-            destroyDockedWidget<e_data_log>(static_cast<DataLog *>(dwb));
-            break;
-        case e_data_plot:
-        case e_data_table:
-        case e_data_gantt:
-        case e_data_frame:
-        default: break;
-    }
+	m_main_window->dockManager().removeActionAble(*dwb);
+	switch (dwb->type())
+	{
+		case e_data_log: removeDockedWidget<e_data_log>(dwb); break;
+		case e_data_plot: removeDockedWidget<e_data_plot>(dwb); break;
+		case e_data_table: removeDockedWidget<e_data_table>(dwb); break;
+		case e_data_gantt: removeDockedWidget<e_data_gantt>(dwb); break;
+		case e_data_frame: removeDockedWidget<e_data_frame>(dwb); break;
+		default: break;
+	}
 }
 
 namespace {
-
 	template <class ContainerT>
 	void destroyDockedWidgets (ContainerT & c, MainWindow & mw, Connection & conn)
 	{
 		for (typename ContainerT::iterator it = c.begin(), ite = c.end(); it != ite; ++it)
 		{
 			typename ContainerT::iterator::value_type ptr = *it;
-      delete ptr;
+			ptr->setParent(0);
+			delete ptr;
 		}
 		c.clear();
 	}
@@ -120,6 +139,7 @@ Connection::~Connection ()
 {
 	qDebug("Connection::~Connection() this=0x%08x", this);
 
+	m_main_window->dockManager().removeActionAble(*this);
 	recurse(m_data, UnregisterDockedWidgets(*m_main_window));
 
 	if (m_tcpstream)
@@ -131,12 +151,8 @@ Connection::~Connection ()
 		m_tcpstream->close();
 	closeStorage();
 
-  qDebug("destroying docked widgets");
+	qDebug("destroying docked widgets");
 	recurse(m_data, DestroyDockedWidgets(*m_main_window, *this));
-
-  qDebug("deleting m_tab_widget w=0x%08x", m_tab_widget);
-	delete m_tab_widget;
-	m_tab_widget = 0;
 
 	/*if (m_file_tlv_stream)
 	{
@@ -157,6 +173,19 @@ Connection::~Connection ()
 	}*/
 }
 
+void Connection::mkWidgetPath (E_DataWidgetType type, QString const tag, QStringList & path)
+{
+	char const * widget_prefix = g_fileTags[type];
+	QString const & name0 = m_main_window->dockedName();
+	QString const & name1 = getAppName();
+	QString const & name2 = widget_prefix;
+	QString const & name3 = tag;
+	path.append(name0);
+	path.append(name1);
+	path.append(name2);
+	path.append(name3);
+}
+
 void Connection::onDisconnected ()
 {
 	qDebug("onDisconnected()");
@@ -164,64 +193,18 @@ void Connection::onDisconnected ()
 
 	if (m_main_window->dumpModeEnabled())
 	{
-		QString fname = tr("%1_%2.csv").arg(getAppName()).arg(m_pid);
+		QString const path = tr("%1_%2").arg(getAppName()).arg(m_pid);
 
-		exportStorageToCSV(fname);
+		if (mkPath(path))
+			onExportDataToCSV(path);
 
-		Server * server = static_cast<Server *>(parent());
-		m_marked_for_close = true;
-		QTimer::singleShot(0, server, SLOT(onCloseMarkedTabs()));
+		m_main_window->markConnectionForClose(this);
 	}
 
 	for (dataplots_t::iterator it = m_data.get<e_data_plot>().begin(), ite = m_data.get<e_data_plot>().end(); it != ite; ++it)
-	{
-		DataPlot * dp = (*it);
-		dp->widget().stopUpdate();
-	}
+		(*it)->stopUpdate();
 }
 
-void Connection::onLevelValueChanged (int val)
-{
-	char tlv_buff[16];
-#ifdef __linux__
-	int const result = snprintf(tlv_buff, 16, "%u", val);
-#else
-	int const result = _snprintf_s(tlv_buff, 16, "%u", val);
-#endif
-
-	if (result > 0)
-	{
-		char buff[256];
-		using namespace tlv;
-		Encoder e(cmd_set_level, buff, 256);
-		e.Encode(TLV(tag_lvl, tlv_buff));
-		if (m_tcpstream && e.Commit())
-			m_tcpstream->write(e.buffer, e.total_len); /// @TODO: async write
-	}
-}
-
-void Connection::onBufferingStateChanged (int val)
-{
-	bool const buffering_enabled = (val == Qt::Checked) ? true : false;
-
-	char tlv_buff[16];
-#ifdef __linux__
-	int const result = snprintf(tlv_buff, 16, "%u", buffering_enabled);
-#else
-	int const result = _snprintf_s(tlv_buff, 16, "%u", buffering_enabled);
-#endif
-
-	if (result > 0)
-	{
-		qDebug("Connection::onBufferingStateChanged to_state=%i", buffering_enabled);
-		char buff[256];
-		using namespace tlv;
-		Encoder e(cmd_set_buffering, buff, 256);
-		e.Encode(TLV(tag_bool, tlv_buff));
-		if (m_tcpstream && e.Commit())
-			m_tcpstream->write(e.buffer, e.total_len); /// @TODO: async write
-	}
-}
 
 struct Save {
 
@@ -233,7 +216,7 @@ struct Save {
 	{
 		typedef typename T::const_iterator it_t;
 		for (it_t it = t.begin(), ite = t.end(); it != ite; ++it)
-			(*it)->widget().saveConfig(m_path);
+			(*it)->saveConfig(m_path);
 	}
 };
 
@@ -247,7 +230,7 @@ struct Load {
 	{
 		typedef typename T::const_iterator it_t;
 		for (it_t it = t.begin(), ite = t.end(); it != ite; ++it)
-			(*it)->widget().loadConfig(m_path);
+			(*it)->loadConfig(m_path);
 	}
 };
 
@@ -258,7 +241,7 @@ struct Apply {
 	{
 		typedef typename T::const_iterator it_t;
 		for (it_t it = t.begin(), ite = t.end(); it != ite; ++it)
-			(*it)->widget().applyConfig();
+			(*it)->applyConfig();
 	}
 };
 
@@ -272,81 +255,93 @@ struct ExportAsCSV {
 	{
 		typedef typename T::const_iterator it_t;
 		for (it_t it = t.begin(), ite = t.end(); it != ite; ++it)
-			(*it)->widget().exportStorageToCSV(m_path);
+			(*it)->exportStorageToCSV(m_path);
 	}
 };
 
-/*void Connection::onSaveAll ()
-{
-	qDebug("%s", __FUNCTION__);
-	// @TODO: v hhdr bude 0 !
-	
-	QString const preset_name = m_curr_preset.isEmpty() ? m_main_window->getValidCurrentPresetName() : m_curr_preset;
-	//QString const fname = getDataTagFileName(getConfig().m_appdir, preset_name, g_presetTableTag, tag);
-	QString const preset_path = getPresetPath(getConfig().m_appdir, preset_name);
-	saveConfigs(preset_path);
-}*/
+struct HandleAction {
+
+	Action * m_action;
+	E_ActionHandleType m_sync;
+	HandleAction (Action * a, E_ActionHandleType sync) : m_action(a), m_sync(sync) { }
+
+	template <class T>
+	void operator() (T & t)
+	{
+	  t.handleAction(m_action, m_sync);
+	}
+};
 
 
 void Connection::saveConfigs (QString const & path)
 {
-		qDebug("%s", __FUNCTION__);
+	qDebug("%s", __FUNCTION__);
+
+	saveConfig(m_curr_preset);
 	recurse(m_data, Save(path));
 }
 
 void Connection::loadConfigs (QString const & path)
 {
-		qDebug("%s", __FUNCTION__);
+	qDebug("%s", __FUNCTION__);
+
+	loadConfig(m_curr_preset);
+
 	recurse(m_data, Load(path));
+}
+
+void Connection::loadConfig (QString const & preset_name)
+{
+	QString const path = mkAppPresetPath(getGlobalConfig().m_appdir, getAppName(), preset_name);
+	QString const fname = path + "/" + getAppName() + ".xml";
+	bool const loaded = loadConfigTemplate(m_config, fname);
+	if (!loaded)
+	{
+		m_config = ConnectionConfig();
+		//m_config.m_tag = tag_backup; // defaultConfigFor destroys tag
+	}
+	setConfigValuesToUI(m_config);
+}
+
+void Connection::saveConfig (QString const & preset_name)
+{
+	QString const path = mkAppPresetPath(getGlobalConfig().m_appdir, getAppName(), preset_name);
+	mkPath(path);
+	QString const fname = path + "/" + getAppName() + ".xml";
+	saveConfigTemplate(m_config, fname);
 }
 
 void Connection::applyConfigs ()
 {
-		qDebug("%s", __FUNCTION__);
+	qDebug("%s", __FUNCTION__);
 	recurse(m_data, Apply());
 }
 
-void Connection::exportStorageToCSV (QString const & dir)
+void Connection::onSaveData (QString const & dir)
 {
-		qDebug("%s", __FUNCTION__);
+	copyStorageTo(dir + "/" + "in_stream." + g_traceFileExtTLV);
+	//recurse(m_data, SaveData(dir));
+}
+
+void Connection::onExportDataToCSV (QString const & dir)
+{
+	qDebug("%s", __FUNCTION__);
 	recurse(m_data, ExportAsCSV(dir));
 }
 
-void Connection::setWidgetToTabWidget (QWidget * w)
+bool Connection::handleAction (Action * a, E_ActionHandleType sync)
 {
-		qDebug("%s", __FUNCTION__);
-	if (m_tab_widget->layout() == 0)
+	if (a->type() == e_Close)
 	{
-		m_tab_widget->setLayout(new QHBoxLayout());
+		m_main_window->markConnectionForClose(this);
+		return true;
 	}
-	m_tab_widget->layout()->addWidget(w);
+
+	recurse(m_data, HandleAction(a, sync));
+	return true;
 }
 
-void Connection::unsetWidgetFromTabWidget (QWidget * & w)
+QWidget * Connection::controlWidget ()
 {
-		qDebug("%s", __FUNCTION__);
-	if (m_tab_widget->layout() != 0)
-	{
-		w = m_tab_widget->layout()->widget();
-		m_tab_widget->layout()->removeWidget(w);
-	}
+	return m_control_bar;
 }
-QWidget * Connection::toCentralWidget (QDockWidget * wd, QWidget * w, bool on)
-{
-		qDebug("%s", __FUNCTION__);
-	if (on)
-	{
-		wd->setVisible(false);
-		setWidgetToTabWidget(w);
-		return 0;
-	}
-	else
-	{
-		wd->setVisible(true);
-		wd->setWidget(w);
-		QWidget * oldw;
-		unsetWidgetFromTabWidget(oldw);
-		return oldw;
-	}
-}
-

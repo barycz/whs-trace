@@ -10,10 +10,10 @@ namespace table {
 	{
 		QString m_tag;
 		QString m_title;
-		QVector<QString> m_hhdr;
-		QVector<int> m_hsize;
-		QVector<QString> m_vhdr;
-		QVector<int> m_vsize;
+		std::vector<QString> m_hhdr;
+		std::vector<int> m_hsize;
+		std::vector<QString> m_vhdr;
+		std::vector<int> m_vsize;
 
 		bool m_hide_empty;
 		bool m_unused_b2;
@@ -45,7 +45,7 @@ namespace table {
 			ar & boost::serialization::make_nvp("sync_group", m_sync_group);
 			// flags
 			ar & boost::serialization::make_nvp("autoscroll", m_auto_scroll);
-			ar & boost::serialization::make_nvp("central_widget", m_central_widget);
+			//ar & boost::serialization::make_nvp("central_widget", m_central_widget);
 			ar & boost::serialization::make_nvp("show", m_show);
 			ar & boost::serialization::make_nvp("hide_empty", m_hide_empty);
 			ar & boost::serialization::make_nvp("flag2", m_unused_b2);

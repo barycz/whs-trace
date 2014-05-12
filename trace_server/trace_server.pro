@@ -56,7 +56,8 @@ SOURCES += ../version.cpp \
     controlbarplots.cpp \
     controlbartables.cpp \
     controlbargantts.cpp \
-    controlbarlog.cpp
+    controlbarlog.cpp \
+    controlbardockedwidgets.cpp
 
 HEADERS  += \
     modelview.h \
@@ -65,7 +66,8 @@ HEADERS  += \
     controlbarplots.h \
     controlbartables.h \
     controlbargantts.h \
-    controlbarlog.h
+    controlbarlog.h \
+    controlbardockedwidgets.h
 
 FORMS    += help.ui \
     mainwindow.ui \
@@ -96,7 +98,8 @@ FORMS    += help.ui \
     controlbarplots.ui \
     controlbartables.ui \
     controlbargantts.ui \
-    controlbarlog.ui
+    controlbarlog.ui \
+    controlbardockedwidgets.ui
 
 RESOURCES += \
     resources.qrc

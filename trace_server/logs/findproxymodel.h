@@ -29,12 +29,13 @@ class FindProxyModel : public FilterProxyModel
 {
 	Q_OBJECT
 public:
-	explicit FindProxyModel (QObject * parent, logs::LogWidget & lw);
+	explicit FindProxyModel (QObject * parent, logs::LogWidget & lw, BaseProxyModel * pxy);
 	~FindProxyModel ();
 
 	virtual bool filterAcceptsRow (int sourceRow, QModelIndex const & sourceParent) const;
 	virtual bool filterAcceptsColumn (int sourceColumn, QModelIndex const & source_parent) const;
 
 protected:
+  BaseProxyModel * m_src_proxy;
 };
 

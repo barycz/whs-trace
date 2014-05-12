@@ -11,7 +11,7 @@
 
 namespace logs {
 
-	class LogWidget;
+	class LogTableView;
 	struct LogConfig;
 
 	struct LogCtxMenu : QObject

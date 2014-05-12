@@ -16,9 +16,6 @@ namespace plot {
 		QColor m_symbolcolor;
 		int m_symbolsize;
 		bool m_show;
-		bool m_unused_b0;
-		bool m_unused_b1;
-		bool m_unused_b2;
 
 		CurveConfig ()
 			: m_pen_width(0.0f)
@@ -28,9 +25,6 @@ namespace plot {
 			, m_symbolcolor(Qt::red)
 			, m_symbolsize(6)
 			, m_show(true)
-			, m_unused_b0(true)
-			, m_unused_b1(true)
-			, m_unused_b2(true)
 		{ }
 
 		template <class ArchiveT>
@@ -41,13 +35,10 @@ namespace plot {
 			ar & boost::serialization::make_nvp("pen", m_pen_width);
 			ar & boost::serialization::make_nvp("style", m_style);
 			ar & boost::serialization::make_nvp("symbol", m_symbol);
+			ar & boost::serialization::make_nvp("color", m_color);
 			ar & boost::serialization::make_nvp("symcol", m_symbolcolor);
 			ar & boost::serialization::make_nvp("symsize", m_symbolsize);
-			ar & boost::serialization::make_nvp("color", m_color);
 			ar & boost::serialization::make_nvp("show", m_show);
-			ar & boost::serialization::make_nvp("flag0", m_unused_b0);
-			ar & boost::serialization::make_nvp("flag1", m_unused_b1);
-			ar & boost::serialization::make_nvp("flag2", m_unused_b2);
 		}
 	};
 
@@ -62,9 +53,6 @@ namespace plot {
 		int m_alignment;
 		double m_rotation;
 		bool m_auto_scale;
-		bool m_unused_b0;
-		bool m_unused_b1;
-		bool m_unused_b2;
 
 		AxisConfig ()
 			: m_label()
@@ -76,9 +64,6 @@ namespace plot {
 			, m_alignment(0)
 			, m_rotation(0.0f)
 			, m_auto_scale(true)
-			, m_unused_b0(true)
-			, m_unused_b1(true)
-			, m_unused_b2(true)
 		{ }
 			
 
@@ -94,9 +79,6 @@ namespace plot {
 			ar & boost::serialization::make_nvp("rot", m_rotation);
 			ar & boost::serialization::make_nvp("scale", m_scale_type);
 			ar & boost::serialization::make_nvp("autoscale", m_auto_scale);
-			ar & boost::serialization::make_nvp("flag0", m_unused_b0);
-			ar & boost::serialization::make_nvp("flag1", m_unused_b1);
-			ar & boost::serialization::make_nvp("flag2", m_unused_b2);
 		}
 	};
 
@@ -110,31 +92,33 @@ namespace plot {
 		int m_timer_delay_ms;
 		int m_history_ln;
 		int m_from;
-		// qwt state
-		// flags
-		bool m_unused_b1;
-		bool m_unused_b2;
+		int m_legend_pos;
+		bool m_legend_show;
 
 		PlotConfig ()
 			: m_tag()
+			, m_title()
 			, m_timer_delay_ms(50)
 			, m_history_ln(256)
 			, m_from(0)
-			, m_unused_b1(false)
-			, m_unused_b2(false)
+			, m_legend_pos(0)
+			, m_legend_show(true)
 		{
 			m_acfg.push_back(AxisConfig());
-			m_acfg.back().m_axis_pos = 2; //QwtPlot::xBottom;
-				//yLeft, yRight, xBottom, xTop,
+			//enum goes like this: yLeft, yRight, xBottom, xTop,
+			m_acfg.back().m_axis_pos = 2; //QwtPlot::xBottom; 
 			m_acfg.push_back(AxisConfig());
 			m_acfg.back().m_axis_pos = 0; //QwtPlot::yLeft;
 		}
 
 		PlotConfig (QString const & tag)
 			: m_tag(tag)
+			, m_title()
 			, m_timer_delay_ms(50)
 			, m_history_ln(256)
 			, m_from(0)
+			, m_legend_pos(0)
+			, m_legend_show(true)
 		{ }
 
 		template <class ArchiveT>
@@ -142,14 +126,14 @@ namespace plot {
 		{
 			DockedConfigBase::serialize(ar, version);
 			ar & boost::serialization::make_nvp("tag", m_tag);
+			ar & boost::serialization::make_nvp("title", m_title);
 			ar & boost::serialization::make_nvp("ccfg", m_ccfg);
 			ar & boost::serialization::make_nvp("acfg", m_acfg);
 			ar & boost::serialization::make_nvp("timer", m_timer_delay_ms);
+			ar & boost::serialization::make_nvp("from", m_from);
+			ar & boost::serialization::make_nvp("legend_pos", m_legend_pos);
+			ar & boost::serialization::make_nvp("legend_show", m_legend_show);
 			ar & boost::serialization::make_nvp("length", m_history_ln);
-			//ar & m_from;
-			// flags
-			ar & boost::serialization::make_nvp("flag1", m_unused_b1);
-			ar & boost::serialization::make_nvp("flag2", m_unused_b2);
 		}
 
 		void partialLoadFrom (PlotConfig const & rhs)

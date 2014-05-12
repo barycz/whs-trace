@@ -16,7 +16,7 @@ void BaseProxyModel::force_update ()
 	m_map_from_src.clear();
 	m_map_from_src.reserve(src_model->rowCount());
 	int tgt_idx = 0;
-	for (size_t src_idx = 0, se = src_model->rowCount(); src_idx < se; ++src_idx)
+	for (int src_idx = 0, se = src_model->rowCount(); src_idx < se; ++src_idx)
 	{
 		if (filterAcceptsRow(src_idx, QModelIndex()))
 		{
@@ -34,7 +34,7 @@ void BaseProxyModel::force_update ()
 	m_cmap_from_src.clear();
 	m_cmap_from_src.reserve(src_model->columnCount());
 	int ctgt_idx = 0;
-	for (size_t src_idx = 0, se = src_model->columnCount(); src_idx < se; ++src_idx)
+	for (int src_idx = 0, se = src_model->columnCount(); src_idx < se; ++src_idx)
 	{
 		if (filterAcceptsColumn(src_idx, QModelIndex()))
 		{
@@ -61,7 +61,7 @@ QVariant BaseProxyModel::data (QModelIndex const & index, int role) const
 void BaseProxyModel::insertCol (int c)
 {
 	int pos0 = 0;
-	int pos1 = m_cmap_from_src.size();
+	int pos1 = static_cast<int>(m_cmap_from_src.size());
 	map_t::iterator it0 = m_cmap_from_src.lower_bound(c);
 	map_t::iterator it1 = m_cmap_from_src.upper_bound(c);
 
@@ -93,7 +93,7 @@ void BaseProxyModel::insertCol (int c)
 void BaseProxyModel::insertRow (int c)
 {
 	int pos0 = 0;
-	int pos1 = m_map_from_src.size();
+	int pos1 = static_cast<int>(m_map_from_src.size());
 	map_t::iterator it0 = m_map_from_src.lower_bound(c);
 	map_t::iterator it1 = m_map_from_src.upper_bound(c);
 
@@ -172,12 +172,12 @@ QModelIndex BaseProxyModel::index (int row, int column, QModelIndex const & pare
 
 int BaseProxyModel::rowCount (QModelIndex const & parent) const
 {
-	return m_map_from_tgt.size();
+	return static_cast<int>(m_map_from_tgt.size());
 }
 
 int BaseProxyModel::columnCount (QModelIndex const & parent) const
 {
-	return m_cmap_from_tgt.size();
+	return static_cast<int>(m_cmap_from_tgt.size());
 }
 
 bool BaseProxyModel::rowInProxy (int row) const
@@ -186,6 +186,12 @@ bool BaseProxyModel::rowInProxy (int row) const
 	if (it != m_map_from_src.end())
 		return true;
 	return false;
+}
+int BaseProxyModel::rowToSource (int row) const
+{
+	if (row < static_cast<int>(m_map_from_tgt.size()))
+		return m_map_from_tgt[row];
+	return -1;
 }
 
 bool BaseProxyModel::colInProxy (int col) const

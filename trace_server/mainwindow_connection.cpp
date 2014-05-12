@@ -2,67 +2,16 @@
 #include "connection.h"
 #include <QClipboard>
 #include <QStatusBar>
-
-Connection * MainWindow::findCurrentConnection ()
-{
-	Q_ASSERT(parent());
-	QWidget * w = getTabTrace()->currentWidget();
-	connections_t::iterator it = m_connections.find(w);
-	return (it != m_connections.end()) ? it->second : 0;
-}
+#include <QTimer>
 
 Connection * MainWindow::findConnectionByName (QString const & app_name)
 {
 	Q_ASSERT(parent());
 
 	for (connections_t::const_iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		if (it->second->getAppName() == app_name)
-			return it->second;
+		if ((*it)->getAppName() == app_name)
+			return (*it);
 	return 0;
-}
-
-void MainWindow::copyStorageTo (QString const & filename)
-{
-	if (Connection * conn = findCurrentConnection())
-		conn->copyStorageTo(filename);
-}
-
-void MainWindow::onLevelValueChanged (int val)
-{
-	qDebug("level changed: %u", val);
-	if (Connection * conn = findCurrentConnection())
-		conn->onLevelValueChanged(val);
-}
-
-/*void MainWindow::onCopyToClipboard ()
-{
-	if (Connection * conn = findCurrentConnection())
-	{
-		QString selection = conn->onCopyToClipboard();
-        qApp->clipboard()->setText(selection);
-	}
-}*/
-
-void MainWindow::onBufferingStateChanged (int state)
-{
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-		it->second->onBufferingStateChanged(state);
-}
-
-
-
-void MainWindow::onTabTraceFocus (int i)
-{
-	QWidget * w = getTabTrace()->widget(i);
-	// @TODO: unfocus current
-	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
-	{
-		if (it->second->m_tab_widget == w)
-		{
-			it->second->onTabTraceFocus();
-			return;
-		}
-	}
 }
 
 void MainWindow::newConnection (Connection * c)
@@ -72,16 +21,11 @@ void MainWindow::newConnection (Connection * c)
 
 Connection * MainWindow::createNewConnection ()
 {
-	// toto (cely?) do mainwindow
-	// emit createNewApplicationTab ();
-	Connection * connection = new Connection(this);
-	QWidget * tab = new QWidget();
-	connection->m_tab_widget = tab;
-
-	int const n = getTabTrace()->addTab(tab, QString::fromUtf8("???"));
-	qDebug("created new tab at %u for connection @ 0x%08x", n, connection);
-
-	m_connections.insert(std::make_pair(tab, connection));
+	static int conn_counter = 0;
+	QString const tmp_name = QString("new_app_") + QString::number(++conn_counter);
+	Connection * connection = new Connection(tmp_name, this);
+	m_connections.push_back(connection);
+	qDebug("created new connection[%u] for connection @ 0x%08x", m_connections.size(), connection);
 	return connection;
 }
 
@@ -107,10 +51,13 @@ void MainWindow::createTailLogStream (QString const & fname, QString const & sep
 {
 	Connection * connection = createNewConnection();
 	connection->setTailFile(fname);
-	//connection->m_csv_separator = separator;
+	QFileInfo fi(fname);
+	QString const tag = fi.fileName();
 	
-	statusBar()->showMessage(tr("Tail!"));
-	connection->handleCSVSetup(fname);
+	connection->handleCSVSetup(tag);
+	datalogs_t::iterator it = connection->findOrCreateLog(tag);
+	(*it)->config().m_csv_separator = separator;
+
 	connection->processTailCSVStream();
 	emit newConnection(connection);
 }
@@ -119,87 +66,52 @@ void MainWindow::createTailDataStream (QString const & fname)
 {
 	Connection * connection = createNewConnection();
 	connection->setTailFile(fname);
+	QFileInfo fi(fname);
+	QString const tag = fi.fileName();
+	
+	connection->handleCSVSetup(tag);
+	datalogs_t::iterator it = connection->findOrCreateLog(tag);
+	//(*it)->config().m_csv_separator = separator;
 
-	statusBar()->showMessage(tr("Tail!"));
-	connection->handleCSVSetup(fname);
 	connection->processTailCSVStream();
 	emit newConnection(connection);
 }
 
-
-void MainWindow::onCloseTab (int idx, QWidget * w)
+void MainWindow::onCloseConnection (Connection * c)
 {
-	qDebug("MainWindow::onCloseTab(idx=%i, QWidget *=0x%08x) idx=%i", idx, w, idx);
-	getTabTrace()->removeTab(idx);
-	connections_t::iterator it = m_connections.find(w);
+	qDebug("MainWindow::onCloseConection(Connection *=0x%08x)", c);
+	connections_t::iterator it = std::find(m_connections.begin(), m_connections.end(), c);
 	if (it != m_connections.end())
 	{
-		Connection * connection = it->second;
+		Connection * connection = (*it);
 		m_connections.erase(it);
-		destroyConnection(connection);
+		delete connection;
+		connection = 0;
 	}
-	qDebug("MainWindow::onCloseTab(idx=%i, QWidget *=0x%08x) curr idx=%i", idx, w, getTabTrace()->currentIndex());
-	onTabTraceFocus(getTabTrace()->currentIndex());
 }
-void MainWindow::onCloseMarkedTabs ()
+
+void MainWindow::onCloseMarkedConnections ()
 {
 	qDebug("%s", __FUNCTION__);
 
-	std::vector<QWidget *> to_delete;
+	std::vector<Connection *> to_delete;
 	to_delete.reserve(m_connections.size());
 
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 	{
-		if (it->second->m_marked_for_close)
-			to_delete.push_back(it->first);
+		if ((*it)->m_marked_for_close)
+			to_delete.push_back(*it);
 	}
 
 	while (!to_delete.empty())
 	{
-		onCloseTab(to_delete.back());
+		onCloseConnection(to_delete.back());
 		to_delete.pop_back();
 	}
 }
 
-void MainWindow::onCloseTab (QWidget * w)
+void MainWindow::markConnectionForClose (Connection * conn)
 {
-	if (w)
-	{
-		int const idx = getTabTrace()->indexOf(w);
-		if (idx != -1)
-		{
-			qDebug("MainWindow::onCloseTab(QWidget *) idx=%i", idx);
-			onCloseTab(idx, w);
-		}
-	}
+	conn->m_marked_for_close = true;
+	QTimer::singleShot(0, this, SLOT(onCloseMarkedConnections()));
 }
-void MainWindow::onCloseTabWithIndex (int idx)
-{
-	if (idx != -1)
-	{
-		if (QWidget * w = getTabTrace()->widget(idx))
-		{
-			qDebug("MainWindow::onCloseTabWithIndex(int) idx=%i widget=0x%08x", idx, w);
-			onCloseTab(idx, w);
-		}
-	}
-}
-void MainWindow::onCloseCurrentTab ()
-{
-	qDebug("%s", __FUNCTION__);
-	QWidget * w = getTabTrace()->currentWidget();
-	onCloseTab(w);
-}
-
-void MainWindow::destroyConnection (Connection * connection)
-{
-	QObject::disconnect(connection->m_tcpstream, SIGNAL(disconnected()), connection, SLOT(onDisconnected()));
-	QObject::disconnect(connection->m_tcpstream, SIGNAL(readyRead()), connection, SLOT(processReadyRead()));
-	//QObject::disconnect(connection->m_table_view_widget->horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(onSectionResized(int, int, int)));
-
-	delete connection;
-}
-
-
-
-

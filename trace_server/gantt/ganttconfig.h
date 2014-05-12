@@ -124,6 +124,11 @@ namespace gantt {
 		{
 			*this = GanttConfig();
 		}
+
+		void fillDefaultConfig ()
+		{
+			*this = GanttConfig();
+		}
 	};
 
 	bool loadConfig (GanttConfig & config, QString const & fname);

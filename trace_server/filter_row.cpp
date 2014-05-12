@@ -70,7 +70,7 @@ void FilterRow::saveConfig (QString const & path)
 void FilterRow::setConfigToUI ()
 {
 	m_model->clear();
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 	{
 		QStandardItem * root = m_model->invisibleRootItem();
 		QStandardItem * child = findChildByText(root, m_data[i].m_row_str);
@@ -132,10 +132,10 @@ void FilterRow::destroyModel ()
 
 bool FilterRow::isRowPresent (int item, bool & enabled, E_RowMode & rowmode) const
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		if (m_data.at(i).m_row == item)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
+		if (m_data[i].m_row == item)
 		{
-			FilteredRow const & l = m_data.at(i);
+			FilteredRow const & l = m_data[i];
 			rowmode = static_cast<E_RowMode>(l.m_state);
 			enabled = l.m_is_enabled;
 			return true;
@@ -157,7 +157,7 @@ void FilterRow::appendRowToUI (FilteredRow const & f)
 
 void FilterRow::appendRowFilter (int item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_row == item)
 		{
 			FilteredRow & f = m_data[i];
@@ -173,7 +173,7 @@ void FilterRow::appendRowFilter (int item)
 }
 void FilterRow::removeRowFilter (int item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_row == item)
 		{
 			FilteredRow & l = m_data[i];
@@ -183,8 +183,8 @@ void FilterRow::removeRowFilter (int item)
 }
 bool FilterRow::setRowMode (int item, bool enabled, E_RowMode rowmode)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		if (m_data.at(i).m_row == item)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
+		if (m_data[i].m_row == item)
 		{
 			FilteredRow & l = m_data[i];
 			l.m_state = rowmode;

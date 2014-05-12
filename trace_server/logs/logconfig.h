@@ -4,6 +4,7 @@
 #include <QColor>
 #include <dockedconfig.h>
 #include <constants.h>
+#include <findconfig.h>
 
 namespace logs {
 
@@ -17,11 +18,11 @@ namespace logs {
 		int m_indent_level;
 		int m_cut_path_level;
 		int m_cut_namespace_level;
-		QVector<QString> 	m_columns_setup;		/// column setup for each registered application
-		QVector<int> 		m_columns_sizes;		/// column sizes for each registered application
-		QVector<QString> 	m_columns_align;		/// column align for each registered application
-		QVector<QString> 	m_columns_elide;		/// column elide for each registered application
-		QVector<QColor> 	m_thread_colors;		/// predefined coloring of threads
+		std::vector<QString> 	m_columns_setup;		/// column setup for each registered application
+		std::vector<int> 		m_columns_sizes;		/// column sizes for each registered application
+		std::vector<QString> 	m_columns_align;		/// column align for each registered application
+		std::vector<QString> 	m_columns_elide;		/// column elide for each registered application
+		std::vector<QColor> 	m_thread_colors;		/// predefined coloring of threads
 		bool m_in_view;
 		bool m_filtering;
 		bool m_clr_filters;
@@ -33,6 +34,7 @@ namespace logs {
 		bool m_filter_proxy;
 		bool m_find_proxy;
 		QString m_csv_separator;
+		FindConfig m_find_config;
 
 		LogConfig ()
 			: m_tag()
@@ -54,9 +56,7 @@ namespace logs {
 			, m_filter_proxy(false)
 			, m_find_proxy(false)
 			, m_csv_separator(",")
-		{
-			m_central_widget = false;
-		}
+		{ }
 
 		LogConfig (QString const & tag)
 			: m_tag(tag)
@@ -78,9 +78,7 @@ namespace logs {
 			, m_filter_proxy(false)
 			, m_find_proxy(false)
 			, m_csv_separator(",")
-		{
-			m_central_widget = tag == g_MainLogName;
-		}
+		{ }
 
 		template <class ArchiveT>
 		void serialize (ArchiveT & ar, unsigned const version)
@@ -107,6 +105,7 @@ namespace logs {
 			ar & boost::serialization::make_nvp("cut_path", m_cut_path);
 			ar & boost::serialization::make_nvp("cut_namespaces", m_cut_namespaces);
 			ar & boost::serialization::make_nvp("dt_enabled", m_dt_enabled);
+			ar & boost::serialization::make_nvp("find_config", m_find_config);
 		}
 
 		void clear ()

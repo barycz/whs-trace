@@ -5,45 +5,10 @@
 #include "utils.h"
 #include "dock.h"
 #include "delegates.h"
+#include "mainwindow.h"
 #include "gantt/ganttview.h"
 #include "gantt/ganttwidget.h"
 //#include <cstdlib>
-
-DataGantt::DataGantt (Connection * connection, QString const & confname, QStringList const & path)
-	: DockedData<e_data_gantt>(connection, confname, path)
-{
-	qDebug("%s this=0x%08x name=%s", __FUNCTION__, this, confname.toStdString().c_str());
-	m_widget = new gantt::GanttWidget(connection, 0, m_config, confname, path);
-	//m_widget->setItemDelegate(new SyncedGanttItemDelegate(m_widget));
-}
-
-void Connection::onShowGantts ()
-{
-	/*qDebug("%s", __FUNCTION__);
-	for (datagantts_t::iterator it = m_data.get<e_data_gantt>().begin(), ite = m_data.get<e_data_gantt>().end(); it != ite; ++it)
-	{
-		(*it)->onShow();
-		m_main_window->restoreDockWidget((*it)->m_wd);
-	}*/
-}
-
-void Connection::onHideGantts ()
-{
-	/*qDebug("%s", __FUNCTION__);
-	for (datagantts_t::iterator it = m_data.get<e_data_gantt>().begin(), ite = m_data.get<e_data_gantt>().end(); it != ite; ++it)
-	{
-		(*it)->onHide();
-	}*/
-}
-
-void Connection::onShowGanttContextMenu (QPoint const &)
-{
-	qDebug("%s", __FUNCTION__);
-	for (datagantts_t::iterator it = m_data.get<e_data_gantt>().begin(), ite = m_data.get<e_data_gantt>().end(); it != ite; ++it)
-	{
-		(*it)->widget().onHideContextMenu();
-	}
-}
 
 datagantts_t::iterator Connection::findOrCreateGantt (QString const & tag)
 {
@@ -55,8 +20,7 @@ void Connection::appendGantt (gantt::DecodedData & dd)
 {
 	//qDebug("appendGantt type=%i tag=%s subtag=%s text=%s", dd.m_type, dd.m_tag.toStdString().c_str(), dd.m_subtag.toStdString().c_str(), dd.m_text.toStdString().c_str());
 	datagantts_t::iterator it = findOrCreateGantt(dd.m_tag);
-	DataGantt & dp = **it;
-	gantt::GanttView * gv = dp.widget().findOrCreateGanttView(dd.m_subtag);
+	gantt::GanttView * gv = (*it)->findOrCreateGanttView(dd.m_subtag);
 	gv->appendGantt(dd);
 }
 
@@ -69,7 +33,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 			msg = cmd.m_tvs[i].m_val;
 	}
 
-	if (m_main_window->plotState() != e_FtrDisabled)
+	if (getClosestFeatureState(e_data_gantt) != e_FtrDisabled)
 	{
 		QString tag = msg;
 		int const slash_pos = tag.lastIndexOf(QChar('/'));
@@ -132,7 +96,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 
 	bool Connection::handleGanttBgnCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
 	{
-		if (m_main_window->ganttState() == e_FtrDisabled)
+		if (getClosestFeatureState(e_data_gantt) == e_FtrDisabled)
 			return true;
 
 		gantt::DecodedData dd;
@@ -147,7 +111,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 
 	bool Connection::handleGanttEndCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
 	{
-		if (m_main_window->ganttState() == e_FtrDisabled)
+		if (getClosestFeatureState(e_data_gantt) == e_FtrDisabled)
 			return true;
 
 		gantt::DecodedData dd;
@@ -160,7 +124,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 	}
 	bool Connection::handleGanttFrameBgnCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
 	{
-		if (m_main_window->ganttState() == e_FtrDisabled)
+		if (getClosestFeatureState(e_data_gantt) == e_FtrDisabled)
 			return true;
 
 		gantt::DecodedData dd;
@@ -173,7 +137,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 	}
 	bool Connection::handleGanttFrameEndCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
 	{
-		if (m_main_window->ganttState() == e_FtrDisabled)
+		if (getClosestFeatureState(e_data_gantt) == e_FtrDisabled)
 			return true;
 
 		gantt::DecodedData dd;
@@ -185,8 +149,7 @@ bool Connection::handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveM
 
 		//qDebug("appendGantt type=%i tag=%s subtag=%s text=%s", dd.m_type, dd.m_tag.toStdString().c_str(), dd.m_subtag.toStdString().c_str(), dd.m_text.toStdString().c_str());
 		datagantts_t::iterator it = findOrCreateGantt(dd.m_tag);
-		DataGantt & dp = **it;
-		dp.widget().appendFrameEnd(dd);
+		(*it)->appendFrameEnd(dd);
 
 		return true;
 	}

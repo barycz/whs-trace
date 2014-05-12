@@ -2,18 +2,20 @@
 #include "mainwindow.h"
 #include "connection.h"
 #include "dockmanagerconfig.h"
+#include "dockdelegates.h"
 #include "controlbar_dockmanager.h"
 #include "serialize.h"
 #include <ui_controlbarcommon.h>
-#include <ui_controlbarlogs.h>
+#include <QScrollBar>
+/*#include <ui_controlbarlogs.h>
 #include <ui_controlbarplots.h>
 #include <ui_controlbartables.h>
-#include <ui_controlbargantts.h>
+#include <ui_controlbargantts.h>*/
 
 DockManager::DockManager (MainWindow * mw, QStringList const & path)
 	: DockManagerView(mw), ActionAble(path)
 	, m_main_window(mw)
-	, m_docked_widgets(0)
+	, m_dockwidget(0)
 	, m_control_bar(0)
 	, m_model(0)
 	, m_config(g_traceServerName)
@@ -22,63 +24,91 @@ DockManager::DockManager (MainWindow * mw, QStringList const & path)
 	resizeColumnToContents(0);
 
 	QString const name = path.join("/");
-	QDockWidget * const dock = new QDockWidget(this);
+	DockWidget * const dock = new DockWidget(*this, name, m_main_window);
 	dock->setObjectName(name);
 	dock->setWindowTitle(name);
 	dock->setAllowedAreas(Qt::AllDockWidgetAreas);
 	m_main_window->addDockWidget(Qt::BottomDockWidgetArea, dock);
-	m_actionables.insert(name, this);
 	dock->setAttribute(Qt::WA_DeleteOnClose, false);
 	dock->setWidget(this);
 
 	//if (visible)
 	//	m_main_window->restoreDockWidget(dock);
-	m_docked_widgets = dock;
+	m_dockwidget = dock;
+
+	connect(m_dockwidget, SIGNAL(widgetVisibilityChanged()), m_main_window, SLOT(onDockManagerVisibilityChanged(bool)));
 	m_control_bar = new ControlBarCommon();
 
 	connect(header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(onColumnResized(int, int, int)));
-	connect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(onClicked(QModelIndex)));
-	connect(m_docked_widgets, SIGNAL(dockClosed()), mw, SLOT(onDockManagerClosed()));
+	connect(m_dockwidget, SIGNAL(dockClosed()), mw, SLOT(onDockManagerClosed()));
 	setAllColumnsShowFocus(false);
-	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	setExpandsOnDoubleClick(false);
+	//setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	//setSizeAdjustPolicy(QAbstractScrollArea::AdjustIgnored);
 	//header()->setSectionResizeMode(0, QHeaderView::Interactive);
 	header()->setStretchLastSection(false);
-	setStyleSheet("QTableView::item{ selection-background-color: #F5DEB3  } QTableView::item{ selection-color: #000000 }");
+	setEditTriggers(QAbstractItemView::NoEditTriggers);
+	//setItemDelegateForColumn(e_Column_Close, new CloseButtonDelegate(*this, this));
+	setItemDelegateForColumn(e_Column_Close, new CloseButtonDelegate(*this, this));
+	setItemDelegateForColumn(e_Column_ControlWidget, new ControlWidgetDelegate(*this, this));
+	setStyleSheet("QTreeView::item{ selection-background-color: #FFE7BA } QTreeView::item{ selection-color: #000000 }");
+	//horizontalScrollBar()->setStyleSheet("QScrollBar:horizontal { border: 1px solid grey; height: 15px; } QScrollBar::handle:horizontal { background: white; min-width: 10px; }");
+	/*
+	setStyleSheet(QString::fromUtf8("QScrollBar:vertical {               
+		"    border: 1px solid #999999;"
+		"    background:white;"
+		"    width:10px;    "
+		"    margin: 0px 0px 0px 0px;"
+		"}"
+		"QScrollBar::handle:vertical {"
+		"    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+		"    stop: 0  rgb(32, 47, 130), stop: 0.5 rgb(32, 47, 130),  stop:1 rgb(32, 47, 130));"
+		"    min-height: 0px;"
+		""
+		"}"
+		"QScrollBar::add-line:vertical {"
+		"    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+		"    stop: 0  rgb(32, 47, 130), stop: 0.5 rgb(32, 47, 130),  stop:1 rgb(32, 47, 130));"
+		"    height: px;"
+		"    subcontrol-position: bottom;"
+		"    subcontrol-origin: margin;"
+		"}"
+		"QScrollBar::sub-line:vertical {"
+		"    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+		"    stop: 0  rgb(32, 47, 130), stop: 0.5 rgb(32, 47, 130),  stop:1 rgb(32, 47, 130));"
+		"    height: 0px;"
+		"    subcontrol-position: top;"
+		"    subcontrol-origin: margin;"
+		"}"
+		""));
+*/	
 }
 
 void DockManager::loadConfig (QString const & cfgpath)
 {
-	QString const fpath = cfgpath + "/" + g_dockManagerTag;
+	QString const fname = cfgpath + "/" + g_dockManagerTag;
 	DockManagerConfig config2(g_traceServerName);
-	if (!::loadConfigTemplate(config2, fpath))
+	if (!::loadConfigTemplate(config2, fname))
 	{
 		m_config.defaultConfig();
-		bool const on = true;
-		m_model = new DockManagerModel(this, &m_config.m_data);
-		setModel(m_model);
-		QModelIndex const idx = m_model->insertItemWithPath(path(), on);
-		QModelIndex const idx1 = m_model->index(idx.row(), 1, idx.parent());
-		setIndexWidget(idx1, m_control_bar);
-		// @TODO: set type=AA into returned node
-		m_model->setData(idx, QVariant(on ? Qt::Checked : Qt::Unchecked), Qt::CheckStateRole);
-		//QString const & name = aa.joinedPath();
 	}
 	else
 	{
 		m_config = config2;
 		config2.m_data.root = 0; // @TODO: promyslet.. takle na to urcite zapomenu
-		m_model = new DockManagerModel(this, &m_config.m_data);
-		setModel(m_model);
 	}
+
+	m_model = new DockManagerModel(*this, this, &m_config.m_data);
+	setModel(m_model);
+	connect(this, SIGNAL(removeCurrentIndex(QModelIndex const &)), this, SLOT(onRemoveCurrentIndex(QModelIndex const &)));
+	bool const on = true;
+	addActionAble(*this, on, false, true);
 }
 
 void DockManager::applyConfig ()
 {
-	for (int i = 0, ie = m_config.m_columns_sizes.size(); i < ie; ++i)
-	{
-		header()->resizeSection(i, m_config.m_columns_sizes[i]);
-	}
+	for (size_t i = 0, ie = m_config.m_columns_sizes.size(); i < ie; ++i)
+		header()->resizeSection(static_cast<int>(i), m_config.m_columns_sizes[i]);
 
 	if (m_model)
 		m_model->syncExpandState(this);
@@ -86,13 +116,17 @@ void DockManager::applyConfig ()
 
 void DockManager::saveConfig (QString const & path)
 {
-	QString const fpath = path + "/" + g_dockManagerTag;
-	::saveConfigTemplate(m_config, fpath);
+	QString const fname = path + "/" + g_dockManagerTag;
+	::saveConfigTemplate(m_config, fname);
 }
 
 DockManager::~DockManager ()
 {
-	disconnect(this, SIGNAL(clicked(QModelIndex)), this, SLOT(onClicked(QModelIndex)));
+	setParent(0);
+	m_dockwidget->setWidget(0);
+	delete m_dockwidget;
+	m_dockwidget= 0;
+	removeActionAble(*this);
 }
 
 DockWidget * DockManager::mkDockWidget (DockedWidgetBase & dwb, bool visible)
@@ -110,9 +144,8 @@ DockWidget * DockManager::mkDockWidget (ActionAble & aa, bool visible, Qt::DockW
 	dock->setObjectName(name);
 	dock->setWindowTitle(name);
 	dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	//dock->setWidget(docked_widget); // set by caller
+	//dock->setWidget(docked_widget); // @NOTE: commented, it is set by caller
 	m_main_window->addDockWidget(area, dock);
-	m_widgets.insert(name, dock);
 	dock->setAttribute(Qt::WA_DeleteOnClose, false);
 
 	if (visible)
@@ -123,25 +156,33 @@ DockWidget * DockManager::mkDockWidget (ActionAble & aa, bool visible, Qt::DockW
 void DockManager::onWidgetClosed (DockWidget * w)
 {
 	qDebug("%s w=%08x", __FUNCTION__, w);
-	m_widgets.remove(w->objectName());
 }
 
-QModelIndex DockManager::addDockedTreeItem (DockedWidgetBase & dwb, bool on)
+QModelIndex DockManager::addActionAble (ActionAble & aa, bool on, bool close_button, bool control_widget)
 {
-	m_dockables.insert(dwb.joinedPath(), &dwb);
-	return addActionTreeItem(dwb, on);
-}
-
-QModelIndex DockManager::addActionTreeItem (ActionAble & aa, bool on)
-{
+	qDebug("%s aa=%s show=%i", __FUNCTION__, aa.joinedPath().toStdString().c_str(), on);
 	QModelIndex const idx = m_model->insertItemWithPath(aa.path(), on);
-	// @TODO: set type=AA into returned node
-	m_model->setData(idx, QVariant(on ? Qt::Checked : Qt::Unchecked), Qt::CheckStateRole);
 	QString const & name = aa.joinedPath();
 	m_actionables.insert(name, &aa);
-	aa.m_idx = idx;
-	//resizeColumnToContents(0);
+	m_model->initData(idx, QVariant(on ? Qt::Checked : Qt::Unchecked), Qt::CheckStateRole);
+
+	if (close_button)
+	{
+		QModelIndex const jdx = m_model->index(idx.row(), e_Column_Close, idx.parent());
+		openPersistentEditor(jdx);
+	}
+	if (control_widget)
+	{
+		QModelIndex const kdx = m_model->index(idx.row(), e_Column_ControlWidget, idx.parent());
+		openPersistentEditor(kdx);
+	}
 	return idx;
+
+}
+
+QModelIndex DockManager::addActionAble (ActionAble & aa, bool on)
+{
+	return addActionAble(aa, on, true, true);
 }
 
 ActionAble const * DockManager::findActionAble (QString const & dst_joined) const
@@ -151,64 +192,32 @@ ActionAble const * DockManager::findActionAble (QString const & dst_joined) cons
 		return *it;
 	return 0;
 }
-
-DockedWidgetBase const * DockManager::findDockableForWidget (QWidget * w) const
+ActionAble * DockManager::findActionAble (QString const & dst_joined)
 {
-	for (dockables_t::const_iterator it = m_dockables.begin(), ite = m_dockables.end(); it != ite; ++it)
-	{
-		DockedWidgetBase const * const dwb = *it;
-		DockedWidgetBase const * const dwbw = qobject_cast<DockedWidgetBase const *>(w);
-		if (w && dwb && dwb == dwbw)
-			return dwb;
-	}
-	return 0;
-}
-DockedWidgetBase * DockManager::findDockableForWidget (QWidget * w)
-{
-	for (dockables_t::const_iterator it = m_dockables.begin(), ite = m_dockables.end(); it != ite; ++it)
-	{
-		DockedWidgetBase * const dwb = *it;
-		if (w && dwb && dwb->dockedWidget() == w)
-			return dwb;
-	}
-	return 0;
-}
-
-void DockManager::removeDockable (QString const & dst_joined)
-{
-	qDebug("%s", __FUNCTION__);
-	dockables_t::iterator it = m_dockables.find(dst_joined);
-	if (it != m_dockables.end() && it.key() == dst_joined)
-		m_dockables.erase(it);
-}
-
-void DockManager::removeActionAble (QString const & dst_joined)
-{
-	qDebug("%s", __FUNCTION__);
 	actionables_t::iterator it = m_actionables.find(dst_joined);
 	if (it != m_actionables.end() && it.key() == dst_joined)
-		m_actionables.erase(it);
+		return *it;
+	return 0;
 }
 
-DockedWidgetBase const * DockManager::findDockable (QString const & dst_joined) const
+void DockManager::removeActionAble (ActionAble & aa)
 {
-	dockables_t::const_iterator it = m_dockables.find(dst_joined);
-	if (it != m_dockables.end() && it.key() == dst_joined)
-		return *it;
-	return 0;
-}
-DockedWidgetBase * DockManager::findDockable (QString const & dst_joined)
-{
-	dockables_t::iterator it = m_dockables.find(dst_joined);
-	if (it != m_dockables.end() && it.key() == dst_joined)
-		return *it;
-	return 0;
+	qDebug("%s aa=%s", __FUNCTION__, aa.joinedPath().toStdString().c_str());
+	actionables_t::iterator it = m_actionables.find(aa.joinedPath());
+	if (it != m_actionables.end() && it.key() == aa.joinedPath())
+	{
+		QModelIndex const idx = m_model->testItemWithPath(aa.path());
+		if (idx.isValid())
+			for (int j = 1; j < e_max_dockmgr_column; ++j)
+				closePersistentEditor(m_model->index(idx.row(), j, idx.parent()));
+		m_actionables.erase(it);
+	}
 }
 
 void DockManager::onColumnResized (int idx, int , int new_size)
 {
 	if (idx < 0) return;
-	int const curr_sz = m_config.m_columns_sizes.size();
+	size_t const curr_sz = m_config.m_columns_sizes.size();
 	if (idx < curr_sz)
 	{
 		//qDebug("%s this=0x%08x hsize[%i]=%i", __FUNCTION__, this, idx, new_size);
@@ -216,7 +225,7 @@ void DockManager::onColumnResized (int idx, int , int new_size)
 	else
 	{
 		m_config.m_columns_sizes.resize(idx + 1);
-		for (int i = curr_sz; i < idx + 1; ++i)
+		for (size_t i = curr_sz; i < idx + 1; ++i)
 			m_config.m_columns_sizes[i] = 32;
 	}
 	m_config.m_columns_sizes[idx] = new_size;
@@ -261,8 +270,7 @@ bool DockManager::handleAction (Action * a, E_ActionHandleType sync)
 			{
 				qDebug("delivering action to: %s", dst_joined.toStdString().c_str());
 				ActionAble * const next_hop =  it.value();
-				next_hop->handleAction(a, sync);
-				++it;
+				next_hop->handleAction(a, sync); //@NOTE: e_Close can invalidate iterator
 			}
 			else
 			{
@@ -277,32 +285,27 @@ bool DockManager::handleAction (Action * a, E_ActionHandleType sync)
 	return false;
 }
 
-void DockManager::onClicked (QModelIndex idx)
+void DockManager::onCloseButton ()
 {
-	TreeModel<DockedInfo>::node_t const * n = m_model->getItemFromIndex(idx);
-	QStringList const & dst = n->data.m_path;
-
-	int const col = idx.column();
-	Action a;
-	a.m_type = static_cast<E_ActionType>(col);
-	a.m_src_path = path();
-	a.m_src = this;
-	a.m_dst_path = dst;
-	if (col == e_Visibility)
+	QVariant v = QObject::sender()->property("idx");
+	if (v.canConvert<QModelIndex>())
 	{
-		int const state = m_model->data(idx, Qt::CheckStateRole).toInt();
-		a.m_args.push_back(state);
+		QModelIndex const idx = v.value<QModelIndex>();
+		if (TreeModel<DockedInfo>::node_t * const n = m_model->getItemFromIndex(idx))
+		{
+			QStringList const & dst_path = n->data.m_path;
+			Action a;
+			a.m_type = e_Close;
+			a.m_src_path = path();
+			a.m_src = this;
+			a.m_dst_path = dst_path;
+			handleAction(&a, e_Sync);
+		}
 	}
-	if (col == e_InCentralWidget)
-	{
-		int const state = m_model->data(idx, e_DockRoleCentralWidget).toInt();
-		int const new_state = state == 0 ? 1 : 0;
-
-		m_model->setData(idx, new_state, e_DockRoleCentralWidget);
-		a.m_args.push_back(new_state);
-	}
-
-	//av.m_dst = 0;
-	handleAction(&a, e_Sync);
 }
 
+
+void DockManager::onRemoveCurrentIndex (QModelIndex const & idx)
+{
+	//model()->removeRows(idx.row(), 1, idx.parent());
+}

@@ -71,7 +71,7 @@ void FilterLvl::saveConfig (QString const & path)
 
 void FilterLvl::setConfigToUI ()
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 	{
 		QStandardItem * root = m_model->invisibleRootItem();
 		QStandardItem * child = findChildByText(root, m_data[i].m_level_str);
@@ -134,7 +134,7 @@ void FilterLvl::destroyModel ()
 
 bool FilterLvl::isPresent (QString const & item, bool & enabled, E_LevelMode & lvlmode) const
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data.at(i).m_level_str == item)
 		{
 			FilteredLevel const & l = m_data.at(i);
@@ -146,7 +146,7 @@ bool FilterLvl::isPresent (QString const & item, bool & enabled, E_LevelMode & l
 }
 void FilterLvl::append (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_level_str == item)
 		{
 			FilteredLevel & l = m_data[i];
@@ -159,7 +159,7 @@ void FilterLvl::append (QString const & item)
 }
 void FilterLvl::remove (QString const & item)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data[i].m_level_str == item)
 		{
 			FilteredLevel & l = m_data[i];
@@ -169,7 +169,7 @@ void FilterLvl::remove (QString const & item)
 }
 bool FilterLvl::setMode (QString const & item, bool enabled, E_LevelMode lvlmode)
 {
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
 		if (m_data.at(i).m_level_str == item)
 		{
 			FilteredLevel & l = m_data[i];

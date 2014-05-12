@@ -1,0 +1,106 @@
+#pragma once
+#include <QString>
+#include <QDockWidget>
+#include <QMultiMap>
+#include <QSpinBox>
+#include "action.h"
+#include "dockedconfig.h"
+#include "dockmanagerview.h"
+#include "dockmanagermodel.h"
+#include "dockmanagerconfig.h"
+#include "controlbarcommon.h"
+#include <QStyledItemDelegate>
+class QCloseEvent; class QPushButton;
+class MainWindow;
+struct DockWidget;
+class ControlBarCommon;
+namespace Ui { class ControlBarCommon; }
+
+struct DockManager : DockManagerView, ActionAble
+{
+	Q_OBJECT
+public:
+
+	DockManager (MainWindow * mw, QStringList const & path);
+	~DockManager ();
+
+	enum {
+		e_Column_Name,
+		e_Column_Close,
+		e_Column_ControlWidget,
+		e_max_dockmgr_column
+	};
+
+	typedef QMultiMap<QString, ActionAble *> actionables_t;
+	actionables_t		m_actionables;
+	MainWindow * 		m_main_window;
+	QDockWidget * 		m_dockwidget;
+	ControlBarCommon * m_control_bar;
+	DockManagerModel *	m_model;
+	DockManagerConfig	m_config;
+
+	DockWidget * mkDockWidget (DockedWidgetBase & dwb, bool visible);
+	DockWidget * mkDockWidget (ActionAble & aa, bool visible, Qt::DockWidgetArea area);
+
+	QModelIndex addActionAble (ActionAble & aa, bool on);
+	void removeActionAble (ActionAble & aa);
+	ActionAble const * findActionAble (QString const & dst_joined) const;
+	Ui::ControlBarCommon * controlUI () { return m_control_bar->ui; }
+	Ui::ControlBarCommon const * controlUI () const { return m_control_bar->ui; }
+
+	void loadConfig (QString const & path);
+	void saveConfig (QString const & path);
+	void applyConfig ();
+
+	virtual bool handleAction (Action * a, E_ActionHandleType sync);
+	virtual QWidget * controlWidget () { return m_control_bar; }
+
+public slots:
+	void onWidgetClosed (DockWidget * w);
+	void onClicked (QModelIndex idx);
+	void onCloseButton ();
+
+protected slots:
+	void onColumnResized (int column, int oldSize, int newSize);
+
+protected:
+	bool findClickedActionAble (QPushButton const * const b, TreeModel<DockedInfo>::node_t const * node, QStringList & aa) const;
+};
+
+class CloseButtonDelegate : public QStyledItemDelegate {
+    Q_OBJECT
+public:
+
+    explicit CloseButtonDelegate (DockManager & mgr, QObject * parent = 0, QPixmap const & icon = QPixmap());
+    QPoint calcIconPos (QStyleOptionViewItem const & option) const;
+    void paint (QPainter * painter, QStyleOptionViewItem const & option, QModelIndex const & index) const;
+    QSize sizeHint (QStyleOptionViewItem const & option, QModelIndex const & index) const;
+    bool editorEvent (QEvent * event, QAbstractItemModel * model, QStyleOptionViewItem const & option, QModelIndex const & index);
+
+signals:
+    void closeIndexClicked (QModelIndex const &);
+
+protected:
+	DockManager & m_dock_mgr;
+    QPixmap m_icon;
+    static int const margin = 2; // pixels to keep arount the icon
+
+    Q_DISABLE_COPY(CloseButtonDelegate)
+};
+
+
+
+class ControlWidgetDelegate : public QStyledItemDelegate
+{
+	Q_OBJECT
+	DockManager & m_dock_mgr;
+public:
+	ControlWidgetDelegate (DockManager & mgr, QObject * parent = 0);
+	QWidget * createEditor (QWidget * parent, QStyleOptionViewItem const & option, QModelIndex const & index) const;
+	void setEditorData (QWidget * editor, QModelIndex const & index) const;
+	void setModelData (QWidget * editor, QAbstractItemModel * model, QModelIndex const & index) const;
+	void updateEditorGeometry (QWidget * editor, QStyleOptionViewItem const & option, QModelIndex const & index) const;
+};
+
+
+

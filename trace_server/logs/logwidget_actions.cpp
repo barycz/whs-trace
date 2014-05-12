@@ -1,6 +1,7 @@
 #include "logwidget.h"
 #include "filterproxymodel.h"
 #include "connection.h"
+#include "mainwindow.h"
 
 namespace logs {
 
@@ -8,11 +9,20 @@ bool LogWidget::handleAction (Action * a, E_ActionHandleType sync)
 {
 	switch (a->type())
 	{
+		case e_Close:
+		{
+			m_connection->destroyDockedWidget(this);
+			setParent(0);
+			delete this;
+			return true;
+		}
+
 		case e_Visibility:
 		{
 			Q_ASSERT(m_args.size() > 0);
 			bool const on = a->m_args.at(0).toBool();
 			setVisible(on);
+			m_connection->getMainWindow()->onDockRestoreButton();
 			return true;
 		}
 
@@ -111,11 +121,7 @@ void LogWidget::findTableIndexInFilters (QModelIndex const & src_idx, bool scrol
 
 void LogWidget::colorRow (int)
 {
-	QModelIndex current = currentIndex();
-	if (isModelProxy())
-	{
-		current = m_proxy_model->mapToSource(current);
-	}
+	QModelIndex current = currentSourceIndex();
 
 	int const row = current.row(); // set search from this line
 	if (current.isValid())
@@ -279,11 +285,7 @@ void LogWidget::onExcludeRow ()
 }
 void LogWidget::onLocateRow ()
 {
-	QModelIndex current = currentIndex();
-	if (isModelProxy())
-	{
-		current = m_proxy_model->mapToSource(current);
-	}
+	QModelIndex current = currentSourceIndex();
 
 	if (!current.isValid())
 		return;
@@ -304,11 +306,7 @@ void LogWidget::onColorRow ()
 }
 void LogWidget::onUncolorRow ()
 {
-	QModelIndex current = currentIndex();
-	if (isModelProxy())
-	{
-		current = m_proxy_model->mapToSource(current);
-	}
+	QModelIndex current = currentSourceIndex();
 
 	int const row = current.row(); // set search from this line
 	if (current.isValid())
@@ -408,11 +406,7 @@ void LogWidget::onHidePrev ()
 {
 	bool const checked = m_hidePrevButton->isChecked();
 
-	QModelIndex current = currentIndex();
-	if (isModelProxy())
-	{
-		current = m_proxy_model->mapToSource(current);
-	}
+	QModelIndex current = currentSourceIndex();
 
 	if (!current.isValid())
 		return;
@@ -432,11 +426,7 @@ void LogWidget::onHideNext () //@TODO: dedup
 {
 	bool const checked = m_hidePrevButton->isChecked();
 
-	QModelIndex current = currentIndex();
-	if (isModelProxy())
-	{
-		current = m_proxy_model->mapToSource(current);
-	}
+	QModelIndex current = currentSourceIndex();
 
 	if (!current.isValid())
 		return;

@@ -14,7 +14,7 @@ namespace logs {
 
 void LogWidget::onInvalidateFilter ()
 {
-	QItemSelectionModel const * selection = selectionModel();
+	QItemSelectionModel const * selection = m_tableview->selectionModel();
 	if (!selection)
 		return;
 
@@ -50,7 +50,7 @@ void LogWidget::onInvalidateFilter ()
 
 void LogWidget::syncSelection (QModelIndexList const & sel)
 {
-	selectionModel()->clearSelection();
+	m_tableview->selectionModel()->clearSelection();
 
 	for (int i = 0, ie = sel.size(); i < ie; ++i)
 	{
@@ -63,7 +63,7 @@ void LogWidget::syncSelection (QModelIndexList const & sel)
 		//else qDebug("syncSelection: src=(%2i, %2i)", idx.row(), idx.column());
 
 		if (idx.isValid())
-			selectionModel()->setCurrentIndex(idx, QItemSelectionModel::Select);
+			m_tableview->selectionModel()->setCurrentIndex(idx, QItemSelectionModel::Select);
 	}
 }
 
@@ -80,7 +80,7 @@ void LogWidget::syncSelection (QModelIndexList const & sel)
 
 void LogWidget::setFilteringProxy (bool on)
 {
-	QItemSelectionModel const * selection = selectionModel();
+	QItemSelectionModel const * selection = m_tableview->selectionModel();
 	QModelIndexList indexes;
 	if (selection)
 		selection->selectedIndexes();
@@ -99,20 +99,20 @@ void LogWidget::setFilteringProxy (bool on)
 			}
 		}
 
-		setModel(m_src_model);
+		m_tableview->setModel(m_src_model);
 
 		if (srcs.size() > 0)
-			setSelectionModel(m_src_selection);
+			m_tableview->setSelectionModel(m_src_selection);
 
 		m_src_model->setProxy(0);
 
 		for (int i = 0, ie = srcs.size(); i < ie; ++i)
-			selectionModel()->setCurrentIndex(srcs.at(i), QItemSelectionModel::Select);
+			m_tableview->selectionModel()->setCurrentIndex(srcs.at(i), QItemSelectionModel::Select);
 	}
 	else
 	{
 		qDebug("%s setting proxy model", __FUNCTION__);
-		setModel(m_proxy_model);
+		m_tableview->setModel(m_proxy_model);
 		// selection
 		m_src_model->setProxy(m_proxy_model);
 
@@ -122,7 +122,7 @@ void LogWidget::setFilteringProxy (bool on)
 		if (m_proxy_model)
 			m_proxy_model->force_update();
 
-		setSelectionModel(m_kproxy_selection);
+		m_tableview->setSelectionModel(m_kproxy_selection);
 
 		QModelIndexList pxys;
 		for (int i = 0, ie = indexes.size(); i < ie; ++i)
@@ -137,7 +137,7 @@ void LogWidget::setFilteringProxy (bool on)
 		for (int i = 0, ie = pxys.size(); i < ie; ++i)
 		{
 			//qDebug("on: pxy r=%i c=%i", pxys.at(i).row(), pxys.at(i).column());
-			selectionModel()->setCurrentIndex(pxys.at(i), QItemSelectionModel::Select);
+			m_tableview->selectionModel()->setCurrentIndex(pxys.at(i), QItemSelectionModel::Select);
 		}
 	}
 
@@ -161,15 +161,15 @@ void LogWidget::setFilteringProxy (bool on)
 
 void LogWidget::refreshFilters (BaseProxyModel const * proxy)
 {
-	QAbstractItemModel * m = model();
+	QAbstractItemModel * m = m_tableview->model();
 	if (m && m == proxy)
 	{
 		Q_ASSERT(m_src_model);
 
 		QModelIndexList src_list;
-		for (int i = 0, ie = model()->rowCount(); i < ie; ++i)
+		for (int i = 0, ie = m_tableview->model()->rowCount(); i < ie; ++i)
 		{
-			QModelIndex const pxy_idx = model()->index(i, 0);
+			QModelIndex const pxy_idx = m_tableview->model()->index(i, 0);
 			QModelIndex const src_idx = proxy->mapToSource(pxy_idx);
 
 			if (src_idx.isValid())
@@ -185,7 +185,7 @@ void LogWidget::refreshFilters (BaseProxyModel const * proxy)
 
 void LogWidget::onRefillFilters ()
 {
-	if (model() == m_src_model || model() == m_proxy_model)
+	if (m_tableview->model() == m_src_model || m_tableview->model() == m_proxy_model)
 	{
 		for (int i = 0, ie = m_src_model->dcmds().size(); i < ie; ++i)
 		{

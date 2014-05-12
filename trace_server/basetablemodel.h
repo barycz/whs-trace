@@ -22,6 +22,8 @@
 #pragma once
 #include <QAbstractTableModel>
 #include <QAbstractProxyModel>
+#include "cmd.h"
+#include "types.h"
 #include <QString>
 #include <QColor>
 #include <vector>
@@ -41,12 +43,30 @@ struct Cell
 typedef std::vector<Cell> columns_t;
 typedef std::vector<columns_t> rows_t;
 
-class TableModel : public QAbstractTableModel
+typedef std::vector<DecodedCommand> dcmds_t;
+
+typedef std::vector<unsigned long long> times_t;
+struct BatchCmd {
+	dcmds_t m_dcmds;
+	rows_t m_rows;
+	times_t m_row_ctimes;
+	times_t m_row_stimes;
+
+	void clear ()
+	{
+		m_dcmds.clear();
+		m_rows.clear();
+		m_row_ctimes.clear();
+		m_row_stimes.clear();
+	}
+};
+
+class BaseTableModel : public QAbstractTableModel
 {
 	//Q_OBJECT
 public:
-	explicit TableModel (QObject * parent, QVector<QString> & hhdr, QVector<int> & hsize);
-	~TableModel ();
+	explicit BaseTableModel (QObject * parent, std::vector<QString> & hhdr, std::vector<int> & hsize);
+	~BaseTableModel ();
 	int rowCount (const QModelIndex & parent = QModelIndex()) const;
 	int columnCount (const QModelIndex & parent = QModelIndex()) const;
 
@@ -56,8 +76,8 @@ public:
 	QVariant headerData (int section, Qt::Orientation orientation, int role) const;
 	bool  setHeaderData (int section, Qt::Orientation orientation, QVariant const & value, int role = Qt::EditRole);
 
-	void appendTableXY (int x, int y, QString const &, QString const & fgc, QString const & bgc, QString const & msg_tag);
-	void appendTableSetup (int x, int y, QString const & time, QString const & fgc, QString const & bgc, QString const & hhdr, QString const & tag);
+	virtual void handleCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
+	virtual void commitCommands (E_ReceiveMode mode);
 
 	void createCell (unsigned long long time, int x, int y);
 	void createRows (unsigned long long time, int first, int last, QModelIndex const &);
@@ -77,14 +97,20 @@ public:
 
 protected:
 
+	virtual void commitBatchToModel (BatchCmd & batch) = 0; 
+	virtual void parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode, BatchCmd & batch) = 0;
+
 	typedef std::vector<unsigned long long> times_t;
 	times_t m_row_ctimes;
 	times_t m_row_stimes;
 	times_t m_col_times;
 	rows_t m_rows;
 	int m_column_count;
-	QVector<QString> & m_hhdr;
-	QVector<int> & m_hsize;
+	std::vector<QString> & m_hhdr;
+	std::vector<int> & m_hsize;
 	QAbstractProxyModel * m_proxy;
+
+	BatchCmd m_batch;
+	dcmds_t m_dcmds;
 };
 

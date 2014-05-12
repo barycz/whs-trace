@@ -19,6 +19,7 @@
 #include <syncwidgets.h>
 
 #include "scrollzoomer.h"
+#include <connection.h>
 
 struct FrameScaleDraw : public QwtScaleDraw
 {
@@ -219,13 +220,12 @@ public:
 
 
 
-FrameView::FrameView (Connection * oparent, QWidget * wparent, FrameViewConfig & cfg, QString const & fname, QStringList const & path)
-	: ActionAble(path)
+FrameView::FrameView (Connection * conn, FrameViewConfig const & cfg, QString const & fname, QStringList const & path)
+	: DockedWidgetBase(conn->getMainWindow(), path)
 	, m_bars(0)
 	, m_config(cfg)
-	, m_config_ui(cfg, this)
+	, m_config_ui(m_config, this)
 {
-
 	setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(this, SIGNAL(customContextMenuRequested(QPoint const &)), this, SLOT(onShowContextMenu(QPoint const &)));
 
@@ -302,6 +302,12 @@ void FrameView::setNum (double v)
 bool FrameView::handleAction (Action * a, E_ActionHandleType sync)
 {
 	return false;
+}
+
+void FrameView::setVisible (bool visible)
+{
+	m_dockwidget->setVisible(visible);
+	QWidget::setVisible(visible);
 }
 
 void FrameView::selected (QRectF const & r)

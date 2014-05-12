@@ -56,44 +56,19 @@ public:
 
 	QString getAppDir () const { return m_config.m_appdir; }
 
-	int createAppName (QString const & appname, E_SrcProtocol const proto);
-	void addNewApplication (QString const & appname);
-	int findAppName (QString const & appname)
-	{
-		for (int i = 0, ie = m_config.m_app_names.size(); i < ie; ++i)
-			if (m_config.m_app_names[i] == appname)
-				return i;
-		return e_InvalidItem;
-	}
-
 	// presets
-	int findRegistryPresetName (QString const & name);
-	int addRegistryPresetName (QString const & name);
-	void saveLayout (QString const & preset_name);
-	void loadLayout (QString const & preset_name);
-	void onPresetActivate (Connection * conn, QString const & pname);
-	QString getCurrentPresetName () const;
-	QString promptAndCreatePresetName (QString const & app_name);
-	QString getValidCurrentPresetName ();
-	QString matchClosestPresetName (QString const & appname);
+	void saveLayout (QString const & fname);
+	void loadLayout (QString const & fname);
+
 	void setPresetAsCurrent (QString const & pname);
 	void mentionInPresetHistory (QString const & str);
-	void mentionInMultiTabPresetHistory (QString const & str);
+	QString getCurrentPresetName () const;
 
 	// global config
 	GlobalConfig const & getConfig () const { return m_config; }
 	bool dumpModeEnabled () const { return m_config.m_dump_mode; }
 	unsigned getHotKey () const;
 	bool onTopEnabled () const;
-	// per connection config
-	void setLevel (int i);
-	int getLevel () const; // @TODO: per connection
-	bool buffEnabled () const;
-	Qt::CheckState buffState () const;
-	int plotState () const; // @TODO: should be per connection
-	int tableState () const;
-	int ganttState () const;
-	//QList<QColor> const & getThreadColors () const { return m_config.m_thread_colors; }
 
 	// drag and drop
 	void changeEvent (QEvent * e);
@@ -101,12 +76,13 @@ public:
 	void dragEnterEvent (QDragEnterEvent * event);
 	bool eventFilter (QObject * o, QEvent * e);
 	void keyPressEvent (QKeyEvent * e);
-	bool handleTab (QKeyEvent * e);
 
 	// docking stuff
 	DockManager const & dockManager () const { return m_dock_mgr; }
 	DockManager & dockManager () { return m_dock_mgr; }
 	QString const & dockedName () const { return m_docked_name; }
+	void addWindowAction (QAction * action);
+	void rmWindowAction (QAction * action);
 
 	// files and streams
 	void createTailDataStream (QString const & fname);
@@ -114,12 +90,15 @@ public:
 	void importDataStream (QString const & fname);
 	void copyStorageTo (QString const & filename);
 	Connection * findConnectionByName (QString const & app_name);
-	Connection * findCurrentConnection ();
 	Connection * createNewConnection ();
-	void destroyConnection (Connection * connection);
+	Connection * createNewConnection (QString const & app_name);
+	void markConnectionForClose (Connection * conn);
 
 public slots:
 	void newConnection (Connection * connection);
+	void onStatusChanged (QString const & status);
+	void onCloseMarkedConnections ();
+
 	void onHotkeyShowOrHide ();
 	void hide ();
 	void showNormal ();
@@ -128,15 +107,10 @@ public slots:
 	void restoreDockedWidgetGeometry ();
 	void onDockRestoreButton ();
 	void onDockManagerButton ();
+	void onDockManagerVisibilityChanged (bool state);
 	void onDockManagerClosed ();
-
-	void onCloseTab (int idx, QWidget * w);
-	void onCloseTab (QWidget * w);
-	void onCloseMarkedTabs ();
-	void onCloseTabWithIndex (int idx);
-	void onCloseCurrentTab ();
-	void onPresetActivate ();
-	void onPresetActivate (int idx);
+	void onSave ();
+	void onSaveAs ();
 
 	friend class Connection;
 private slots:
@@ -144,49 +118,57 @@ private slots:
 	void loadState ();
 	void storeGeometry ();
 	void storeState ();
-	void timerHit ();
+	void onTimerHit ();
 	void onQuit ();
 	//void onFocusChanged (QWidget * old, QWidget * now);
 	void onQuitReally ();
 	void openFiles (QStringList const & list);
+	void onCloseConnection (Connection * c);
 
 	void onFileLoad ();
 	void onFileTail ();
 	void onLogTail ();
 	void tailFiles (QStringList const & list);
-	void onFileSave ();
-	void onFileExportToCSV ();
+	void onSaveData ();
+	void onExportDataToCSV ();
 	void closeEvent (QCloseEvent *event);
 	void iconActivated (QSystemTrayIcon::ActivationReason reason);
 
-	// preset
-	void onPresetChanged (int idx);
-	void onMultiTabPresetChanged (int idx);
-	void onMultiTabPresetReturnPressed ();
-	void onSaveCurrentState ();
-	void onSaveCurrentStateTo (QString const & name);
-	void onAddPreset ();
-	void onRmCurrentPreset ();
-
+	// control widget
 	void onLevelValueChanged (int i);
 	void onBufferingStateChanged (int state);
-	void onShowHelp ();
-	void onTabTraceFocus (int i);
-	
-	//void onReuseTabChanged (int state);
-	//void ondtToolButton ();
-	//void onTimeUnitsChanged (int i);
+	void onPresetChanged (int idx);
+	void onPresetEdited ();
+	void onPresetApply ();
+	void onPresetSave ();
+	void onPresetAdd ();
+	void onPresetRm ();
+	void onPresetReset ();
+	void onLogsStateChanged (int state);
+	void onPlotsStateChanged (int state);
 	void onTablesStateChanged (int state);
-	void onPlotStateChanged (int state);
+	void onGanttsStateChanged (int state);
+	void onPresetApply (QString const & preset_name);
+	void onPresetSave (QString const & preset_name);
+	void onRemoveConfigurationFiles ();
+
+	//void onSaveCurrentStateTo (QString const & name);
+	//void onPresetActivate (int idx);
+
+	void onShowHelp ();
 
 private:
 	void showServerStatus ();
-	void loadNetworkSettings ();
 	void setupMenuBar ();
-	void createActions ();
+	void createTrayActions ();
 	void createTrayIcon ();
+	void registerHotKey ();
+	void saveConfig ();
+	void loadConfig ();
+	void setConfigValuesToUI (GlobalConfig const & cfg);
+	void setUIValuesToConfig (GlobalConfig & cfg);
 
-	typedef std::map<QWidget *, Connection *> connections_t;
+	typedef std::vector<Connection *> connections_t;
 	connections_t 		m_connections;
 
 	Ui::MainWindow * 	ui;
@@ -198,6 +180,7 @@ private:
 
 	QTimer *  			m_timer;
 	Server *  			m_server;
+	QMenu * 			m_windows_menu;
 	QAction * 			m_minimize_action;
 	QAction * 			m_maximize_action;
 	QAction * 			m_restore_action;
@@ -210,6 +193,7 @@ private:
 	DockManager 		m_dock_mgr;
 	QString				m_docked_name;
 	QString 			m_log_name;
+	QString				m_appdir;
 
 	int 				m_start_level; // @TODO: to config?
 	float 				m_time_units;

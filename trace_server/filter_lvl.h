@@ -75,7 +75,7 @@ struct FilterLvl : FilterBase
 	QTreeView const * getWidget () const { return m_ui->view; }
 	void locateItem (QString const & item, bool scrollto, bool expand);
 
-	typedef QList<FilteredLevel> lvl_filters_t;
+	typedef std::vector<FilteredLevel> lvl_filters_t;
 	lvl_filters_t			m_data;
 	QStandardItemModel *	m_model;
 	QStyledItemDelegate *   m_delegate;

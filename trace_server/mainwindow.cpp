@@ -27,22 +27,13 @@
 #include "help.h"
 #include "version.h"
 #include "constants.h"
-#include "dock.h"
+#include "dockwidget.h"
 #include <ui_controlbarcommon.h>
 #include "utils.h"
 #include "utils_qstandarditem.h"
 #include "utils_qsettings.h"
 #include "utils_history.h"
 #include "qt_plugins.h"
-
-void MainWindow::loadNetworkSettings ()
-{
-	QSettings settings("MojoMir", "TraceServer");
-	m_config.m_trace_addr = settings.value("trace_addr", "127.0.0.1").toString();
-	m_config.m_trace_port = settings.value("trace_port", Server::default_port).toInt();
-	m_config.m_profiler_addr = settings.value("profiler_addr", "127.0.0.1").toString();
-	m_config.m_profiler_port = settings.value("profiler_port", 13147).toInt();
-}
 
 MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QString const & log_name, int level)
 	: QMainWindow(parent)
@@ -52,6 +43,7 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	, m_help(new Ui::HelpDialog)
 	, m_timer(new QTimer(this))
 	, m_server(0)
+	, m_windows_menu(0)
 	, m_minimize_action(0)
 	, m_maximize_action(0)
 	, m_restore_action(0)
@@ -62,24 +54,27 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	, m_dock_mgr(this, QStringList(QString(g_traceServerName)))
 	, m_docked_name(g_traceServerName)
 	, m_log_name(log_name)
+	, m_appdir(QDir::homePath() + "/" + g_traceServerDirName)
 	, m_start_level(level)
 {
 	qDebug("================================================================================");
 	qDebug("%s this=0x%08x", __FUNCTION__, this);
 	ui->setupUi(this);
-	ui->tabTrace->setTabsClosable(true);
+
+    setStyleSheet( "QMainWindow::separator { background: rgb(150, 150, 150); width: 1px; height: 1px; }");
 
 	m_settings_dialog = new QDialog(this);
 	m_settings_dialog->setWindowFlags(Qt::Sheet);
 	ui_settings = new Ui::SettingsDialog();
 	ui_settings->setupUi(m_settings_dialog);
 
-	QString const homedir = QDir::homePath();
-	m_config.m_appdir = homedir + "/.flogging";
+	m_config.m_appdir = m_appdir;
 	m_config.m_dump_mode = dump_mode;
+	loadConfig();
+	setConfigValuesToUI(m_config);
 
 	// tray stuff
-	createActions();
+	createTrayActions();
 	createTrayIcon();
 	QIcon icon(":images/Icon1.ico");
 	setWindowIcon(icon);
@@ -90,85 +85,44 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	setDockNestingEnabled(true);
 	setAnimated(false);
 
-	QSettings settings("MojoMir", "TraceServer");
-	bool const on_top = settings.value("onTopCheckBox", false).toBool();
+	bool const on_top = m_config.m_on_top;
 	if (on_top)
 	{
 		onOnTop(on_top);
 	}
-	ui_settings->onTopCheckBox->setChecked(on_top);
 
-	loadNetworkSettings();
 	m_server = new Server(m_config.m_trace_addr, m_config.m_trace_port, this, quit_delay);
 	connect(m_server, SIGNAL(newConnection(Connection *)), this, SLOT(newConnection(Connection *)));
+	connect(m_server, SIGNAL(statusChanged(QString const & status)), this, SLOT(onStatusChanged(QString const & status)));
 	showServerStatus();
 
-	/*size_t const n = tlv::get_tag_count();
-	QString msg_tag;
-	for (size_t i = tlv::tag_ctime; i < n; ++i)
-	{
-		char const * name = tlv::get_tag_name(i);
-		if (name)
-		{
-			QString qname = QString::fromStdString(name);
-			if (i == tlv::tag_msg)
-				msg_tag = qname;
-			//ui->qSearchColumnComboBox->addItem(qname);
-		}
-	}
-	ui->qSearchColumnComboBox->addItem("trace_server");
-	ui->qSearchColumnComboBox->setCurrentIndex(ui->qSearchColumnComboBox->findText(msg_tag));*/
-
 	m_timer->setInterval(5000);
-	connect(m_timer, SIGNAL(timeout()) , this, SLOT(timerHit()));
+	connect(m_timer, SIGNAL(timeout()) , this, SLOT(onTimerHit()));
 	m_timer->start();
 	setupMenuBar();
 
-	connect(ui->tabTrace, SIGNAL(currentChanged(int)), this, SLOT(onTabTraceFocus(int)));
-	connect(ui->tabTrace, SIGNAL(tabCloseRequested(int)), this, SLOT(onCloseTabWithIndex(int)));
-
 	connect(ui->dockManagerButton, SIGNAL(clicked()), this, SLOT(onDockManagerButton()));
-	connect(ui->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onLevelValueChanged(int)));
-	connect(ui->plotSlider, SIGNAL(valueChanged(int)), this, SLOT(onPlotStateChanged(int)));
-	connect(ui->tableSlider, SIGNAL(valueChanged(int)), this, SLOT(onTablesStateChanged(int)));
-	connect(ui->dockManagerButton, SIGNAL(clicked()), this, SLOT(onDockManagerButton()));
-	connect(ui->buffCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onBufferingStateChanged(int)));
-
-	//connect(ui_settings->tableFontToolButton, SIGNAL(clicked()), this, SLOT(onTableFontToolButton()));
-	connect(ui_settings->onTopCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onOnTop(int)));//@FIXME: this has some issues
-	//connect(ui_settings->reuseTabCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onReuseTabChanged(int)));
-
-	connect(ui->activatePresetButton, SIGNAL(clicked()), this, SLOT(onPresetActivate()));
-	connect(ui->presetComboBox, SIGNAL(activated(int)), this, SLOT(onPresetChanged(int)));
-	connect(ui->multiTabPresetComboBox, SIGNAL(activated(int)), this, SLOT(onMultiTabPresetChanged(int)));
-	connect(ui->multiTabPresetComboBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onMultiTabPresetReturnPressed()));
-	connect(ui->presetAddButton, SIGNAL(clicked()), this, SLOT(onAddPreset()));
-	connect(ui->presetRmButton, SIGNAL(clicked()), this, SLOT(onRmCurrentPreset()));
-	connect(ui->presetSaveButton, SIGNAL(clicked()), this, SLOT(onSaveCurrentState()));
-	//connect(ui->presetResetButton, SIGNAL(clicked()), this, SLOT(onClearCurrentState()));
-
+	connect(ui->saveButton, SIGNAL(clicked()), this, SLOT(onSave()));
+	connect(ui->saveAsButton, SIGNAL(clicked()), this, SLOT(onSaveAs()));
 
 	connect(m_dock_mgr.controlUI()->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onLevelValueChanged(int)));
 	connect(m_dock_mgr.controlUI()->buffCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onBufferingStateChanged(int)));
-
 	connect(m_dock_mgr.controlUI()->presetComboBox, SIGNAL(activated(int)), this, SLOT(onPresetChanged(int)));
-	connect(m_dock_mgr.controlUI()->activatePresetButton, SIGNAL(clicked()), this, SLOT(onPresetActivate()));
-	connect(m_dock_mgr.controlUI()->presetSaveButton, SIGNAL(clicked()), this, SLOT(onSaveCurrentState()));
-	connect(m_dock_mgr.controlUI()->presetAddButton, SIGNAL(clicked()), this, SLOT(onAddPreset()));
-	connect(m_dock_mgr.controlUI()->presetRmButton, SIGNAL(clicked()), this, SLOT(onRmCurrentPreset()));
-
-	connect(m_dock_mgr.controlUI()->plotSlider, SIGNAL(valueChanged(int)), this, SLOT(onPlotStateChanged(int)));
+	connect(m_dock_mgr.controlUI()->presetComboBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onPresetAdd()));
+	connect(m_dock_mgr.controlUI()->activatePresetButton, SIGNAL(clicked()), this, SLOT(onPresetApply()));
+	connect(m_dock_mgr.controlUI()->presetSaveButton, SIGNAL(clicked()), this, SLOT(onPresetSave()));
+	connect(m_dock_mgr.controlUI()->presetAddButton, SIGNAL(clicked()), this, SLOT(onPresetAdd()));
+	connect(m_dock_mgr.controlUI()->presetRmButton, SIGNAL(clicked()), this, SLOT(onPresetRm()));
+	connect(m_dock_mgr.controlUI()->presetResetButton, SIGNAL(clicked()), this, SLOT(onPresetReset()));
+	connect(m_dock_mgr.controlUI()->logSlider, SIGNAL(valueChanged(int)), this, SLOT(onLogsStateChanged(int)));
+	connect(m_dock_mgr.controlUI()->plotSlider, SIGNAL(valueChanged(int)), this, SLOT(onPlotsStateChanged(int)));
 	connect(m_dock_mgr.controlUI()->tableSlider, SIGNAL(valueChanged(int)), this, SLOT(onTablesStateChanged(int)));
-	//connect(m_dock_mgr.controlUI()->multiTabPresetComboBox, SIGNAL(activated(int)), this, SLOT(onMultiTabPresetChanged(int)));
-	//connect(m_dock_mgr.controlUI()->multiTabPresetComboBox->lineEdit(), SIGNAL(returnPressed()), this, SLOT(onMultiTabPresetReturnPressed()));
-	//connect(ui->presetResetButton, SIGNAL(clicked()), this, SLOT(onClearCurrentState()));
-
-	//connect(qApp, SIGNAL(void focusChanged(QWidget *, QWidget *)), this, SLOT(void onFocusChanged(QWidget *, QWidget *)));
+	connect(m_dock_mgr.controlUI()->ganttSlider, SIGNAL(valueChanged(int)), this, SLOT(onGanttsStateChanged(int)));
 
 	/// status bar
 	m_status_label = new QLabel(m_server->getStatus());
 	QString human_version(g_Version);
-	human_version.chop(human_version.lastIndexOf(QChar('-')));
+	human_version.chop(human_version.size() - human_version.lastIndexOf(QChar('-')));
 	QLabel * version_label = new QLabel(tr("Ver: %1").arg(human_version));
 	statusBar()->addPermanentWidget(version_label);
 	statusBar()->addWidget(m_status_label);
@@ -177,12 +131,6 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	setWindowTitle(g_traceServerName);
 	setObjectName(g_traceServerName);
 }
-
-/*void MainWindow::onFocusChanged (QWidget * old, QWidget * now)
-{
-	//m_find_widget->onFocusChanged(old, now);
-	handleFindVisibility();
-}*/
 
 MainWindow::~MainWindow()
 {
@@ -220,7 +168,7 @@ void MainWindow::showMaximized ()
 	QMainWindow::showMaximized();
 }
 
-void MainWindow::createActions ()
+void MainWindow::createTrayActions ()
 {
 	qDebug("%s", __FUNCTION__);
 	m_minimize_action = new QAction(tr("Mi&nimize"), this);
@@ -254,6 +202,16 @@ void MainWindow::createTrayIcon ()
 	connect(m_tray_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
 }
 
+void MainWindow::registerHotKey ()
+{
+#ifdef WIN32
+	DWORD const hotkey = m_config.m_hotkey;
+	int mod = 0;
+	UnregisterHotKey(getHWNDForWidget(this), 0);
+	RegisterHotKey(getHWNDForWidget(this), 0, mod, LOBYTE(hotkey));
+#endif
+}
+
 void MainWindow::dropEvent (QDropEvent * event)
 {
 	QMimeData const * mimeData = event->mimeData();
@@ -276,55 +234,37 @@ void MainWindow::dragEnterEvent (QDragEnterEvent *event)
 	event->acceptProposedAction();
 }
 
+void MainWindow::onStatusChanged (QString const & status)
+{
+	statusBar()->showMessage(status);
+	m_timer->start(5000);
+}
+
 void MainWindow::showServerStatus ()
 {
 	statusBar()->showMessage(m_server->getStatus());
 }
 
-void MainWindow::timerHit ()
+void MainWindow::onTimerHit ()
 {
 	showServerStatus();
-}
-
-QTabWidget * MainWindow::getTabTrace () { return ui->tabTrace; }
-QTabWidget const * MainWindow::getTabTrace () const { return ui->tabTrace; }
-
-
-
-//QTreeView const * MainWindow::getDockedWidgetsTreeView () const { return m_docked_widgets_tree_view; }
-
-bool MainWindow::onTopEnabled () const { return ui_settings->onTopCheckBox->isChecked(); }
-int MainWindow::plotState () const { return ui->plotSlider->value(); }
-int MainWindow::tableState () const { return ui->tableSlider->value(); }
-int MainWindow::ganttState () const { return ui->ganttSlider->value(); }
-
-bool MainWindow::buffEnabled () const { return ui->buffCheckBox->isChecked(); }
-Qt::CheckState MainWindow::buffState () const { return ui->buffCheckBox->checkState(); }
-
-void MainWindow::setLevel (int i)
-{
-	bool const old = ui->levelSpinBox->blockSignals(true);
-	ui->levelSpinBox->setValue(i);
-	ui->levelSpinBox->blockSignals(old);
-}
-int MainWindow::getLevel () const
-{
-	int const current = ui->levelSpinBox->value();
-	return current;
 }
 
 void MainWindow::onQuit ()
 {
 	qDebug("onQuit: hide systray, store state, qApp->quit");
 
+	m_server->stop();
+
 	m_tray_icon->setVisible(false);
 	m_tray_icon->hide();
 	storeState();
 
-	QWidget * w = 0;
-	while (w = getTabTrace()->currentWidget())
+	while (!m_connections.empty())
 	{
-		onCloseTab(w);
+		Connection * c = m_connections.back();
+		m_connections.pop_back();
+		delete c;
 	}
 
 	QTimer::singleShot(0, this, SLOT(onQuitReally()));	// trigger lazy quit
@@ -340,13 +280,13 @@ void MainWindow::onDockManagerButton ()
 {
 	if (ui->dockManagerButton->isChecked())
 	{
-		m_dock_mgr.m_docked_widgets->show();
+		m_dock_mgr.m_dockwidget->show();
 		m_dock_mgr.m_config.m_show = true;
-		restoreDockWidget(m_dock_mgr.m_docked_widgets);
+		restoreDockWidget(m_dock_mgr.m_dockwidget);
 	}
 	else
 	{
-		m_dock_mgr.m_docked_widgets->hide();
+		m_dock_mgr.m_dockwidget->hide();
 		m_dock_mgr.m_config.m_show = false;
 	}
 }
@@ -356,20 +296,12 @@ void MainWindow::onDockManagerClosed ()
 	ui->dockManagerButton->setChecked(false);
 }
 
-void MainWindow::onPlotStateChanged (int state)
-{
-}
-
-void MainWindow::onTablesStateChanged (int state)
-{
-}
-
 void MainWindow::tailFiles (QStringList const & files)
 {
 	for (int i = 0, ie = files.size(); i < ie; ++i)
 	{
-		QString fname = files.at(i);
-		if (fname != "")
+		QString const fname = files.at(i);
+		if (!fname.isEmpty())
 			createTailDataStream(fname);
 	}
 }
@@ -384,7 +316,6 @@ void MainWindow::onFileTail ()
 
 void MainWindow::onLogTail ()
 {
-	//setupSeparatorChar("|");
 	createTailLogStream(m_log_name, "|");
 }
 
@@ -403,30 +334,35 @@ void MainWindow::openFiles (QStringList const & files)
 void MainWindow::onFileLoad ()
 {
 	// @TODO: multi-selection?
-	QString fname = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("TLV Trace Files (*.tlv_trace)"));
+	QString fname = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Trace File(s) (*.%1)").arg(g_traceFileExtTLV));
 	QStringList files;
 	files << fname;
 	openFiles(files);
 }
 
-void MainWindow::onFileSave ()
+void MainWindow::onSaveData ()
 {
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("Trace Files (*.tlv_trace)"));
+	QString const dir = QFileDialog::getExistingDirectory(this, tr("Save data to directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+	if (dir.isEmpty())
+		return;
 
-	if (filename != "")
+	if (mkPath(dir))
 	{
-		copyStorageTo(filename);
+		for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
+			(*it)->onSaveData(dir);
 	}
 }
 
-void MainWindow::onFileExportToCSV ()
+void MainWindow::onExportDataToCSV ()
 {
-	QString filename = QFileDialog::getSaveFileName(this, tr("Save File"), "", tr("Trace Files (*.csv)"));
+	QString const dir = QFileDialog::getExistingDirectory(this, tr("Export csv to directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+	if (dir.isEmpty())
+		return;
 
-	if (filename != "")
+	if (mkPath(dir))
 	{
-    if (Connection * conn = findCurrentConnection())
-      conn->exportStorageToCSV(filename);
+		for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
+			(*it)->onExportDataToCSV(dir);
 	}
 }
 
@@ -469,7 +405,6 @@ void MainWindow::onHotkeyShowOrHide ()
 	}
 }
 
-
 void MainWindow::onShowHelp ()
 {
 	QDialog dialog(this);
@@ -504,13 +439,22 @@ void MainWindow::setupMenuBar ()
 	QMenu * fileMenu = menuBar()->addMenu(tr("&File"));
 	fileMenu->addAction(tr("File &Load..."), this, SLOT(onFileLoad()), QKeySequence(Qt::ControlModifier + Qt::Key_O));
 	fileMenu->addAction(tr("File &Tail..."), this, SLOT(onFileTail()), QKeySequence(Qt::ControlModifier + Qt::Key_T));
-	fileMenu->addAction(tr("File &Save..."), this, SLOT(onFileSave()), QKeySequence(Qt::ControlModifier + Qt::Key_S));
-	fileMenu->addAction(tr("File &Save As CSV format"), this, SLOT(onFileExportToCSV()), QKeySequence(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_S));
+	fileMenu->addAction(tr("Traceserver log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
+	fileMenu->addAction(tr("&Save data..."), this, SLOT(onSaveData()), QKeySequence(Qt::ControlModifier + Qt::Key_S));
+	fileMenu->addAction(tr("&Export data ss CSV format"), this, SLOT(onExportDataToCSV()), QKeySequence(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_S));
 	fileMenu->addSeparator();
 	fileMenu->addAction(tr("Quit program"), this, SLOT(onQuit()), QKeySequence::Quit);
 
+	// View
+	m_windows_menu = menuBar()->addMenu(tr("&Windows"));
+	//fileMenu->addAction(tr("Show &Tool Widget"), this, SLOT(onShowToolWidget()), QKeySequence(Qt::ControlModifier + Qt::Key_O));
+
+	// Panic!
+	QMenu * panicMenu = menuBar()->addMenu(tr("&Panic"));
+	panicMenu->addAction(tr("&Remove configuration files"), this, SLOT(onRemoveConfigurationFiles()));
+
 	// Edit
-	QMenu * editMenu = menuBar()->addMenu(tr("&Edit"));
+	//QMenu * editMenu = menuBar()->addMenu(tr("&Edit"));
 /*
 	editMenu->addAction(tr("Find"), this, SLOT(onFind()), QKeySequence::Find);
 	//editMenu->addAction(tr("Find"), this, SLOT(onFind()),	Qt::ControlModifier + Qt::Key_F);
@@ -522,8 +466,8 @@ void MainWindow::setupMenuBar ()
 	//editMenu->addAction(tr("Find and Select All"), this, SLOT(onFindAllButton()));
 	//editMenu->addAction(tr("Goto Next Tag or Selection"), this, SLOT(onNextToView()));
 
-	editMenu->addSeparator();
-	editMenu->addAction(tr("Close Tab"), this, SLOT(onCloseCurrentTab()), QKeySequence(Qt::ControlModifier + Qt::Key_W));
+	//editMenu->addSeparator();
+	//editMenu->addAction(tr("Close Tab"), this, SLOT(onCloseCurrentTab()), QKeySequence(Qt::ControlModifier + Qt::Key_W));
 
 	// Filter
 	//QMenu * filterMenu = menuBar()->addMenu(tr("Fi&lter"));
@@ -532,10 +476,6 @@ void MainWindow::setupMenuBar ()
 	//filterMenu->addAction(tr("Goto regex filter"), this, SLOT(onGotoRegexFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F3));
 	//filterMenu->addAction(tr("Goto color filter"), this, SLOT(onGotoColorFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F4));
 
-	QMenu * tailMenu = menuBar()->addMenu(tr("&Tail"));
-	tailMenu->addAction(tr("File &Tail..."), this, SLOT(onFileTail()), QKeySequence(Qt::ControlModifier + Qt::Key_T));
-	tailMenu->addAction(tr("Trace Server Log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
-		
 	// Tools
 	//QMenu * tools = menuBar()->addMenu(tr("&Settings"));
 	//tools->addAction(tr("&Options"), this, SLOT(onSetupAction()), QKeySequence(Qt::AltModifier + Qt::ShiftModifier + Qt::Key_O));
@@ -544,110 +484,21 @@ void MainWindow::setupMenuBar ()
 	//tools->addAction(tr("Save options now (this will NOT save presets)"), this, SLOT(storeState()), QKeySequence(Qt::AltModifier + Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_O));
 
 	// Help
-	QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
-	helpMenu->addAction(tr("Help"), this, SLOT(onShowHelp()));
+	//QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
+	//helpMenu->addAction(tr("Help"), this, SLOT(onShowHelp()));
 	//helpMenu->addAction(tr("Dump filters"), this, SLOT(onDumpFilters()));
 
 	//new QShortcut(QKeySequence(Qt::AltModifier + Qt::Key_Space), this, SLOT(onAutoScrollHotkey()));
 }
 
-void MainWindow::storeState ()
+void MainWindow::addWindowAction (QAction * action)
 {
-	qDebug("%s", __FUNCTION__);
-	QSettings settings("MojoMir", "TraceServer");
-
-	settings.setValue("trace_addr", m_config.m_trace_addr);
-	settings.setValue("trace_port", m_config.m_trace_port);
-	settings.setValue("profiler_addr", m_config.m_profiler_addr);
-	settings.setValue("profiler_port", m_config.m_profiler_port);
-
-	settings.setValue("geometry", saveGeometry());
-	settings.setValue("windowState", saveState());
-
-	settings.setValue("tableSlider", ui->tableSlider->value());
-	settings.setValue("plotSlider", ui->plotSlider->value());
-	settings.setValue("ganttSlider", ui->ganttSlider->value());
-	settings.setValue("buffCheckBox", ui->buffCheckBox->isChecked());
-	settings.setValue("levelSpinBox", ui->levelSpinBox->value());
-
-	//OBSOLETTEsettings.setValue("trace_stats", ui_settings->traceStatsCheckBox->isChecked());
-	settings.setValue("reuseTabCheckBox", ui_settings->reuseTabCheckBox->isChecked());
-	settings.setValue("onTopCheckBox", ui_settings->onTopCheckBox->isChecked());
-	settings.setValue("presetComboBox", ui->presetComboBox->currentText());
-	
-	m_dock_mgr.saveConfig(m_config.m_appdir);
-#ifdef WIN32
-	settings.setValue("hotkeyCode", m_config.m_hotkey);
-#endif
+	m_windows_menu->addAction(action);
 }
-
-void MainWindow::restoreDockedWidgetGeometry ()
+void MainWindow::rmWindowAction (QAction * action)
 {
-	QSettings settings("MojoMir", "TraceServer");
-
-	//restoreGeometry(settings.value("geometry").toByteArray());
-	restoreState(settings.value("windowState").toByteArray());
+	m_windows_menu->removeAction(action);
 }
-
-void MainWindow::loadState ()
-{
-	qDebug("%s", __FUNCTION__);
-	//OBSOLETTEm_config.m_app_names.clear();
-	//OBSOLETTEm_config.m_columns_setup.clear();
-	//OBSOLETTEm_config.m_columns_sizes.clear();
-	//OBSOLETTEm_config.m_columns_align.clear();
-	//OBSOLETTEm_config.m_columns_elide.clear();
-	m_config.loadHistory();
-  syncHistoryToWidget(ui->multiTabPresetComboBox, m_config.m_multitab_preset_history);
-	//updateSearchHistory();
-
-	QSettings settings("MojoMir", "TraceServer");
-	restoreGeometry(settings.value("geometry").toByteArray());
-	restoreState(settings.value("windowState").toByteArray());
-	int const pane_val = settings.value("filterPaneComboBox", 0).toInt();
-
-	//OBSOLETTEui_settings->traceStatsCheckBox->setChecked(settings.value("trace_stats", true).toBool());
-	ui_settings->reuseTabCheckBox->setChecked(settings.value("reuseTabCheckBox", true).toBool());
-
-	ui->tableSlider->setValue(settings.value("tableSlider", 0).toInt());
-	ui->plotSlider->setValue(settings.value("plotSlider", 0).toInt());
-	ui->ganttSlider->setValue(settings.value("ganttSlider", 0).toInt());
-	ui->buffCheckBox->setChecked(settings.value("buffCheckBox", true).toBool());
-
-
-	//@TODO: delete filterMode from registry if exists
-	if (m_start_level == -1)
-	{
-		qDebug("reading saved level from cfg");
-		ui->levelSpinBox->setValue(settings.value("levelSpinBox", 3).toInt());
-	}
-	else
-	{
-		qDebug("reading level from command line");
-		ui->levelSpinBox->setValue(m_start_level);
-	}
-
-	if (m_config.m_thread_colors.empty())
-	{
-		for (size_t i = Qt::white; i < Qt::transparent; ++i)
-			m_config.m_thread_colors.push_back(QColor(static_cast<Qt::GlobalColor>(i)));
-	}
-
-#ifdef WIN32
-	unsigned const hotkeyCode = settings.value("hotkeyCode").toInt();
-	m_config.m_hotkey = hotkeyCode ? hotkeyCode : VK_SCROLL;
-	DWORD const hotkey = m_config.m_hotkey;
-	int mod = 0;
-	UnregisterHotKey(getHWNDForWidget(this), 0);
-	RegisterHotKey(getHWNDForWidget(this), 0, mod, LOBYTE(hotkey));
-#endif
-
-	m_dock_mgr.loadConfig(m_config.m_appdir);
-	m_dock_mgr.applyConfig();
-	ui->dockManagerButton->setChecked(m_dock_mgr.m_config.m_show);
-	qApp->installEventFilter(this);
-}
-
 
 void MainWindow::iconActivated (QSystemTrayIcon::ActivationReason reason)
 {
@@ -671,69 +522,48 @@ void MainWindow::closeEvent (QCloseEvent * event)
 void MainWindow::changeEvent (QEvent * e) { QMainWindow::changeEvent(e); }
 bool MainWindow::eventFilter (QObject * target, QEvent * e)
 {
-	/*if (e->type() == QEvent::Shortcut)
-	{
+	/*if (e->type() == QEvent::Shortcut) {
 		QShortcutEvent * se = static_cast<QShortcutEvent *>(e);
-		if (se->key() == QKeySequence(Qt::ControlModifier + Qt::Key_Insert))
-		{
-
+		if (se->key() == QKeySequence(Qt::ControlModifier + Qt::Key_Insert)) {
 			//onCopyToClipboard();
 			return true;
 		}
 	}*/
 	return false;
 }
-
-bool MainWindow::handleTab (QKeyEvent * e)
-{
-	/*if (e->key() == Qt::Key_Tab && m_find_widget && m_find_widget->isVisible())
-	{
-		m_find_widget->focusNext();
-		e->accept();
-		return true;
-	}
-
-	if (e->key() == Qt::Key_Backtab && m_find_widget && m_find_widget->isVisible())
-	{
-		m_find_widget->focusPrev();
-		e->accept();
-		return true;
-	}*/
-
-	return false;
-}
-
 void MainWindow::keyPressEvent (QKeyEvent * e)
 {
 	if (e->type() == QKeyEvent::KeyPress)
 	{
 		/*if (e->matches(QKeySequence::Copy))
-		{
 			e->accept();
-		}
-		else
-		if (e->key() == Qt::Key_Escape)
-		{
-			if (m_find_widget && m_find_widget->isVisible())
-			{
+		else if (e->key() == Qt::Key_Escape)
+			if (m_find_widget && m_find_widget->isVisible()) {
 				m_find_widget->onCancel();
 				e->accept();
-			}
-		}*/
+			}*/
 	}
 	QMainWindow::keyPressEvent(e);
 }
 
-
-void MainWindow::addNewApplication (QString const & appname)
+void MainWindow::onRemoveConfigurationFiles ()
 {
-	m_config.m_app_names.push_back(appname);
+	//QString const path = m_appdir; // @NOTE: rather not.. will not risk deletion of other files than mine
+	QString const path = QDir::homePath() + "/" + g_traceServerDirName;
+	if (path.isEmpty())
+		return;
+	QMessageBox msg_box;
+	QPushButton * b_del = msg_box.addButton(tr("Yes, Delete"), QMessageBox::ActionRole);
+	QPushButton * b_abort = msg_box.addButton(QMessageBox::Abort);
+	msg_box.exec();
+	if (msg_box.clickedButton() == b_abort)
+		return;
+
+	QDir d_out(path);
+	d_out.removeRecursively();
+
+	QDir d_new;
+	d_new.mkpath(path);
 }
 
-int MainWindow::createAppName (QString const & appname, E_SrcProtocol const proto)
-{
-	addNewApplication(appname);
-	int const app_idx = static_cast<int>(m_config.m_app_names.size()) - 1;
-	return app_idx;
-}
 

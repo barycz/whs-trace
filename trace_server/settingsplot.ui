@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>294</height>
+    <width>577</width>
+    <height>286</height>
    </rect>
   </property>
   <property name="font">
@@ -25,39 +25,30 @@
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QVBoxLayout" name="verticalLayout_6">
     <property name="spacing">
-     <number>1</number>
+     <number>0</number>
     </property>
-    <property name="leftMargin">
-     <number>1</number>
-    </property>
-    <property name="topMargin">
-     <number>1</number>
-    </property>
-    <property name="rightMargin">
-     <number>1</number>
-    </property>
-    <property name="bottomMargin">
-     <number>1</number>
+    <property name="margin">
+     <number>0</number>
     </property>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="leftMargin">
-       <number>6</number>
+      <property name="spacing">
+       <number>0</number>
       </property>
-      <property name="topMargin">
-       <number>6</number>
-      </property>
-      <property name="rightMargin">
-       <number>6</number>
-      </property>
-      <property name="bottomMargin">
-       <number>6</number>
+      <property name="margin">
+       <number>0</number>
       </property>
       <item>
        <widget class="QListWidget" name="iconWidget">
+        <property name="minimumSize">
+         <size>
+          <width>70</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
-          <width>64</width>
+          <width>70</width>
           <height>16777215</height>
          </size>
         </property>
@@ -71,7 +62,7 @@
          <number>0</number>
         </property>
         <property name="verticalScrollBarPolicy">
-         <enum>Qt::ScrollBarAlwaysOff</enum>
+         <enum>Qt::ScrollBarAlwaysOn</enum>
         </property>
         <property name="horizontalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -105,6 +96,9 @@
         </property>
         <property name="uniformItemSizes">
          <bool>true</bool>
+        </property>
+        <property name="currentRow">
+         <number>2</number>
         </property>
         <item>
          <property name="text">
@@ -146,6 +140,9 @@
       </item>
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
         <property name="currentIndex">
          <number>2</number>
         </property>
@@ -159,6 +156,12 @@
         </widget>
         <widget class="QWidget" name="toolsPage">
          <layout class="QGridLayout" name="gridLayout_6">
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <property name="spacing">
+           <number>0</number>
+          </property>
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_5">
             <item row="1" column="0">
@@ -394,16 +397,7 @@
               <string>curve</string>
              </attribute>
              <layout class="QGridLayout" name="gridLayout_2">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <property name="spacing">
@@ -596,16 +590,7 @@
               <property name="spacing">
                <number>0</number>
               </property>
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
+              <property name="margin">
                <number>0</number>
               </property>
               <item>

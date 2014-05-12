@@ -21,10 +21,7 @@
  **/
 #pragma once
 #include <QAbstractTableModel>
-#include <QString>
-#include <vector>
-#include <tlv_parser/tlv_cmd_qstring.h>
-#include <table/tablemodelview.h>
+#include <basetablemodel.h>
 #include <filterstate.h>
 #include "findconfig.h"
 #include <cmd.h>
@@ -35,32 +32,12 @@ class QAbstractProxyModel;
 
 namespace logs { class LogWidget; struct LogConfig; }
 
-typedef std::vector<DecodedCommand> dcmds_t;
-
-typedef std::vector<unsigned long long> times_t;
-struct BatchCmd {
-	dcmds_t m_dcmds;
-	rows_t m_rows;
-	times_t m_row_ctimes;
-	times_t m_row_stimes;
-
-	void clear ()
-  {
-    m_dcmds.clear();
-    m_rows.clear();
-    m_row_ctimes.clear();
-    m_row_stimes.clear();
-  }
-};
-
-class LogTableModel : public TableModel
+class LogTableModel : public BaseTableModel
 {
 public:
 	explicit LogTableModel (QObject * parent, logs::LogWidget & lw);
 	~LogTableModel ();
 
-	void handleCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
-	void commitCommands (E_ReceiveMode mode);
 	void appendCommand (tlv::StringCommand const & cmd);
 	//void appendCommandCSV (QAbstractProxyModel * filter, tlv::StringCommand const & cmd);
 
@@ -75,8 +52,8 @@ public:
 	FilterState const & filterState () const { return m_filter_state; }
     logs::LogWidget const & logWidget () const { return m_log_widget; }
 	dcmds_t const & dcmds () { return m_dcmds; }
-	LogTableModel * cloneToNewModel ();
-	LogTableModel * cloneToNewModel (FindConfig const & fc);
+	//LogTableModel * cloneToNewModel ()
+	LogTableModel * cloneToNewModel (logs::LogWidget * parent, FindConfig const & fc);
     void reloadModelAccordingTo (logs::LogConfig & config);
 
 signals:
@@ -86,20 +63,18 @@ public slots:
 protected:
 	friend class logs::LogWidget;
 
-	void commitBatchToModel ();
-	void parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode, BatchCmd & batch);
+	virtual void parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode, BatchCmd & batch);
+	virtual void commitBatchToModel (BatchCmd & batch); 
+	void postProcessBatch (int src_from, int src_to, BatchCmd const & batch);
 
 	logs::LogWidget & m_log_widget;
 	FilterState & m_filter_state;
-	
-	BatchCmd m_batch;
-	dcmds_t m_dcmds;
 };
 
 /*
 	Q_OBJECT
 public:
-	explicit LogTableModel (QObject * parent, logs::LogWidget & lw);
+	explicit LogTableModel (QObject * parent, logs::LogTableView & lw);
 	~LogTableModel ();
 
 	int rowCount (const QModelIndex & parent = QModelIndex()) const;
@@ -134,7 +109,7 @@ public slots:
 
 private:
 
-	logs::LogWidget & m_log_widget;
+	logs::LogTableView & m_log_widget;
 	FilterState & m_filter_state;
 	typedef std::vector<QString> columns_t;
 	typedef std::vector<columns_t> rows_t;

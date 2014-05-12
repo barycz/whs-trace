@@ -26,7 +26,7 @@
 #include <table/baseproxymodel.h>
 #include "logtablemodel.h"
 
-namespace logs { class LogWidget; struct LogConfig; }
+namespace logs { class LogTableView; struct LogConfig; }
 
 class FilterProxyModel : public BaseProxyModel
 {
@@ -38,6 +38,7 @@ public:
 	virtual QModelIndex sibling (int row, int column, QModelIndex const & idx) const;
 	virtual bool filterAcceptsRow (int sourceRow, QModelIndex const & sourceParent) const;
 	virtual bool filterAcceptsColumn (int sourceColumn, QModelIndex const & source_parent) const;
+	void setSourceModel (QAbstractItemModel *sourceModel);
 	virtual Qt::ItemFlags flags (QModelIndex const & index) const;
 	void resizeToCfg (logs::LogConfig const & config);
 	void commitBatchToModel (int from, int to, BatchCmd const & batch);

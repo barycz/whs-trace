@@ -3,6 +3,7 @@
 #include "logwidget.h"
 #include "utils.h"
 #include "connection.h"
+#include "mainwindow.h"
 #include <logs/tagconfig.h>
 
 namespace logs {
@@ -237,7 +238,7 @@ void LogCtxMenu::setConfigValuesToUI (LogConfig const & cfg)
 	QStandardItem * cel_root = static_cast<QStandardItemModel *>(m_ui->listViewColumnElide->model())->invisibleRootItem();
 	for (int i = 0, ie = cfg.m_columns_setup.size(); i < ie; ++i)
 	{
-		int const li = m_log_widget.horizontalHeader()->logicalIndex(i);
+		int const li = m_log_widget.m_tableview->horizontalHeader()->logicalIndex(i);
 		Q_ASSERT(li > -1);
     if (li == -1)
     {
@@ -480,22 +481,22 @@ void LogCtxMenu::onClickedAtApplyButton ()
 			{
 				QModelIndex const row_idx = m_ui->listViewColumnSetup->model()->index(j, 0, QModelIndex());
 				QString const & d = m_ui->listViewColumnSetup->model()->data(row_idx).toString();
-				config.m_columns_setup.append(d);
+				config.m_columns_setup.push_back(d);
 			}
 
 			{
 				QModelIndex const row_idx = m_ui->listViewColumnSizes->model()->index(j, 0, QModelIndex());
-				config.m_columns_sizes.append(m_ui->listViewColumnSizes->model()->data(row_idx).toString().toInt());
+				config.m_columns_sizes.push_back(m_ui->listViewColumnSizes->model()->data(row_idx).toString().toInt());
 			}
 
 			{
 				QModelIndex const row_idx = m_ui->listViewColumnAlign->model()->index(j, 0, QModelIndex());
-				config.m_columns_align.append(m_ui->listViewColumnAlign->model()->data(row_idx).toString());
+				config.m_columns_align.push_back(m_ui->listViewColumnAlign->model()->data(row_idx).toString());
 			}
 
 			{
 				QModelIndex const row_idx = m_ui->listViewColumnElide->model()->index(j, 0, QModelIndex());
-				config.m_columns_elide.append(m_ui->listViewColumnElide->model()->data(row_idx).toString());
+				config.m_columns_elide.push_back(m_ui->listViewColumnElide->model()->data(row_idx).toString());
 			}
 		}
 	}
@@ -527,6 +528,11 @@ void LogCtxMenu::onClickedAtApplyButton ()
 			m_log_widget.m_config.m_columns_elide[li] = config.m_columns_elide[c];
 		}*/
 	}
+  else
+  {
+		fillDefaultConfig(config);
+		m_log_widget.reloadModelAccordingTo(config);
+  }
 }
 
 void LogCtxMenu::onClickedAtSaveButton ()
@@ -545,7 +551,7 @@ void LogCtxMenu::onClickedAtCancelButton ()
 	//filterMenu->addAction(tr("Set time reference row"), m_server, SLOT(onTimeRefFromRow()), QKeySequence(Qt::Key_Space));
 	//filterMenu->addAction(tr("Exclude file:line row"), m_server, SLOT(onExcludeFileLine()), QKeySequence(Qt::Key_X));
 
-/*void LogWidget::onFileColOrExp (QModelIndex const & idx, bool collapsed)
+/*void LogTableView::onFileColOrExp (QModelIndex const & idx, bool collapsed)
 {
 	QStandardItemModel const * const model = static_cast<QStandardItemModel *>(filterMgr()->getFilterFileLine()->getWidgetFile()->model());
 	QStandardItem * const node = model->itemFromIndex(idx);

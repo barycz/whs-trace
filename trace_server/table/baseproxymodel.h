@@ -42,6 +42,7 @@ public:
 	QModelIndex mapNearestFromSource (QModelIndex const & sourceIndex) const;
 	virtual QModelIndex mapFromSource (QModelIndex const & sourceIndex) const;
 	bool rowInProxy (int row) const;
+	int rowToSource (int row) const;
 	bool colInProxy (int col) const;
 	int colToSource (int col) const;
 	int colFromSource (int col) const;

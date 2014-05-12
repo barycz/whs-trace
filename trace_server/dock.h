@@ -4,42 +4,23 @@
 #include "types.h"
 #include "dockedconfig.h"
 
-struct DockedWidgetBase : QObject, ActionAble {
-	Q_OBJECT
+class QCloseEvent; class QMainWindow; struct DockManager; class MainWindow; struct DockWidget;
+
+struct DockedWidgetBase : ActionAble {
+	//Q_OBJECT
 public:
-	DockedWidgetBase (QStringList const & path)
-		: ActionAble(path)
-		, m_wd(0)
-	{ }
-	virtual ~DockedWidgetBase () { }
+	MainWindow * m_main_window;
+	DockWidget * m_dockwidget;
 
-	virtual DockedConfigBase const & dockedConfig () const = 0;
-	virtual DockedConfigBase & dockedConfig () = 0;
-	virtual QWidget * dockedWidget () = 0;
-
-	QDockWidget * m_wd;
+	DockedWidgetBase (MainWindow * mw, QStringList const & path);
+	virtual ~DockedWidgetBase ();
 
 	virtual E_DataWidgetType type () const = 0;
+	virtual QWidget * controlWidget () = 0;
+
+	void setDockWidget (DockWidget * w) { m_dockwidget = w; }
+	DockWidget * dockWidget () { return m_dockwidget; }
+	DockWidget const * dockWidget () const { return m_dockwidget; }
 };
 
-class QCloseEvent;
-class QMainWindow;
-struct DockManager;
-
-struct DockWidget : public QDockWidget
-{
-	Q_OBJECT
-	friend struct DockManager;
-public:
-
-	explicit DockWidget (DockManager & mgr, QString const & name, QMainWindow * const window);
-	virtual void closeEvent (QCloseEvent * event);
-
-Q_SIGNALS:
-	void dockClosed (DockWidget * w);
-
-private:
-
-	DockManager & m_mgr;
-};
 

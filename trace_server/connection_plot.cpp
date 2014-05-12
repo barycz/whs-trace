@@ -5,46 +5,12 @@
 #include "cmd.h"
 #include "utils.h"
 #include "dock.h"
+#include "mainwindow.h"
 #include <cstdlib>
-
-DataPlot::DataPlot (Connection * connection, QString const & confname, QStringList const & path)
-	: DockedData<e_data_plot>(connection, confname, path)
-{
-	qDebug("%s this=0x%08x", __FUNCTION__, this);
-	m_widget = new plot::PlotWidget(connection, 0, m_config, confname, path);
-}
-
-void Connection::onShowPlots ()
-{
-	qDebug("%s", __FUNCTION__);
-	/*for (dataplots_t::iterator it = m_data.get<e_data_plot>().begin(), ite = m_data.get<e_data_plot>().end(); it != ite; ++it)
-	{
-		(*it)->onShow();
-		m_main_window->restoreDockWidget((*it)->m_wd);
-	}*/
-}
-
-void Connection::onHidePlots ()
-{
-	qDebug("%s", __FUNCTION__);
-	/*for (dataplots_t::iterator it = m_data.get<e_data_plot>().begin(), ite = m_data.get<e_data_plot>().end(); it != ite; ++it)
-	{
-		(*it)->onHide();
-	}*/
-}
-
-void Connection::onShowPlotContextMenu (QPoint const &)
-{
-	qDebug("%s", __FUNCTION__);
-	for (dataplots_t::iterator it = m_data.get<e_data_plot>().begin(), ite = m_data.get<e_data_plot>().end(); it != ite; ++it)
-	{
-		(*it)->widget().onHideContextMenu();
-	}
-}
 
 bool Connection::handlePlotCommand (DecodedCommand const & cmd, E_ReceiveMode mode)
 {
-	if (m_main_window->plotState() == e_FtrDisabled)
+	if (getClosestFeatureState(e_data_plot) == e_FtrDisabled)
 		return true;
 
 	QString tag;
@@ -61,9 +27,7 @@ bool Connection::handlePlotCommand (DecodedCommand const & cmd, E_ReceiveMode mo
 	//subtag.remove(0, slash_pos + 1);
 
 	dataplots_t::iterator it = findOrCreatePlot(tag);
-	DataPlot & dp = **it;
-
-	dp.widget().handleCommand(cmd, mode);
+	(*it)->handleCommand(cmd, mode);
 	return true;
 }
 /*	QString tag;
@@ -100,7 +64,7 @@ dataplots_t::iterator Connection::findOrCreatePlot (QString const & tag)
 	if (it == m_data.get<e_data_plot>().end())
 	{
 		it = dataWidgetFactory<e_data_plot>(tag);
-		(*it)->widget().applyConfig();
+		(*it)->applyConfig();
 	}
 	return it;
 }

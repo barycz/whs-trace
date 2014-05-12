@@ -58,6 +58,7 @@ set(trace_server_SOURCES
 	qt_plugins.cpp
 	mainwindow.cpp
 	mainwindow_presets.cpp
+	mainwindow_controlwidget.cpp
 	mainwindow_connection.cpp
 	mainwindow_docking.cpp
 	mainwindow_find.cpp
@@ -69,13 +70,18 @@ set(trace_server_SOURCES
 	server_filtering.cpp
 	filterwidget.cpp
 	connection.cpp
+	connectionconfig.cpp
 	connection_stream.cpp
 	connection_setup.cpp
+	connection_controlwidget.cpp
+	connection_csv.cpp
 	filterstate.cpp
 	filterstate_serialize.cpp
 	constants.cpp
 	config.cpp
 	dock.cpp
+	dockwidget.cpp
+	dockdelegates.cpp
 	dockmanagerconfig.cpp
 	dockmanager.cpp
 	dockmanagerview.cpp
@@ -86,11 +92,9 @@ set(trace_server_SOURCES
 	timecombobox.cpp
 	buttoncache.cpp
 	controlbarcommon.cpp
-	controlbarlogs.h
-	controlbarplots.h
-	controlbartables.h
-	controlbargantts.h
-	controlbarlog.h
+	controlbardockedwidgets.cpp
+	controlbarlog.cpp
+	basetablemodel.cpp
 
 	filterbase.cpp
 	filtermgrbase.cpp
@@ -131,6 +135,7 @@ set(trace_server_SOURCES
 
 	connection_log.cpp
 	logs/logtablemodel.cpp
+	logs/logtableview.cpp
 	logs/filterproxymodel.cpp
 	logs/findproxymodel.cpp
 	logs/logselectionproxymodel.cpp
@@ -155,7 +160,7 @@ set(trace_server_SOURCES
 	table/baseproxymodel.cpp
 	table/sparseproxymodel.cpp
 	table/tableconfig.cpp
-	table/tablemodelview.cpp
+	table/tablemodel.cpp
 	table/tablewidget.cpp
 
 	connection_gantt.cpp
@@ -191,6 +196,9 @@ set(trace_server_HEADERS
 	rendezvous.h
 	utils.h
 	dock.h
+	dockwidget.h
+	dockdelegates.h
+	dockedwidgets.h
 	dockmanagerconfig.h
 	dockmanager.h
 	dockmanagermodel.h
@@ -205,11 +213,9 @@ set(trace_server_HEADERS
 	warnimage.h
 	buttoncache.h
 	controlbarcommon.h
+	controlbardockedwidgets.h
 	controlbarlog.h
-	controlbarlogs.h
-	controlbarplots.h
-	controlbartables.h
-	controlbargantts.h
+	basetablemodel.h
 
 	findwidget.h
 	findconfig.h
@@ -244,6 +250,7 @@ set(trace_server_HEADERS
 
 
 	logs/logtablemodel.h
+	logs/logtableview.h
 	logs/logselectionproxymodel.h
 	logs/logwidget.h
 	logs/logconfig.h
@@ -268,7 +275,7 @@ set(trace_server_HEADERS
 	table/sparseproxymodel.h
 	table/tableconfig.h
 	table/tablectxmenu.h
-	table/tablemodelview.h
+	table/tablemodel.h
 	table/tablewidget.h
 
 	gantt/arrow.h
@@ -290,11 +297,8 @@ set(trace_server_HEADERS
 set(trace_server_UI
 	mainwindow.ui
 	controlbarcommon.ui
+	controlbardockedwidgets.ui
 	controlbarlog.ui
-	controlbarlogs.ui
-	controlbarplots.ui
-	controlbartables.ui
-	controlbargantts.ui
 	filterwidget.ui
 	findwidget.ui
 	combolist.ui

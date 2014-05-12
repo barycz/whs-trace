@@ -20,22 +20,26 @@ QT_FORWARD_DECLARE_CLASS(FilterWidget)
 namespace gantt {
 	QT_FORWARD_DECLARE_CLASS(GanttView)
 	QT_FORWARD_DECLARE_CLASS(FrameView)
-	QT_FORWARD_DECLARE_CLASS(CtxGanttConfig)
+	struct CtxGanttConfig;
 }
 
 namespace gantt {
 
-	class GanttWidget : public QFrame, public ActionAble
+	class GanttWidget : public QFrame, public DockedWidgetBase
 	{
 		Q_OBJECT
 	public:
-		GanttWidget (Connection * oparent, QWidget * wparent, GanttConfig & cfg, QString const & fname, QStringList const & path);
+		enum { e_type = e_data_gantt };
+		GanttWidget (Connection * conn, GanttConfig const & cfg, QString const & fname, QStringList const & path);
 
+		virtual QWidget * controlWidget () { return 0; }
+		virtual E_DataWidgetType type () const { return e_data_gantt; }
+		GanttConfig & config () { return m_config; }
+		GanttConfig const & config () const { return m_config; }
 		void loadConfig (QString const & path);
 		void saveConfig (QString const & path);
 		void applyConfig ();
-    void exportStorageToCSV (QString const & filename) { }
-        void setDockedWidget (DockedWidgetBase * dwb) { m_dwb = dwb; }
+		void exportStorageToCSV (QString const & filename) { }
 
 		void commitCommands (E_ReceiveMode mode);
 		QList<DecodedCommand> m_queue;
@@ -52,6 +56,7 @@ namespace gantt {
 		ganttviews_t::iterator mkGanttView (QString const & subtag);
 		void syncGanttViews (GanttView * src, QPointF interval);
 		virtual bool handleAction (Action * a, E_ActionHandleType sync);
+		virtual void setVisible (bool visible);
 		void handleCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
 
 		FrameView * findOrCreateFrameView (int sync_group);
@@ -104,15 +109,13 @@ namespace gantt {
 		void requestSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
 
 	protected:
-		GanttConfig & m_config;
-		GanttConfig m_config2;
+		GanttConfig m_config;
 		gantt::CtxGanttConfig * m_config_ui;
 		QString m_fname;
 		Connection * m_connection;
 		QSplitter * m_layout;
 		ganttviews_t m_ganttviews;
 		QVector<QString> m_subtags;
-        DockedWidgetBase * m_dwb;
 	};
 }
 

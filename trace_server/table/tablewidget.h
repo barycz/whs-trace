@@ -2,34 +2,39 @@
 #include <QWidget>
 #include <QColorDialog>
 #include <QTableView>
-#include <QAbstractProxyModel>
 #include <QAbstractItemView>
 #include "tableconfig.h"
 #include "tablectxmenu.h"
-#include "tablemodelview.h"
-#include "action.h"
-#include "dock.h"
+#include "tablemodel.h"
+#include <action.h>
+#include "baseproxymodel.h"
+#include <dock.h>
+#include <syncwidgets.h>
 #include <cmd.h>
 
 class Connection;
 
 namespace table {
 
-	class TableWidget : public QTableView, public ActionAble
+	class TableWidget : public QTableView, public DockedWidgetBase
 	{
 		Q_OBJECT
 	public:
-		TableWidget (Connection * oparent, QWidget * wparent, TableConfig & cfg, QString const & fname, QStringList const & path);
+		enum { e_type = e_data_table };
+		TableWidget (Connection * conn, TableConfig const & cfg, QString const & fname, QStringList const & path);
 
+		virtual E_DataWidgetType type () const { return e_data_table; }
+		virtual QWidget * controlWidget () { return 0; }
 		void applyConfig (TableConfig & pcfg);
 		virtual ~TableWidget ();
 
-		TableConfig & getConfig () { return m_config; }
-		TableConfig const & getConfig () const { return m_config; }
+		TableConfig & config () { return m_config; }
+		TableConfig const & config () const { return m_config; }
 
 		void handleCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
 		void commitCommands (E_ReceiveMode mode);
 		virtual bool handleAction (Action * a, E_ActionHandleType sync);
+		virtual void setVisible (bool visible);
 
 		void appendTableXY (int x, int y, QString const & time, QString const & fgc, QString const & bgc, QString const & msg);
 		void appendTableSetup (int x, int y, QString const & time, QString const & fgc, QString const & bgc, QString const & hhdr, QString const & tag);
@@ -38,14 +43,20 @@ namespace table {
 		void onInvalidateFilter ();
 		void findNearestTimeRow (unsigned long long t);
 
-		void requestTableWheelEventSync (QWheelEvent * ev, QTableView const * source);
-		void requestTableActionSync (unsigned long long t, int cursorAction, Qt::KeyboardModifiers modifiers, QTableView const * source);
+		//void requestTableWheelEventSync (QWheelEvent * ev, QTableView const * source);
+		//void requestTableActionSync (unsigned long long t, int cursorAction, Qt::KeyboardModifiers modifiers, QTableView const * source);
 
+		QString getCurrentWidgetPath () const;
 		void loadConfig (QString const & path);
 		void saveConfig (QString const & path);
 		void applyConfig ();
-        void exportStorageToCSV (QString const & filename) { }
-        void setDockedWidget (DockedWidgetBase * dwb) { m_dwb = dwb; }
+		void exportStorageToCSV (QString const & filename) { }
+		void autoScrollOff ();
+		void autoScrollOn ();
+		QModelIndex currentSourceIndex () const;
+
+		void findNearestRow4Time (bool ctime, unsigned long long t);
+		void performSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
 
 	protected:
 		virtual void wheelEvent (QWheelEvent * event);
@@ -69,15 +80,18 @@ namespace table {
 		void onTableDoubleClicked (QModelIndex const & row_index);
 		void onClickedAtColumnSetup (QModelIndex const idx);
 
+	signals:
+		void requestSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
+
 	protected:
-		TableConfig & m_config;
+		TableConfig m_config;
 		table::CtxTableConfig m_config_ui;
 		//QList<QColor> m_colors;
 		QString m_fname;
-		TableModel * m_modelView;
-		QAbstractProxyModel * m_table_view_proxy;
+		TableModel * m_src_model;
+		BaseProxyModel * m_proxy_model;
 		Connection * m_connection;
-        DockedWidgetBase * m_dwb;
+		std::vector<DecodedCommand> m_queue;
 	};
 }
 

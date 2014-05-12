@@ -14,7 +14,7 @@ struct BarPlot : QwtPlotBarChart
 {
 	BarPlot ();
 
-    virtual QwtColumnSymbol * specialSymbol (int index, QPointF const &) const;
+	virtual QwtColumnSymbol * specialSymbol (int index, QPointF const &) const;
 	virtual QwtText barTitle (int idx) const;
 
 	QVector<double> m_values;
@@ -24,19 +24,23 @@ struct BarPlot : QwtPlotBarChart
 	std::vector<QColor> m_colors;
 };
 
-struct FrameView : QWidget, ActionAble
+struct FrameView : QWidget, DockedWidgetBase
 {
-	FrameView (Connection * oparent, QWidget * wparent, FrameViewConfig & cfg, QString const & fname, QStringList const & path);
+	enum { e_type = e_data_frame };
+	FrameView (Connection * oparent, FrameViewConfig const & cfg, QString const & fname, QStringList const & path);
 
+	virtual E_DataWidgetType type () const { return e_data_frame; }
 	void appendFrame (unsigned long long from, unsigned long long to);
 	virtual bool handleAction (Action * a, E_ActionHandleType sync);
+	virtual void setVisible (bool visible);
 
+	FrameViewConfig & config () { return m_config; }
+	FrameViewConfig const & config () const { return m_config; }
 	void loadConfig (QString const & path);
 	void saveConfig (QString const & path);
 	void applyConfig (FrameViewConfig & cfg);
 	void applyConfig ();
-
-    void setDockedWidget (DockedWidgetBase * dwb) { m_dwb = dwb; }
+	virtual QWidget * controlWidget () { return 0; }
 
 signals:
 	void requestSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
@@ -64,12 +68,10 @@ private slots:
 	void setNum (double v);
 
 public:
-	
 	QwtPlot * m_plot;
 	BarPlot * m_bars;
-	FrameViewConfig & m_config;
+	FrameViewConfig m_config;
 	frameview::CtxFrameViewConfig m_config_ui;
-    DockedWidgetBase * m_dwb;
 
 	Q_OBJECT
 };
