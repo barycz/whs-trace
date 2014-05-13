@@ -38,7 +38,7 @@ public:
 	explicit LogTableModel (QObject * parent, logs::LogWidget & lw);
 	~LogTableModel ();
 
-	void appendCommand (tlv::StringCommand const & cmd);
+	void appendCommand (DecodedCommand const & cmd);
 	//void appendCommandCSV (QAbstractProxyModel * filter, tlv::StringCommand const & cmd);
 
 	//void emitLayoutChanged ();

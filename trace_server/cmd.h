@@ -37,7 +37,7 @@ inline QVariant tag2variant (tlv::tag_t t, QString const & src)
 	}
 }
 
-struct DecodedCommand : tlv::StringCommand
+struct DecodedCommand : tlv::StringCommand_v1
 {
 	std::vector<char> m_orig_message;
 	bool m_written_hdr;
@@ -50,11 +50,11 @@ struct DecodedCommand : tlv::StringCommand
 	typedef std::vector<QVariant> tvariants_t;
 	tvariants_t m_variants;
 
-	DecodedCommand () : StringCommand() { m_orig_message.resize(2048); reset(); }
+	DecodedCommand () : StringCommand_v1() { m_orig_message.resize(2048); reset(); }
 
 	void reset ()
 	{
-		tlv::StringCommand::reset();
+		tlv::StringCommand_v1::reset();
 		m_written_hdr = m_written_payload = false;
 	}
 

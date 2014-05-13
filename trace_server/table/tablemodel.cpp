@@ -87,9 +87,12 @@ bool TableModel::handleTableClearCommand (DecodedCommand const & cmd, E_ReceiveM
 
 void TableModel::parseTableXY (int x, int y, QString const & time, QString const & fgc, QString const & bgc, QString const & cmd, BatchCmd & batch)
 {
-	unsigned long long t = time.toULongLong();
-	QStringList const values = cmd.split("|");
+  QString tag = cmd;
+  int const slash_pos = tag.lastIndexOf(QChar('/'));
+  tag.remove(0, slash_pos + 1);
+	QStringList const values = tag.split("|");
 	int const n_cols = values.size();
+	unsigned long long t = time.toULongLong();
 
 	bool new_rows = false;
 	int rows_first = 0;

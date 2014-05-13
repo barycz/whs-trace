@@ -21,8 +21,6 @@
  **/
 #pragma once
 #include <QThread>
-#include <tlv_parser/tlv.h>
-#include <tlv_parser/tlv_cmd_qstring.h>
 #include <boost/circular_buffer.hpp>
 #include <boost/tuple/tuple.hpp>
 #include "cmd.h"
@@ -247,7 +245,6 @@ private:
 	DecodedCommand m_current_cmd;
 	enum { e_ringcmd_size = 16384 };
 	boost::circular_buffer<DecodedCommand> m_decoded_cmds;
-	tlv::TVDecoder m_decoder;
 	QFile * m_storage;
 	QDataStream * m_tcp_dump_stream;
 	QTcpSocket * m_tcpstream;

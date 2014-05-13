@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-project (sample_client)
+project (test_client)
 #set (CMAKE_MODULE_PATH "~/devel/flogging;${CMAKE_MODULE_PATH}")
 
 find_package (Flogging REQUIRED)
@@ -17,9 +17,9 @@ add_definitions ("-DTRACE_STATIC")
 include_directories (${FLOGGING_INCLUDE_DIRS})
 add_library (flog_client_lib STATIC "${FLOGGING_SOURCE_DIRS}/trace_client/trace.cpp")
 
-add_executable (sample_client main.cpp)
+add_executable (test_client main.cpp)
 
 if (MINGW)
-	target_link_libraries (sample_client trace_client "c:/devel/QtSDK/mingw/lib/libws2_32.a")
+	target_link_libraries (test_client trace_client "c:/devel/QtSDK/mingw/lib/libws2_32.a")
 endif()
-target_link_libraries (sample_client flog_client_lib ${CMAKE_THREAD_LIBS_INIT}) 
+target_link_libraries (test_client flog_client_lib ${CMAKE_THREAD_LIBS_INIT}) 

@@ -54,14 +54,14 @@ namespace tlv {
 	/**@class	TVDecoder
 	 * @brief	interprets stream of bytes as TLV protocol and creates StringCommand
 	 */
-	struct TVDecoder
+	struct TVDecoder_v1
 	{
-		TVDecoder () { }
+		TVDecoder_v1 () { }
 
 		bool decode_header (char const * buff, size_t ln, StringCommand & cmd)
 		{
 			memstream input(buff, ln);
-			return decode_hdr(input, cmd.hdr);
+			return decode_hdr_v1(input, cmd.hdr);
 		}
 
 		bool decode_payload (char const * buff, size_t ln, StringCommand & cmd)

@@ -11,7 +11,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_plot_xy, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_plot_xy, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%x", context), tlv_buff));
@@ -29,7 +29,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_plot_xy, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_plot_xy, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%x", context), tlv_buff));
@@ -48,7 +48,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_plot_clear, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_plot_clear, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%x", context), tlv_buff));

@@ -97,7 +97,7 @@ void Connection::onLevelValueChanged (int val)
 		m_config.m_level = val;
 		char buff[256];
 		using namespace tlv;
-		Encoder e(cmd_set_level, buff, 256);
+		Encoder_v1 e(cmd_set_level, buff, 256);
 		e.Encode(TLV(tag_lvl, tlv_buff));
 		if (m_tcpstream && e.Commit())
 		{
@@ -125,7 +125,7 @@ void Connection::onBufferingStateChanged (int state)
 		qDebug("Connection::onBufferingStateChanged to_state=%i", buffering_enabled);
 		char buff[256];
 		using namespace tlv;
-		Encoder e(cmd_set_buffering, buff, 256);
+		Encoder_v1 e(cmd_set_buffering, buff, 256);
 		e.Encode(TLV(tag_bool, tlv_buff));
 		if (m_tcpstream && e.Commit())
 		{

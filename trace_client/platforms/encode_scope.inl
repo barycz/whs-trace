@@ -7,7 +7,7 @@ namespace trace {
 
 	inline void encode_scope (msg_t & msg, tlv::cmd_t cmd, level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, va_list args)
 	{
-		tlv::Encoder e(cmd, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(cmd, msg.m_data, msg_t::e_data_sz);
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;

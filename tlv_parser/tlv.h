@@ -163,13 +163,14 @@ namespace tlv {
 	 ********************************************/
 	struct Header
 	{
+		unsigned char version;
 		cmd_t cmd;  // 1 Byte command ( setup | log | ... )
 		len_t len;  // 2 Byte length of payload
 
-		enum { e_Size = sizeof(cmd_t) + sizeof(len_t) } ;
+		enum { e_Size = sizeof(unsigned char) + sizeof(cmd_t) + sizeof(len_t) } ;
 
-		Header (cmd_t c, len_t l) : cmd(c), len(l) { }
-		void Reset () { cmd = 0; len = 0; }
+		Header (unsigned char v, cmd_t c, len_t l) : version(v), cmd(c), len(l) { }
+		void Reset () { version = 1; cmd = 0; len = 0; }
 	};
 }
 

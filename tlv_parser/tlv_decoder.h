@@ -34,6 +34,14 @@ namespace tlv {
 
 	inline bool decode_hdr (memstream & stream, Header & h)
 	{
+		unsigned char version = 0;
+		if (!stream.read(reinterpret_cast<char * >(&version), sizeof(unsigned char)))
+			return false;
+		h.version = version;
+
+		if (version != 1)
+			return false;
+
 		cmd_t command = 0;
 		if (!stream.read(reinterpret_cast<char * >(&command), sizeof(cmd_t)))
 			return false;

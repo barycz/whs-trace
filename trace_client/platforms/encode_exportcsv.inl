@@ -7,7 +7,7 @@ namespace trace {
 
 	inline void encode_exportCSV (msg_t & msg, char const * filename)
 	{
-		tlv::Encoder e(tlv::cmd_export_csv, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_export_csv, msg.m_data, msg_t::e_data_sz);
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;

@@ -15,8 +15,8 @@ namespace trace {
 		return 0;
 	}
 
-
-	inline void encode_gantt_msg (tlv::Encoder & e, char * tag_buff, size_t max_size, char const * fmt, va_list args)
+	template <class Encoder>
+	void encode_gantt_msg (Encoder & e, char * tag_buff, size_t max_size, char const * fmt, va_list args)
 	{
 		size_t const tlv_buff_sz = 1024;
 		char tlv_buff[tlv_buff_sz];
@@ -44,7 +44,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -62,7 +62,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -79,7 +79,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_bgn, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -95,7 +95,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_end, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_end, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -112,7 +112,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_end, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_end, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -128,7 +128,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_frame_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_frame_bgn, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -145,7 +145,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_frame_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_frame_bgn, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -161,7 +161,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_frame_end, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_frame_end, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -178,7 +178,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_frame_end, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_frame_end, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));
@@ -194,7 +194,7 @@ namespace trace {
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_gantt_clear, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_gantt_clear, msg.m_data, msg_t::e_data_sz);
 		e.Encode(TLV(tag_ctime, sys::trc_vsnprintf(tlv_buff, tlv_buff_sz, "%llu", sys::queryTime_us()), tlv_buff));
 		e.Encode(TLV(tag_lvl,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%u", level), tlv_buff));
 		e.Encode(TLV(tag_ctx,  sys::trc_vsnprintf(tlv_buff, tlv_buff_sz,   "%x", context), tlv_buff));

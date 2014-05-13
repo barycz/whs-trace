@@ -40,12 +40,12 @@ namespace tlv {
 	};
 	typedef std::vector<TV> tvs_t;
 
-	struct StringCommand
+	struct StringCommand_v1
 	{
 		tlv::Header m_hdr;
 		tvs_t m_tvs;
 
-		StringCommand () : m_hdr(0, 0) { }
+		StringCommand_v1 () : m_hdr(1, 0, 0) { }
 
 		void reset ()
 		{
@@ -54,21 +54,28 @@ namespace tlv {
 		}
 	};
 
-
-	/**@class	TVDecoder
-	 * @brief	interprets stream of bytes as TLV protocol and creates StringCommand
+	/**@class	HeaderDecoder
+	 * @brief	decodes header
 	 */
-	struct TVDecoder
+	struct HeaderDecoder
 	{
-		TVDecoder () { }
+		HeaderDecoder () { }
 
-		bool decode_header (char const * buff, size_t ln, StringCommand & cmd)
+		bool decode_header (char const * buff, size_t ln, tlv::Header & hdr)
 		{
 			memstream input(buff, ln);
-			return decode_hdr(input, cmd.m_hdr);
+			return decode_hdr(input, hdr);
 		}
+	};
 
-		bool decode_payload (char const * buff, size_t ln, StringCommand & cmd)
+	/**@class	TVDecoder_v1
+	 * @brief	interprets stream of bytes as TLV protocol and creates StringCommand_v1
+	 */
+	struct TVDecoder_v1
+	{
+		TVDecoder_v1 () { }
+
+		bool decode_payload (char const * buff, size_t ln, StringCommand_v1 & cmd)
 		{
 			memstream input(buff, ln);
 			return decode(input, cmd.m_tvs);

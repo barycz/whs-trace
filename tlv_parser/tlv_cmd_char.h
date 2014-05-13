@@ -52,7 +52,7 @@ namespace tlv {
 		tlvs_t tlvs;						/// array of TLV
 		char concat_values[max_buff_size];	/// internal concantenated values from list of TLV
 	
-		Command () : hdr(0, 0), tlvs_count(0) { }
+		Command () : hdr(1, 0, 0), tlvs_count(0) { }
 		void Reset ()
 		{
 			hdr.Reset();
@@ -63,7 +63,7 @@ namespace tlv {
 	/**@class	Encoder
 	 * @brief	main encoder class
 	 */
-	struct Encoder
+	struct Encoder_v1
 	{
 		len_t total_len;		/// total message length including header
 		len_t data_len;			/// payload (data) length (i.e. without header)
@@ -71,10 +71,10 @@ namespace tlv {
 		char * buffer;			///	raw buffer
 
 
-		Encoder (cmd_t cmd, char * buff, size_t ln) 
+		Encoder_v1 (cmd_t cmd, char * buff, size_t ln) 
 			: total_len(0) , data_len(0) , output(buff, ln) , buffer(buff) 
 		{
-			Header h(cmd, 0);
+			Header h(1, cmd, 0);
 			Encode(h);
 		}
 
@@ -86,14 +86,15 @@ namespace tlv {
 				total_len = static_cast<len_t>(output.total_write_len());
 				data_len = total_len - Header::e_Size;
                 len_t const encoded_ln = htons(data_len);
-                buffer[sizeof(cmd_t)] = reinterpret_cast<char const *>(&encoded_ln)[0];
-                buffer[sizeof(cmd_t) + 1] = reinterpret_cast<char const *>(&encoded_ln)[1]; // write length of data
+                buffer[sizeof(unsigned char) + sizeof(cmd_t)    ] = reinterpret_cast<char const *>(&encoded_ln)[0];
+                buffer[sizeof(unsigned char) + sizeof(cmd_t) + 1] = reinterpret_cast<char const *>(&encoded_ln)[1]; // write length of data
 			}
 			return is_ok;
 		}
 
 		void Encode (Header h)
 		{
+			output.write(reinterpret_cast<char const * >(&h.version), sizeof(unsigned char));
 			output.write(reinterpret_cast<char const * >(&h.cmd), sizeof(cmd_t));
 			output.write(reinterpret_cast<char const * >(&h.len), sizeof(len_t));
 		}

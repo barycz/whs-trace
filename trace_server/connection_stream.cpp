@@ -2,6 +2,8 @@
 #include <QtNetwork>
 #include <QMessageBox>
 #include <QHeaderView>
+#include <tlv_parser/tlv.h>
+#include <tlv_parser/tlv_cmd_qstring.h>
 #include <tlv_parser/tlv_encoder.h>
 #include "logs/logtablemodel.h"
 #include "cmd.h"
@@ -239,7 +241,8 @@ int Connection::processStream (T * t, T_Ret (T::*read_member_fn)(T_Arg0, T_Arg1)
 					size_t const count_hdr = read_min(m_buffer, &m_current_cmd.m_orig_message[0], tlv::Header::e_Size);
 					if (count_hdr == tlv::Header::e_Size)
 					{
-						m_decoder.decode_header(&m_current_cmd.m_orig_message[0], tlv::Header::e_Size, m_current_cmd);
+						tlv::HeaderDecoder hdr_decoder;
+						hdr_decoder.decode_header(&m_current_cmd.m_orig_message[0], tlv::Header::e_Size, m_current_cmd.m_hdr);
 						if (m_current_cmd.m_hdr.cmd == 0 || m_current_cmd.m_hdr.len == 0)
 						{
 							Q_ASSERT(false);
@@ -263,20 +266,24 @@ int Connection::processStream (T * t, T_Ret (T::*read_member_fn)(T_Arg0, T_Arg1)
 
 				if (m_current_cmd.m_written_hdr && m_current_cmd.m_written_payload)
 				{
-					if (m_decoder.decode_payload(&m_current_cmd.m_orig_message[0] + tlv::Header::e_Size, m_current_cmd.m_hdr.len, m_current_cmd))
+					if (m_current_cmd.m_hdr.version == 1)
 					{
-						//qDebug("CONN: hdr_sz=%u payload_sz=%u buff_sz=%u ",  tlv::Header::e_Size, m_current_cmd.hdr.len, m_buffer.size());
-						m_decoded_cmds.push_back(m_current_cmd);
-						m_decoded_cmds.back().decode_postprocess();
-					}
-					else
-					{
-						Q_ASSERT(false);
-						//@TODO: parsing error, discard everything and re-request stop sequence
-						break;
-					}
+						tlv::TVDecoder_v1 decoder;
+						if (decoder.decode_payload(&m_current_cmd.m_orig_message[0] + tlv::Header::e_Size, m_current_cmd.m_hdr.len, m_current_cmd))
+						{
+							//qDebug("CONN: hdr_sz=%u payload_sz=%u buff_sz=%u ",  tlv::Header::e_Size, m_current_cmd.hdr.len, m_buffer.size());
+							m_decoded_cmds.push_back(m_current_cmd);
+							m_decoded_cmds.back().decode_postprocess();
+						}
+						else
+						{
+							Q_ASSERT(false);
+							//@TODO: parsing error, discard everything and re-request stop sequence
+							break;
+						}
 
-					m_current_cmd.reset(); // reset current command for another decoding pass
+						m_current_cmd.reset(); // reset current command for another decoding pass
+					}
 				}
 			}
 
