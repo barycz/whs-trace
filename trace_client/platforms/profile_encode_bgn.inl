@@ -9,7 +9,7 @@ namespace profile {
 	inline void encode_bgn (msg_t & msg)
 	{
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_profile_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_profile_bgn, msg.m_data, msg_t::e_data_sz);
 		encode_common_fields(e);
 		if (e.Commit())
 		{
@@ -20,7 +20,7 @@ namespace profile {
 	inline void encode_frame_bgn (msg_t & msg)
 	{
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_profile_frame_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_profile_frame_bgn, msg.m_data, msg_t::e_data_sz);
 		encode_common_fields(e);
 		if (e.Commit())
 		{
@@ -31,7 +31,7 @@ namespace profile {
 	inline void encode_bgn (msg_t & msg, char const * fmt, va_list args)
 	{
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_profile_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_profile_bgn, msg.m_data, msg_t::e_data_sz);
 		encode_common_fields(e);
 		encode_va_fields(e, fmt, args);
 		if (e.Commit())
@@ -43,7 +43,7 @@ namespace profile {
 	inline void encode_frame_bgn (msg_t & msg, char const * fmt, va_list args)
 	{
 		using namespace tlv;
-		tlv::Encoder e(tlv::cmd_profile_frame_bgn, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(tlv::cmd_profile_frame_bgn, msg.m_data, msg_t::e_data_sz);
 		encode_common_fields(e);
 		encode_va_fields(e, fmt, args);
 		if (e.Commit())

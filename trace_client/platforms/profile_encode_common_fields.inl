@@ -5,7 +5,8 @@
 
 namespace profile {
 
-	inline void encode_va_fields (tlv::Encoder & e, char const * fmt, va_list args)
+	template<class Encoder>
+	void encode_va_fields (Encoder & e, char const * fmt, va_list args)
 	{
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
@@ -13,7 +14,8 @@ namespace profile {
 		e.Encode(TLV(tag_msg, sys::va_trc_vsnprintf(tlv_buff, tlv_buff_sz, fmt, args), tlv_buff));
 	}
 
-	inline void encode_common_fields (tlv::Encoder & e)
+	template<class Encoder>
+	void encode_common_fields (Encoder & e)
 	{
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
