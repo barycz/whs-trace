@@ -28,6 +28,7 @@ struct GlobalConfig {
 	QString	  m_appdir;
 
 	History<QString> m_preset_history;
+	History<QString> m_recent_history;
 
 	GlobalConfig ()
 		: m_hotkey(0x91 /*VK_SCROLL*/)
@@ -52,6 +53,7 @@ struct GlobalConfig {
 		, m_profiler_port(13147)
 		, m_appdir(QDir::homePath() + "/" + g_traceServerDirName)
 		, m_preset_history(16)
+		, m_recent_history(16)
 	{ }
 
 	void loadHistory (QString const & path);

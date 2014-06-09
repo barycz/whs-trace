@@ -69,6 +69,7 @@ namespace tlv {
 	static cmd_t const cmd_version_ack       = 0xCA;	/// version ack
 	static cmd_t const cmd_set_proto_version = 0xC9;	/// switch protocol version
 	static cmd_t const cmd_set_proto_version_ack = 0xC8;	/// switch protocol version ack
+	static cmd_t const cmd_dict_lvl          = 0xC7;	/// level dictionnary (string, int)
 
 	enum e_Tags
 	{

@@ -1,0 +1,20 @@
+# Config file for the DbgToolkit package. It defines the following variables
+#		DBGTOOLKIT_INCLUDE_DIRS - include directories for DbgToolkit
+#		DBGTOOLKIT_LIBRARIES    - libraries to link against
+#		DBGTOOLKIT_EXECUTABLE   - the executable
+
+# Compute paths
+get_filename_component(DBGTOOLKIT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+#if(EXISTS "${DBGTOOLKIT_CMAKE_DIR}/CMakeCache.txt")
+   # In build tree
+   include("${DBGTOOLKIT_CMAKE_DIR}/DbgToolkitBuildTreeSettings.cmake")
+#else()
+   #set(DBGTOOLKIT_INCLUDE_DIRS "${DBGTOOLKIT_CMAKE_DIR}/@CONF_REL_INCLUDE_DIR@")
+#endif()
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+#include("${DBGTOOLKIT_CMAKE_DIR}/DbgToolkitLibraryDepends.cmake")
+
+# These are IMPORTED targets created by DbgToolkitLibraryDepends.cmake
+#set(DBGTOOLKIT_LIBRARIES trace_client)

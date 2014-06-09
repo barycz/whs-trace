@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
-project (flogging_dll)
+project (trace_client_dll)
 
 set (CMAKE_VERBOSE_MAKEFILE on)
 

@@ -18,6 +18,8 @@ class LogTableModel;
 class FindProxyModel;
 class BaseProxyModel;
 class ControlBarLog;
+class ColorizeWidget;
+struct ColorizeConfig;
 
 namespace logs {
 
@@ -38,6 +40,7 @@ namespace logs {
 		void saveConfig (QString const & preset_dir);
 		void saveAuxConfigs ();
 		void saveFindConfig ();
+		void saveColorizeConfig ();
 		void resizeModelToConfig (LogConfig & pcfg);
 		void reloadModelAccordingTo (LogConfig & pcfg);
 		void applyConfig ();
@@ -52,11 +55,12 @@ namespace logs {
 		virtual bool handleAction (Action * a, E_ActionHandleType sync);
 		virtual void setVisible (bool visible);
 
-		int findColumn4Tag (tlv::tag_t tag);
-		int findColumn4TagCst (tlv::tag_t tag) const;
+		E_SrcProtocol protocol () const;
 
 		LogTableModel const * logModel () const { return m_src_model; }
 		FilterProxyModel const * logProxy () const { return m_proxy_model; }
+		FindProxyModel const * findProxy () const { return m_find_proxy_model; }
+		QModelIndex mapToSourceIndexIfProxy (QModelIndex const & idx) const;
 		bool isModelProxy () const;
 		void setupLogModel ();
 		void setupRefsModel (LogTableModel * linked_model);
@@ -64,13 +68,14 @@ namespace logs {
 		void setupCloneModel (LogTableModel * src_model);
 		void setupLogSelectionProxy ();
 
-		DecodedCommand const * getDecodedCommand (QModelIndex const & row_index);
-		DecodedCommand const * getDecodedCommand (int row);
+		DecodedCommand const * getDecodedCommand (QModelIndex const & row_index) const;
+		DecodedCommand const * getDecodedCommand (int row) const;
 
 		///virtual void scrollTo (QModelIndex const & index, ScrollHint hint = EnsureVisible);
 
 	protected:
 		friend class LogTableModel;
+		friend class MainWindow;
 		friend class FilterProxyModel;
 		friend class FindProxyModel;
 		friend struct LogCtxMenu;
@@ -101,6 +106,7 @@ namespace logs {
 		void commitBatchToLinkedModel (int src_from, int src_to, BatchCmd const & batch);
 		void setSrcModel (FindConfig const & fc);
 		void handleFindAction (FindConfig const & fc);
+		void handleColorizeAction (ColorizeConfig const & fc);
 		void findInWholeTable (FindConfig const & fc, QModelIndexList & result);
 		LogWidget * mkFindAllRefsLogWidget (FindConfig const & fc);
 		LogWidget * mkFindAllCloneLogWidget (FindConfig const & fc);
@@ -160,13 +166,10 @@ namespace logs {
 		void uncolorRegex (ColorizedText const & ct);
 		void loadToRegexps (QString const & filter_item, bool inclusive, bool enabled);*/
 
-		void setupSeparatorChar (QString const & c);
-		QString separatorChar () const;
-
 		// find
 		void selectionFromTo (int & from, int & to) const;
-		QString findString4Tag (tlv::tag_t tag, QModelIndex const & row_index) const;
-		QVariant findVariant4Tag (tlv::tag_t tag, QModelIndex const & row_index) const;
+		QString findString4Tag (int tag, QModelIndex const & row_index) const;
+		//QVariant findVariant4Tag (int tag, QModelIndex const & row_index) const;
 
 		void scrollToCurrentTag ();
 		void scrollToCurrentSelection ();
@@ -177,8 +180,9 @@ namespace logs {
 		FilterState & filterState () { return m_filter_state; }
 		FilterState const & filterState () const { return m_filter_state; }
 
-		int findColumn4TagInTemplate (tlv::tag_t tag) const;
-		int appendColumn (tlv::tag_t tag);
+		int column2Tag (int tag) const;
+		//int findColumn4Tag (int tag);
+		//int findColumn4TagInTemplate (int tag) const;
 
 		ThreadSpecific & getTLS () { return m_tls; }
 		ThreadSpecific const & getTLS () const { return m_tls; }
@@ -203,6 +207,10 @@ namespace logs {
 		void onFindNext ();
 		void onFindPrev ();
 		void onFindAllRefs ();
+
+		void onColorize ();
+		void onColorizeNext ();
+		void onColorizePrev ();
 
 		void performSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
 
@@ -243,6 +251,7 @@ namespace logs {
 		void onHidePrev ();
 		void onHideNext ();
 		void onChangeTimeUnits (int);
+		void onOpenFileLine ();
 
 		/*void requestTableWheelEventSync (QWheelEvent * ev, QTableView const * source);
 		void requestTableActionSync (unsigned long long t, int cursorAction, Qt::KeyboardModifiers modifiers, QTableView const * source);*/
@@ -260,6 +269,7 @@ namespace logs {
 		QToolButton * m_gotoNextErrButton;
 		QToolButton * m_gotoPrevWarnButton;
 		QToolButton * m_gotoNextWarnButton;
+		QToolButton * m_openFileLineButton;
 		QToolButton * m_excludeFileButton;
 		QToolButton * m_excludeFileLineButton;
 		QToolButton * m_excludeRowButton;
@@ -285,7 +295,6 @@ namespace logs {
 
 		// mutable state
 		TagConfig m_tagconfig;
-		QMap<tlv::tag_t, int> m_tags2columns;
 		ThreadSpecific m_tls;
 
 		unsigned long long m_time_ref_value;
@@ -302,13 +311,13 @@ namespace logs {
 		QItemSelectionModel * m_kfind_proxy_selection;
 		QStandardItemModel * m_color_regex_model;
 		FindWidget * m_find_widget;
+		ColorizeWidget * m_colorize_widget;
 		QAction * m_window_action;
 
 		LogWidget * m_linked_parent; // @TODO: move to LogWidgetWithButtons
 		typedef std::vector<DockedWidgetBase *> linked_widgets_t;
 		linked_widgets_t m_linked_widgets;
 
-		QString m_csv_separator;
 		QTextStream * m_file_csv_stream;
 	};
 }

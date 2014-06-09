@@ -5,6 +5,10 @@
 
 namespace logs {
 
+	LogDelegate::LogDelegate (LogWidget & lw, AppData const & ad, QObject * parent)
+		: QStyledItemDelegate(parent), m_log_widget(lw), m_app_data(ad)
+	{ }
+
 	void LogDelegate::paintContext (QPainter * painter, QStyleOptionViewItemV4 & option4, QModelIndex const & index) const
 	{
 		QVariant const value = index.data(Qt::DisplayRole);
@@ -33,7 +37,7 @@ namespace logs {
 			long long const ref_dt = value.toString().toULongLong() - ref_value;
 
 			option4.text.clear();
-			if (m_log_widget.config().m_dt_enabled)
+			/*if (m_log_widget.config().m_dt_enabled)
 			{
 				if (ref_dt >= 0)
 				{
@@ -65,7 +69,7 @@ namespace logs {
 					}
 				}
 			}
-			else
+			else*/
 			{
 				if (ref_dt >= 0)
 					option4.text = tr("%1").arg(ref_dt);
@@ -142,7 +146,6 @@ namespace logs {
 			E_Align const align = stringToAlign(column_aligns[index.column()].at(0).toLatin1());
 			option4.displayAlignment = static_cast<Qt::Alignment>(1 << align);
 		}
-
 		std::vector<QString> const & column_elides = m_log_widget.config().m_columns_elide;
 		if (index.column() < column_elides.size())
 		{
@@ -150,34 +153,39 @@ namespace logs {
 			option4.textElideMode = static_cast<Qt::TextElideMode>(elide);
 		}
 
-		LogWidget & lw = const_cast<LogWidget &>(m_log_widget); // hm
-
-		if (m_log_widget.config().m_cut_path && index.column() == lw.findColumn4Tag(tlv::tag_file))
+		int const tag = m_log_widget.column2Tag(index.column());
+		if (tag < tlv::tag_max_value)
 		{
-			int level = m_log_widget.config().m_cut_path_level;
-			paintTokenized(painter, option4, index, QString("[:/\\\\]"), "/", level);
-		}
-		else if (m_log_widget.config().m_cut_namespaces && index.column() == lw.findColumn4Tag(tlv::tag_func))
-		{
-			int level = m_log_widget.config().m_cut_namespaces;
-			paintTokenized(painter, option4, index, QString("[::]"), "::", level);
-		}
-		else if (m_app_data.getDictCtx().m_names.size() && index.column() == lw.findColumn4Tag(tlv::tag_ctx))
-		{
-			paintContext(painter, option4, index);
-		}
-		else if (index.column() == lw.findColumn4Tag(tlv::tag_ctime))
-		{
-			paintTime(painter, option4, index);
-		}
-		else if (index.column() == lw.findColumn4Tag(tlv::tag_stime))
-		{
-			paintTime(painter, option4, index);
+			switch (tag)
+			{
+				case tlv::tag_file:
+					paintTokenized(painter, option4, index, QString("[:/\\\\]"), "/", m_log_widget.config().m_cut_path_level);
+					break;
+				case tlv::tag_func:
+					paintTokenized(painter, option4, index, QString("[::]"), "::",  m_log_widget.config().m_cut_namespaces);
+					break;
+				case tlv::tag_ctx:
+					if (m_app_data.getDictCtx().m_names.size())
+						paintContext(painter, option4, index);
+					else
+						QStyledItemDelegate::paint(painter, option4, index); // no dictionnary
+					break;
+				case tlv::tag_ctime:
+				case tlv::tag_stime:
+					paintTime(painter, option4, index);
+					break;
+				
+				default:
+					QStyledItemDelegate::paint(painter, option4, index);
+					break;
+			}
 		}
 		else
 		{
+			// user tags
 			QStyledItemDelegate::paint(painter, option4, index);
 		}
+
 		painter->restore();
 	}
 }

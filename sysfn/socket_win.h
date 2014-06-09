@@ -53,22 +53,27 @@ namespace sys { namespace socks {
 		}
 
 		// attempt to connect to an address until one succeeded
-		for (addrinfo * ptr = result; ptr != NULL ; ptr = ptr->ai_next) {
+		for (addrinfo * ptr = result; ptr != NULL ; ptr = ptr->ai_next)
+		{
 			// create a SOCKET for connecting to server
-			handle = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-			if (handle == INVALID_SOCKET) {
+			socket_t new_handle = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+			if (new_handle == INVALID_SOCKET)
+			{
 				DBG_OUT("socket failed with error: %ld\n", get_errno());
 				WSACleanup();
 				return;
 			}
 
-			// Connect to server.
-			int const connect_result = connect(handle, ptr->ai_addr, (int)ptr->ai_addrlen);
-			if (connect_result == SOCKET_ERROR) {
-				closesocket(handle);
-				handle = INVALID_SOCKET;
-				continue;
+			// Try connect to server...
+			int const connect_result = connect(new_handle, ptr->ai_addr, (int)ptr->ai_addrlen);
+			if (connect_result == SOCKET_ERROR)
+			{
+				closesocket(new_handle);
+				new_handle = INVALID_SOCKET;
+				continue; // ... nope
 			}
+
+			handle = new_handle; // ...connected
 			break;
 		}
 

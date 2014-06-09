@@ -22,11 +22,11 @@ important files to check for paths, existence etc are:
 
 having already bjam.exe simply invoke it in cat_server directory, like:
 
-	/c/devel/flogging/cat_server $ bjam.exe release
+	/c/devel/dbgtoolkit/cat_server $ bjam.exe release
 
 or
 
-	/c/devel/flogging/cat_server $ bjam.exe
+	/c/devel/dbgtoolkit/cat_server $ bjam.exe
 
 for debug build.
 

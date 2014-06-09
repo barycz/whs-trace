@@ -39,12 +39,12 @@ endif()
 set(BOOST_LIBS thread date_time system regex)
 find_package(Boost COMPONENTS ${BOOST_LIBS} REQUIRED)
 
-find_package (Flogging REQUIRED)
+find_package (DbgToolkit REQUIRED)
 message ("Current dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-message ("Flog includes: ${FLOGGING_INCLUDE_DIRS}")
-message ("Flog srcs: ${FLOGGING_SOURCE_DIRS}")
+message ("DbgToolkit includes: ${DBGTOOLKIT_INCLUDE_DIRS}")
+message ("DbgToolkit srcs: ${DBGTOOLKIT_SOURCE_DIRS}")
 
-include_directories (${FLOGGING_INCLUDE_DIRS})
+include_directories (${DBGTOOLKIT_INCLUDE_DIRS})
 
 set(profile_server_SOURCES
 	main.cpp
@@ -119,7 +119,7 @@ message("Generated files profile_server_UI_SRCS ${profile_server_UI_SRCS}")
 message("Generated files profile_server_RESOURCES_RCC ${profile_server_RESOURCES_RCC}")
 message("Generated files profile_server_SOURCES ${profile_server_SOURCES}")
 
-#add_library (fprof_client_lib STATIC "${FLOGGING_SOURCE_DIRS}/trace_client/profile.cpp")
+#add_library (fprof_client_lib STATIC "${DBGTOOLKIT_SOURCE_DIRS}/trace_client/profile.cpp")
 
 add_executable(profile_server WIN32
 		${profile_server_MOC}

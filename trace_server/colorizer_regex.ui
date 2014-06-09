@@ -50,8 +50,17 @@
          <property name="minimumSize">
           <size>
            <width>150</width>
-           <height>0</height>
+           <height>19</height>
           </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Colorized regular expression</string>
          </property>
          <property name="editable">
           <bool>true</bool>
@@ -69,6 +78,9 @@
            <height>24</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selects foreground color&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>fg</string>
          </property>
@@ -81,6 +93,9 @@
            <width>48</width>
            <height>24</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>Select background color</string>
          </property>
          <property name="text">
           <string>bg</string>
@@ -95,6 +110,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>Add item to colorizer</string>
+         </property>
          <property name="text">
           <string>+</string>
          </property>
@@ -107,6 +125,9 @@
            <width>15</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>Remove item from colorizer</string>
          </property>
          <property name="text">
           <string>-</string>

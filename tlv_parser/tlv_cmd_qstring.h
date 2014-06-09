@@ -35,6 +35,7 @@ namespace tlv {
 		QString			  m_val;	// payload
 
 		TV (tag_t t, char const * v) : m_tag(t) , m_val(v) { }
+		TV (tag_t t, QString const & v) : m_tag(t) , m_val(v) { }
 		TV () : m_tag(0) , m_val() { }
 		len_t len () const { return static_cast<len_t>(m_val.length()); }
 	};

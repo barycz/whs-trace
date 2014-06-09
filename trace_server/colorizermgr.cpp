@@ -57,7 +57,7 @@ FilterBase * ColorizerMgr::filterFactory (E_FilterType t, QWidget * parent)
 	{
 		case e_Colorizer_Mgr: return new ColorizerMgr (parent);
 		//case e_Colorizer_Script: return new ColorizerScript (parent);
-		//case e_Colorizer_String: return new ColorizerString (parent);
+		case e_Colorizer_String: return new ColorizerString (parent);
 		case e_Colorizer_Regex: return new ColorizerRegex (parent);
 		//case e_Colorizer_Ctx: return new ColorizerCtx (parent);
 		//case e_Colorizer_Lvl: return new ColorizerLvl (parent);
@@ -86,7 +86,7 @@ void ColorizerMgr::defaultConfig ()
 {
 	m_filter_order.clear();
 	// @TODO clear others? probably no
-	//m_filter_order.push_back(g_filterNames[e_Colorizer_String]);
+	m_filter_order.push_back(g_filterNames[e_Colorizer_String]);
 	//m_filter_order.push_back(g_filterNames[e_Colorizer_Ctx]);
 	//m_filter_order.push_back(g_filterNames[e_Colorizer_Lvl]);
 	//m_filter_order.push_back(g_filterNames[e_Colorizer_FileLine]);

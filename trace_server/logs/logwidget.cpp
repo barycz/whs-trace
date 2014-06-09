@@ -16,6 +16,7 @@
 #include <controlbarlog.h>
 #include <ui_controlbarlog.h>
 #include "mainwindow.h"
+#include "colorizewidget.h"
 
 namespace logs {
 
@@ -25,6 +26,7 @@ namespace logs {
 		, m_tableview(0)
 		, m_cacheLayout(new ButtonCache)
 		, m_gotoPrevErrButton(0) , m_gotoNextErrButton(0) , m_gotoPrevWarnButton(0) , m_gotoNextWarnButton(0)
+		, m_openFileLineButton(0)
 		, m_excludeFileButton(0) , m_excludeFileLineButton(0) , m_excludeRowButton(0) , m_locateRowButton(0)
 		, m_clrDataButton(0) , m_setRefTimeButton(0) , m_hidePrevButton(0) , m_hideNextButton(0)
 		, m_colorRowButton(0) , m_colorFileLineButton(0) , m_uncolorRowButton(0) , m_gotoPrevColorButton(0) , m_gotoNextColorButton(0)
@@ -35,7 +37,6 @@ namespace logs {
 		, m_warnimage(0)
 		, m_filter_state()
 		, m_tagconfig()
-		, m_tags2columns()
 		, m_tls()
 		, m_time_ref_value(0)
 		, m_proxy_model(0)
@@ -50,9 +51,9 @@ namespace logs {
 		, m_kfind_proxy_selection(0)
 		, m_color_regex_model(0)
 		, m_find_widget(0)
+		, m_colorize_widget(0)
 		, m_window_action(0)
 		, m_linked_parent(0)
-		, m_csv_separator()
 		, m_file_csv_stream(0)
 		//, m_file_tlv_stream(0)
 	{
@@ -91,8 +92,8 @@ namespace logs {
 
 		QStyle const * const style = QApplication::style();
 		m_config_ui.ui()->findWidget->setMainWindow(m_connection->getMainWindow());
-		connect(m_config_ui.ui()->gotoNextButton, SIGNAL(clicked()), this, SLOT(onNextToView()));
-		m_config_ui.ui()->gotoNextButton->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
+		//connect(m_config_ui.ui()->gotoNextButton, SIGNAL(clicked()), this, SLOT(onNextToView()));
+		//m_config_ui.ui()->gotoNextButton->setIcon(style->standardIcon(QStyle::SP_ArrowDown));
 		connect(m_config_ui.ui()->saveButton, SIGNAL(clicked()), this, SLOT(onSaveButton()));
 		//connect(ui->autoScrollCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onAutoScrollStateChanged(int)));
 		//connect(ui->inViewCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onInViewStateChanged(int)));
@@ -108,6 +109,9 @@ namespace logs {
 		m_find_widget = new FindWidget(m_connection->getMainWindow(), this);
 		m_find_widget->setActionAbleWidget(this);
 		m_find_widget->setParent(m_tableview);
+		m_colorize_widget = new ColorizeWidget(m_connection->getMainWindow(), this);
+		m_colorize_widget->setActionAbleWidget(this);
+		m_colorize_widget->setParent(m_tableview);
 
 		m_window_action = new QAction("Tool widget for " + joinedPath(), this);
 		connect(m_window_action, SIGNAL(triggered()), this, SLOT(onWindowActionTriggered()));
@@ -151,6 +155,16 @@ namespace logs {
 		m_gotoNextWarnButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		m_gotoNextWarnButton->setArrowType(Qt::DownArrow);
 		cacheLayout->addWidget(m_gotoNextWarnButton);
+
+		m_openFileLineButton = new QToolButton(parent_widget);
+		m_openFileLineButton->setObjectName(QStringLiteral("openFileLineButton"));
+		m_openFileLineButton->setMaximumSize(QSize(16777215, 16));
+		m_openFileLineButton->setCheckable(false);
+		//m_openFileLineButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		//m_openFileLineButton->setArrowType(Qt::DownArrow);
+		QIcon icon(":images/open_file.png");
+		m_openFileLineButton->setIcon(icon);
+		cacheLayout->addWidget(m_openFileLineButton);
 
 		QFrame * line4 = new QFrame(parent_widget);
 		line4->setObjectName(QStringLiteral("line4"));
@@ -323,6 +337,7 @@ namespace logs {
 		connect(m_gotoNextErrButton, SIGNAL(clicked()), this, SLOT(onGotoNextErr()));
 		connect(m_gotoPrevWarnButton, SIGNAL(clicked()), this, SLOT(onGotoPrevWarn()));
 		connect(m_gotoNextWarnButton, SIGNAL(clicked()), this, SLOT(onGotoNextWarn()));
+		connect(m_openFileLineButton, SIGNAL(clicked()), this, SLOT(onOpenFileLine()));
 		connect(m_excludeFileButton, SIGNAL(clicked()), this, SLOT(onExcludeFile()));
 		connect(m_excludeFileLineButton, SIGNAL(clicked()), this, SLOT(onExcludeFileLine()));
 		connect(m_excludeRowButton, SIGNAL(clicked()), this, SLOT(onExcludeRow()));
@@ -353,6 +368,24 @@ namespace logs {
 			current = m_proxy_model->mapToSource(current);
 		}
 		return current;
+	}
+
+	QModelIndex LogWidget::mapToSourceIndexIfProxy (QModelIndex const & idx) const
+	{
+		if (m_tableview->model() == m_src_model)
+			return idx;
+
+		if (m_tableview->model() == logProxy())
+		{
+			QModelIndex const src = m_proxy_model->mapToSource(idx);
+			return src;
+		}
+		if (m_tableview->model() == findProxy())
+		{
+			QModelIndex const src = m_find_proxy_model->mapToSource(idx);
+			return src;
+		}
+		return QModelIndex();
 	}
 
 	void LogWidget::setupRefsProxyModel (LogTableModel * linked_model, BaseProxyModel * linked_proxy)
@@ -557,11 +590,14 @@ namespace logs {
 		if (filterMgr()->getFilterCtx())
 			filterMgr()->getFilterCtx()->setAppData(&m_connection->appData());
 
+    if (colorizerMgr()->getColorizerString())
+      colorizerMgr()->getColorizerString()->setSrcModel(m_src_model);
 		if (colorizerMgr()->getColorizerRegex())
 			colorizerMgr()->getColorizerRegex()->setSrcModel(m_src_model);
-
 		if (colorizerMgr()->getColorizerRow())
 			colorizerMgr()->getColorizerRow()->setSrcModel(m_src_model);
+
+		setConfigValuesToUI(m_config);
 
 		//if (colorizerMgr()->getFilterCtx())
 		//	colorizerMgr()->getFilterCtx()->setAppData(&m_connection->appData());
@@ -624,21 +660,25 @@ namespace logs {
 	{
 		//qDebug("%s this=0x%08x", __FUNCTION__, this);
 		Ui::SettingsLog * ui = m_config_ui.ui();
-		ui->dtCheckBox->setCheckState(cfg.m_dt_enabled ? Qt::Checked : Qt::Unchecked);
+		//ui->dtCheckBox->setCheckState(cfg.m_dt_enabled ? Qt::Checked : Qt::Unchecked);
 		ui->autoScrollCheckBox->setCheckState(cfg.m_auto_scroll ? Qt::Checked : Qt::Unchecked);
-		
-		//ui->globalShowCheckBox->blockSignals(true);
-		//ui->globalShowCheckBox->setCheckState(cfg.m_show ? Qt::Checked : Qt::Unchecked);
-		//ui->globalShowCheckBox->blockSignals(false);
+		ui->groupingWidget->setCurrentIndex(m_config.m_curr_tooltab);
 
-		//ui->logViewComboBox->clear();
-		/*for (size_t i = 0, ie = cfg.m_gvcfg.size(); i < ie; ++i)
-		{
-			LogViewConfig const & gvcfg = cfg.m_gvcfg[i];
-			ui->logViewComboBox->addItem(gvcfg.m_tag);
-		}
-		if (cfg.m_gvcfg.size())
-			setViewConfigValuesToUI(cfg.m_gvcfg[0]);*/
+		// TODO: block signals
+		//bool const old = m_table_view_widget->blockSignals(true);
+		//m_table_view_widget->blockSignals(old);
+		ui->autoScrollCheckBox->setChecked(cfg.m_auto_scroll);
+		ui->cutNamespaceCheckBox->setChecked(m_config.m_cut_namespaces);
+		ui->cutNamespaceSpinBox->setValue(m_config.m_cut_namespace_level);
+		ui->cutPathCheckBox->setChecked(m_config.m_cut_path);
+		ui->cutPathSpinBox->setValue(m_config.m_cut_path_level);
+		ui->indentCheckBox->setChecked(m_config.m_indent);
+		ui->indentSpinBox->setValue(m_config.m_indent_level);
+		ui->scopesCheckBox->setChecked(m_config.m_scopes);
+		//ui->tableFontComboBox->
+		//ui->tableFontToolButton->
+		ui->tableRowSizeSpinBox->setValue(m_config.m_row_width);
+		ui->timeComboBox->comboBox()->setCurrentIndex(ui->timeComboBox->comboBox()->findText(m_config.m_time_units_str));
 	}
 
 	void LogWidget::setUIValuesToConfig (LogConfig & cfg)
@@ -646,6 +686,20 @@ namespace logs {
 		//qDebug("%s this=0x%08x", __FUNCTION__, this);
 		Ui::SettingsLog * ui = m_config_ui.ui();
 		//m_config.m_show = ui->globalShowCheckBox->checkState() == Qt::Checked;
+		cfg.m_curr_tooltab = ui->groupingWidget->currentIndex();
+
+		cfg.m_auto_scroll = ui->autoScrollCheckBox->isChecked();
+		m_config.m_cut_namespaces = ui->cutNamespaceCheckBox->isChecked();
+		m_config.m_cut_namespace_level = ui->cutNamespaceSpinBox->value();
+		m_config.m_cut_path = ui->cutPathCheckBox->isChecked();
+		m_config.m_cut_path_level = ui->cutPathSpinBox->value();
+		m_config.m_indent = ui->indentCheckBox->isChecked();
+		m_config.m_indent_level = ui->indentSpinBox->value();
+		m_config.m_scopes = ui->scopesCheckBox->isChecked();
+		//ui->tableFontComboBox->
+		//ui->tableFontToolButton->
+		m_config.m_row_width = ui->tableRowSizeSpinBox->value();
+		m_config.m_time_units_str = ui->timeComboBox->comboBox()->currentText();
 	}
 
 	void LogWidget::onApplyButton ()
@@ -691,10 +745,19 @@ namespace logs {
 	}
 	void LogWidget::defaultConfigFor (logs::LogConfig & config)
 	{
-		QString const & appname = m_connection->getAppName();
-		if (!validateConfig(config))
-			reconfigureConfig(config);
+		if (m_connection->protocol() == e_Proto_TLV)
+		{
+			QString const & appname = m_connection->getAppName();
+			if (!validateConfig(config))
+				reconfigureConfig(config);
+		}
+		else if (m_connection->protocol() == e_Proto_CSV)
+		{
+		}
 	}
+
+	E_SrcProtocol LogWidget::protocol () const { return m_connection->protocol(); }
+	int LogWidget::column2Tag (int col) const { return (m_src_model) ? m_src_model->column2Tag(col) : -1; }
 
 	void LogWidget::loadConfig (QString const & preset_dir)
 	{
@@ -715,6 +778,8 @@ namespace logs {
 		QString const logpath = getCurrentWidgetPath();
 		m_config.m_find_config.clear();
 		loadConfigTemplate(m_config.m_find_config, logpath + "/" + g_findTag);
+		m_config.m_colorize_config.clear();
+		loadConfigTemplate(m_config.m_colorize_config, logpath + "/" + g_colorizeTag);
 		filterMgr()->loadConfig(logpath);
 		colorizerMgr()->loadConfig(logpath);
 	}
@@ -722,6 +787,7 @@ namespace logs {
 	{
 		QString const logpath = getCurrentWidgetPath();
 		saveConfigTemplate(m_config.m_find_config, logpath + "/" + g_findTag);
+		saveConfigTemplate(m_config.m_colorize_config, logpath + "/" + g_colorizeTag);
 		filterMgr()->saveConfig(logpath);
 		colorizerMgr()->saveConfig(logpath);
 	}
@@ -729,6 +795,11 @@ namespace logs {
 	{
 		QString const logpath = getCurrentWidgetPath();
 		saveConfigTemplate(m_config.m_find_config, logpath + "/" + g_findTag);
+	}
+	void LogWidget::saveColorizeConfig ()
+	{
+		QString const logpath = getCurrentWidgetPath();
+		saveConfigTemplate(m_config.m_colorize_config, logpath + "/" + g_colorizeTag);
 	}
 
 	void LogWidget::normalizeConfig (logs::LogConfig & normalized)
@@ -767,6 +838,7 @@ namespace logs {
 	{
 		QString const logpath = getCurrentWidgetPath();
 		mkPath(logpath);
+		setUIValuesToConfig(m_config);
 
 		logs::LogConfig tmp = m_config;
 		normalizeConfig(tmp);
@@ -901,12 +973,12 @@ void LogWidget::onDumpFilters ()
 	*/
 }
 
-DecodedCommand const * LogWidget::getDecodedCommand (QModelIndex const & row_index)
+DecodedCommand const * LogWidget::getDecodedCommand (QModelIndex const & row_index) const
 {
 	return getDecodedCommand(row_index.row());
 }
 
-DecodedCommand const * LogWidget::getDecodedCommand (int row)
+DecodedCommand const * LogWidget::getDecodedCommand (int row) const
 {
 	if (row >= 0 && row < m_src_model->dcmds().size())
 		return &m_src_model->dcmds()[row];
@@ -968,7 +1040,6 @@ void LogWidget::reloadModelAccordingTo (LogConfig & config)
 	m_config.m_columns_elide = config.m_columns_elide;
 	m_src_model->clearModel();
 	m_proxy_model->clearModel();
-	m_tags2columns.clear();
 	m_src_model->reloadModelAccordingTo(config);
 	resizeSections();
 }
@@ -1084,48 +1155,6 @@ LogTableModel * LogWidget::cloneToNewModel (LogWidget * parent, FindConfig const
 }
 
 */
-
-int LogWidget::findColumn4TagCst (tlv::tag_t tag) const
-{
-	QMap<tlv::tag_t, int>::const_iterator it = m_tags2columns.find(tag);
-	if (it != m_tags2columns.end())
-		return it.value();
-	return -1;
-}
-
-int LogWidget::findColumn4Tag (tlv::tag_t tag)
-{
-	QMap<tlv::tag_t, int>::const_iterator it = m_tags2columns.find(tag);
-	if (it != m_tags2columns.end())
-		return it.value();
-
-	char const * name = tlv::get_tag_name(tag);
-	QString const qname = QString(name);
-	for (size_t i = 0, ie = m_config.m_columns_setup.size(); i < ie; ++i)
-		if (m_config.m_columns_setup[i] == qname)
-		{
-			m_tags2columns.insert(tag, static_cast<int>(i));
-			return static_cast<int>(i);
-		}
-	return -1;
-}
-
-int LogWidget::appendColumn (tlv::tag_t tag)
-{
-	TagDesc const & desc = m_tagconfig.findOrCreateTag(tag);
-
-	m_config.m_columns_setup.push_back(desc.m_tag_str);
-	m_config.m_columns_align.push_back(desc.m_align_str);
-	m_config.m_columns_elide.push_back(desc.m_elide_str);
-	m_config.m_columns_sizes.push_back(desc.m_size);
-
-	//qDebug("inserting column and size. tmpl_sz=%u curr_sz=%u sizes_sz=%u", m_columns_setup_template->size(), m_columns_setup_current->size(), m_columns_sizes->size());
-
-	int const column_index = static_cast<int>(m_config.m_columns_setup.size()) - 1;
-	m_tags2columns.insert(tag, column_index);
-
-	return column_index;
-}
 
 inline void simplify_keep_indent (QString const & src, QString & indent, QString & dst)
 {

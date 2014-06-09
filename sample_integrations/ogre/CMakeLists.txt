@@ -18,20 +18,20 @@ cmake_minimum_required(VERSION 2.6)
 set (CMAKE_VERBOSE_MAKEFILE on)
 project(OgreApp)
 
-# include flogging package first and build a new library with user specific
+# include DbgToolkit package first and build a new library with user specific
 # files such as wh_config.h, wh_levels.h and wh_contexts.h
-set (CMAKE_MODULE_PATH "c:/devel/flogging;${CMAKE_MODULE_PATH}")
-find_package (Flogging REQUIRED)
+set (CMAKE_MODULE_PATH "c:/devel/DbgToolkit;${CMAKE_MODULE_PATH}")
+find_package (DbgToolkit REQUIRED)
 message ("Current dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-message ("Flog includes: ${FLOGGING_INCLUDE_DIRS}")
-message ("Flog srcs: ${FLOGGING_SOURCE_DIRS}")
+message ("DbgToolkit includes: ${DBGTOOLKIT_INCLUDE_DIRS}")
+message ("DbgToolkit srcs: ${DBGTOOLKIT_SOURCE_DIRS}")
 #add_definitions ("-DTRACE_CONFIG_INCLUDE=\"${CMAKE_CURRENT_SOURCE_DIR}/wh_config.h\"")
 #add_definitions ("-DTRACE_LEVELS_INCLUDE=\"${CMAKE_CURRENT_SOURCE_DIR}/wh_levels.h\"")
 add_definitions ("-DTRACE_CONTEXTS_INCLUDE=\"${CMAKE_CURRENT_SOURCE_DIR}/app_contexts.h\"")
 add_definitions ("-DTRACE_ENABLED")
 add_definitions ("-DTRACE_STATIC")
-include_directories (${FLOGGING_INCLUDE_DIRS})
-add_library (flog_client_lib STATIC "${FLOGGING_SOURCE_DIRS}/trace_client/trace.cpp")
+include_directories (${DBGTOOLKIT_INCLUDE_DIRS})
+add_library (trace_client_lib STATIC "${DBGTOOLKIT_SOURCE_DIRS}/trace_client/trace.cpp")
 
 
 if(WIN32)
@@ -129,7 +129,7 @@ add_executable(OgreApp WIN32 ${HDRS} ${SRCS})
  
 set_target_properties(OgreApp PROPERTIES DEBUG_POSTFIX _d)
  
-target_link_libraries(OgreApp ${OGRE_LIBRARIES} ${OIS_LIBRARIES} flog_client_lib)
+target_link_libraries(OgreApp ${OGRE_LIBRARIES} ${OIS_LIBRARIES} trace:w_client_lib)
  
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)

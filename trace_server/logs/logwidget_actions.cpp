@@ -2,6 +2,7 @@
 #include "filterproxymodel.h"
 #include "connection.h"
 #include "mainwindow.h"
+#include "utils_openfilelinewith.h"
 
 namespace logs {
 
@@ -40,6 +41,21 @@ bool LogWidget::handleAction (Action * a, E_ActionHandleType sync)
 				return true;
 			}
 		}
+		case e_Colorize:
+		{
+			if (a->m_args.size() > 0)
+			{
+				if (a->m_args.at(0).canConvert<ColorizeConfig>())
+				{
+					ColorizeConfig const cc = a->m_args.at(0).value<ColorizeConfig>();
+					handleColorizeAction(cc);
+					m_config.m_colorize_config = cc;
+					// m_config.save
+				}
+				return true;
+			}
+		}
+
 		default:
 			return false;
 	}
@@ -50,13 +66,13 @@ void LogWidget::onTableClicked (QModelIndex const & row_index)
 {
 	autoScrollOff();
 
-	QModelIndex const current = currentSourceIndex();
-	if (!current.isValid())
+	QModelIndex const curr_src_idx = currentSourceIndex();
+	if (!curr_src_idx.isValid())
 		return;
 
 	bool const scroll_to_item = false;
 	bool const expand = false;
-	findTableIndexInFilters(current, scroll_to_item, expand);
+	findTableIndexInFilters(curr_src_idx, scroll_to_item, expand);
 }
 
 void LogWidget::onTableFontToolButton ()
@@ -121,13 +137,13 @@ void LogWidget::findTableIndexInFilters (QModelIndex const & src_idx, bool scrol
 
 void LogWidget::colorRow (int)
 {
-	QModelIndex current = currentSourceIndex();
+	QModelIndex curr_src_idx = currentSourceIndex();
 
-	int const row = current.row(); // set search from this line
-	if (current.isValid())
+	int const row = curr_src_idx.row(); // set search from this line
+	if (curr_src_idx.isValid())
 	{
-		qDebug("Color tag on row=%i", current.row());
-		addColorTagRow(current.row());
+		qDebug("Color tag on row=%i", curr_src_idx.row());
+		addColorTagRow(curr_src_idx.row());
 		onInvalidateFilter();
 	}
 }
@@ -285,16 +301,16 @@ void LogWidget::onExcludeRow ()
 }
 void LogWidget::onLocateRow ()
 {
-	QModelIndex current = currentSourceIndex();
+	QModelIndex curr_src_idx = currentSourceIndex();
 
-	if (!current.isValid())
+	if (!curr_src_idx.isValid())
 		return;
 
 	bool const scroll_to_item = true;
 	bool const expand = true;
-	findTableIndexInFilters(current, scroll_to_item, expand);
+	findTableIndexInFilters(curr_src_idx, scroll_to_item, expand);
 	filterMgr()->focusToFilter(e_Filter_FileLine);
-	m_config_ui.ui()->stackedWidget->setCurrentWidget(m_config_ui.ui()->filtersPage);
+	m_config_ui.ui()->groupingWidget->setCurrentWidget(m_config_ui.ui()->filtersPage);
 	// @TODO: locate in colorizer row
 }
 void LogWidget::onColorFileLine ()
@@ -306,13 +322,13 @@ void LogWidget::onColorRow ()
 }
 void LogWidget::onUncolorRow ()
 {
-	QModelIndex current = currentSourceIndex();
+	QModelIndex curr_src_idx = currentSourceIndex();
 
-	int const row = current.row(); // set search from this line
-	if (current.isValid())
+	int const row = curr_src_idx.row(); // set search from this line
+	if (curr_src_idx.isValid())
 	{
-		qDebug("uncolor tag on row=%i", current.row());
-		removeColorTagRow(current.row());
+		qDebug("uncolor tag on row=%i", curr_src_idx.row());
+		removeColorTagRow(curr_src_idx.row());
 		onInvalidateFilter();
 	}
 }
@@ -330,10 +346,10 @@ void LogWidget::onSetRefTime ()
 {
 	if (m_setRefTimeButton->isChecked())
 	{
-		QModelIndex const current = currentSourceIndex();
-		if (current.isValid())
+		QModelIndex const curr_src_idx = currentSourceIndex();
+		if (curr_src_idx.isValid())
 		{
-			QString const & strtime = findString4Tag(tlv::tag_ctime, current);
+			QString const & strtime = findString4Tag(tlv::tag_ctime, curr_src_idx);
 			setTimeRefValue(strtime.toULongLong());
 			onInvalidateFilter();
 		}
@@ -406,12 +422,12 @@ void LogWidget::onHidePrev ()
 {
 	bool const checked = m_hidePrevButton->isChecked();
 
-	QModelIndex current = currentSourceIndex();
+	QModelIndex curr_src_idx = currentSourceIndex();
 
-	if (!current.isValid())
+	if (!curr_src_idx.isValid())
 		return;
 
-	QString const & strtime = findString4Tag(tlv::tag_ctime, current);
+	QString const & strtime = findString4Tag(tlv::tag_ctime, curr_src_idx);
 
 	filterMgr()->mkFilter(e_Filter_Time);
 
@@ -426,12 +442,12 @@ void LogWidget::onHideNext () //@TODO: dedup
 {
 	bool const checked = m_hidePrevButton->isChecked();
 
-	QModelIndex current = currentSourceIndex();
+	QModelIndex curr_src_idx = currentSourceIndex();
 
-	if (!current.isValid())
+	if (!curr_src_idx.isValid())
 		return;
 
-	QString const & strtime = findString4Tag(tlv::tag_ctime, current);
+	QString const & strtime = findString4Tag(tlv::tag_ctime, curr_src_idx);
 
 	filterMgr()->mkFilter(e_Filter_Time);
 
@@ -541,6 +557,23 @@ void LogWidget::onTableDoubleClicked (QModelIndex const & row_index)
 			m_session_state.appendCollapsedBlock(tid, from, to, file, line);
 		onInvalidateFilter();
 	}*/
+}
+
+void LogWidget::onOpenFileLine ()
+{
+	QModelIndex const curr_src_idx = currentSourceIndex();
+	if (!curr_src_idx.isValid())
+		return;
+
+	DecodedCommand const * dcmd = getDecodedCommand(curr_src_idx);
+	if (dcmd)
+	{
+		QString file, line;
+		if (dcmd->getString(tlv::tag_file, file) && dcmd->getString(tlv::tag_line, line))
+		{
+			openFileLineWith(m_config_ui.ui()->openFileWithComboBox->currentText(), file, line);
+		}
+	}
 }
 
 }

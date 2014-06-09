@@ -9,6 +9,7 @@ char const * g_presetLayoutName		= "layout";
 char const * g_filterTag			= "filter";
 char const * g_colorizerTag			= "colorizer";
 char const * g_findTag				= "find";
+char const * g_colorizeTag			= "colorize";
 char const * g_MainLogName			= "main_log";
 char const * g_dockManagerTag		= "dockmgr";
 char const * g_MainConfigTag		= "config";

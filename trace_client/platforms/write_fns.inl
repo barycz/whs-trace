@@ -23,7 +23,11 @@ namespace trace {
 	// setup and utils
 	inline void SetCustomUserDictionnary (CtxDictPair const * ptr, size_t n)
 	{
-		ENCODE_BODY(encode_ctx_dict(msg, ptr, n));
+		ENCODE_BODY(encode_dict(msg, tlv::cmd_dict_ctx, ptr, n));
+	}
+	inline void SetCustomUserDictionnary (LvlDictPair const * ptr, size_t n)
+	{
+		ENCODE_BODY(encode_dict(msg, tlv::cmd_dict_lvl, ptr, n));
 	}
 	inline void ExportToCSV (char const * file)
 	{
@@ -133,6 +137,7 @@ namespace trace {
 	{
 		ENCODE_BODY(encode_gantt_clear(msg, level, context, fmt, args));
 	}
-
 }
+
+#undef ENCODE_BODY
 

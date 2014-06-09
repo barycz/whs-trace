@@ -12,7 +12,7 @@ namespace trace {
 	void create_log_filename (char * filename, size_t buff_sz)
 	{
 		char const * app_name = GetAppName() ? GetAppName() : "unknown";
-		_snprintf_s(filename, buff_sz, buff_sz - 1, "%s_%u.tlv_trace", app_name, ::GetCurrentProcessId());
+		_snprintf_s(filename, buff_sz, buff_sz - 1, "%s_%u.trace", app_name, ::GetCurrentProcessId());
 	}
 
 	typedef sys::Message<1536> msg_t;

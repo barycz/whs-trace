@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(trace_server)
 set (CMAKE_VERBOSE_MAKEFILE on)
+
+# use this for develoment, if you do not pass it from command line:
+set(CMAKE_INSTALL_PREFIX "c:/_builds/trace_server/")
+message("trace_server install path=${CMAKE_INSTALL_PREFIX}")
+
+### directX
+if (WIN32)
+	include("${CMAKE_CURRENT_SOURCE_DIR}/FindDirectX.cmake")
+endif (WIN32)
+
+### Qt
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Network REQUIRED)
@@ -32,14 +43,7 @@ set(EXECUTABLE_OUTPUT_PATH
    "Single Directory for all Executables."
    )
 
-add_subdirectory("qwt")
-add_subdirectory("qtsln")
-
-add_definitions("-DTRACE_ENABLED")
-add_definitions("-DTRACE_STATIC")
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-
+### boost
 set(Boost_DEBUG 0)
 set(Boost_USE_STATIC_LIBS 1)
 find_package(Boost)
@@ -52,14 +56,30 @@ if (Boost_FOUND)
 endif()
 message("boost: ${Boost_LIBRARIES}")
 
+### version generator
+include("${CMAKE_SOURCE_DIR}/../build/version.cmake")
+add_custom_target(version_cpp ALL)
+add_custom_command(TARGET version_cpp COMMAND ${CMAKE_COMMAND}
+         -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+         -P ${CMAKE_SOURCE_DIR}/../build/version.cmake)
 
+### trace server files
+add_subdirectory("qwt")
+add_subdirectory("qtsln")
+
+add_definitions("-DTRACE_ENABLED")
+add_definitions("-DTRACE_STATIC")
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(trace_server_SOURCES
+  version.cpp
 	main.cpp
 	qt_plugins.cpp
 	mainwindow.cpp
 	mainwindow_presets.cpp
 	mainwindow_controlwidget.cpp
 	mainwindow_connection.cpp
+	mainwindow_csv.cpp
 	mainwindow_docking.cpp
 	mainwindow_find.cpp
 	tableview.cpp
@@ -68,7 +88,6 @@ set(trace_server_SOURCES
 	delegates.cpp
 	server.cpp
 	server_filtering.cpp
-	filterwidget.cpp
 	connection.cpp
 	connectionconfig.cpp
 	connection_stream.cpp
@@ -95,6 +114,7 @@ set(trace_server_SOURCES
 	controlbardockedwidgets.cpp
 	controlbarlog.cpp
 	basetablemodel.cpp
+	setupdialogcsv.cpp
 
 	filterbase.cpp
 	filtermgrbase.cpp
@@ -112,7 +132,7 @@ set(trace_server_SOURCES
 	#filter_dt.cpp
 	colorizermgr.cpp
 	#colorizer_script.cpp
-	#colorizer_string.cpp
+	colorizer_string.cpp
 	colorizer_regex.cpp
 	#colorizer_ctx.cpp
 	#colorizer_lvl.cpp
@@ -127,7 +147,9 @@ set(trace_server_SOURCES
 	colorizer_regex.cpp
 
 	findwidget.cpp
+	colorizewidget.cpp
 	findconfig.cpp
+	colorizeconfig.cpp
 
 	kde/kselectionproxymodel.cpp
 	kde/kmodelindexproxymapper.cpp
@@ -141,6 +163,7 @@ set(trace_server_SOURCES
 	logs/logselectionproxymodel.cpp
 	logs/logwidget.cpp
 	logs/logwidget_find.cpp
+	logs/logwidget_colorize.cpp
 	logs/logwidget_filtering.cpp
 	logs/logwidget_legacycfg.cpp
 	logs/logwidget_actions.cpp
@@ -178,6 +201,7 @@ set(trace_server_SOURCES
 	)
 
 set(trace_server_HEADERS
+  ../version.h
 	mainwindow.h
 	tableview.h
 	treeview.h
@@ -190,7 +214,6 @@ set(trace_server_HEADERS
 	../tlv_parser/tlv_decoder.h
 	../filters/nnode.hpp
 	../filters/file_filter.hpp
-	filterwidget.h
 	filterstate.h
 	delegates.h
 	rendezvous.h
@@ -216,8 +239,10 @@ set(trace_server_HEADERS
 	controlbardockedwidgets.h
 	controlbarlog.h
 	basetablemodel.h
+	setupdialogcsv.h
 
 	findwidget.h
+	colorizewidget.h
 	findconfig.h
 
 	filterbase.h
@@ -235,7 +260,7 @@ set(trace_server_HEADERS
 	#filter_function.h
 	#filter_dt.h
 	#colorizer_script.h
-	#colorizer_string.h
+	colorizer_string.h
 	colorizermgr.h
 	colorizer_regex.h
 	colorizer_row.h
@@ -299,10 +324,11 @@ set(trace_server_UI
 	controlbarcommon.ui
 	controlbardockedwidgets.ui
 	controlbarlog.ui
-	filterwidget.ui
 	findwidget.ui
+	colorizewidget.ui
 	combolist.ui
 	timecombobox.ui
+	setupdialogcsv.ui
 	settings.ui
 	settingslog.ui
 	settingsplot.ui
@@ -321,9 +347,16 @@ set(trace_server_UI
 	filter_time.ui
 	colorizer_regex.ui
 	colorizer_row.ui
+	colorizer_string.ui
 	)
 
 set(trace_server_RESOURCES resources.qrc)
+
+if (WIN32)
+	set(trace_server_WIN32_RESOURCES resources_win.rc)
+	set(CMAKE_RC_COMPILER_INIT windres)
+	enable_language(RC)
+endif (WIN32)
 
 qt5_wrap_ui(trace_server_UI_HDRS ${trace_server_UI})
 qt5_wrap_cpp(trace_server_MOC ${trace_server_HEADERS})
@@ -333,8 +366,18 @@ add_executable(trace_server WIN32
 		${trace_server_UI_HDRS}
 		${trace_server_UI_SRCS}
 		${trace_server_RESOURCES_RCC}
-		${trace_server_SOURCES})
+		${trace_server_SOURCES}
+		${trace_server_WIN32_RESOURCES}
+)
 
+####################### Platform specific ######################
+if (WIN32)
+	set (QT_USE_QTMAIN TRUE)
+	add_definitions(-DNOMINMAX)
+	add_definitions(-DWIN_LEAN_AND_MEAN)
+	target_link_libraries(trace_server Qt5::WinMain)
+endif (WIN32)
+####################### Platform specific ######################
 
 include_directories(${QT_USE_FILE} ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 add_definitions(${QT_DEFINITIONS})
@@ -346,15 +389,6 @@ add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_NO_DEBUG)
 add_definitions(-DQT_STATIC)
 add_definitions(-DSTATIC)
-
-####################### Platform specific ######################
-if (WIN32)
-	set (QT_USE_QTMAIN TRUE)
-	add_definitions(-DNOMINMAX)
-	add_definitions(-DWIN_LEAN_AND_MEAN)
-	target_link_libraries(trace_server Qt5::WinMain)
-endif (WIN32)
-####################### Platform specific ######################
 
 
 ######################## Plugin section ########################
@@ -374,10 +408,11 @@ if (WIN32)
 	FIND_PLUGINS(QTRANS_COMMON NAMES translator_common      DEFAULT_SUFFIXES PATHS ${QT_LIB_PATH})
 	FIND_PLUGINS(QTRANS_HLSL   NAMES translator_hlsl        DEFAULT_SUFFIXES PATHS ${QT_LIB_PATH})
 	FIND_PLUGINS(QPREPROC      NAMES preprocessor           DEFAULT_SUFFIXES PATHS ${QT_LIB_PATH})
-	FIND_LIBRARY(DXGUID_LIBRARY dxguid)
-	FIND_LIBRARY(D3DCOMPILER_LIBRARY d3dcompiler)
-	message("plugin win: ${QWINDOWS_LIBRARIES}")
-	message("dx: ${DXGUID_LIBRARY} ${D3DCOMPILER_LIBRARY}")
+	message("QPA plugin for win: ${QWINDOWS_LIBRARIES}")
+
+	FIND_LIBRARY(DXGUID_LIBRARY      NAMES dxguid      PATHS ${DirectX_LIBRARY_PATHS})
+	FIND_LIBRARY(D3DCOMPILER_LIBRARY NAMES d3dcompiler PATHS ${DirectX_LIBRARY_PATHS})
+	message("DirectX: ${DXGUID_LIBRARY} ${D3DCOMPILER_LIBRARY}")
 
 	if(QTRANSLATOR_LIBRARY)
 		set(TRANSLATOR_LIBRARIES ${TRANSLATOR_LIBRARIES} ${QTRANSLATOR_LIBRARY})
@@ -414,30 +449,25 @@ target_link_libraries(trace_server ${Boost_LIBRARIES}
 	${QICO}
 	Qt5::WinMain)
 
-message("src_dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+install(TARGETS trace_server
+	RUNTIME DESTINATION .
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/static)
 
-if (WIN32 AND NOT MINGW)
-	find_program(GIT_EXECUTABLE
-		NAMES "git.exe"
-		HINTS "C:/Program Files (x86)/git/bin/"
-		DOC "git x86 command line client")
+if(MSVC)
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../utils/bin/VisualStudioFileOpenTool.all.exe
+		DESTINATION .)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Debug/trace_server.pdb
+		DESTINATION .
+		CONFIGURATIONS Debug)
+endif(MSVC)
 
-	if (NOT GIT_FOUND)
-		find_program(GIT_EXECUTABLE
-			NAMES "git.exe"
-			HINTS "C:/Program Files/git/bin/"
-			DOC "git x64 command line client")
-	endif (NOT GIT_FOUND)
-
-	message("git: ${GIT_EXECUTABLE}")
-endif (WIN32 AND NOT MINGW)
-
-if (WIN32 AND NOT MINGW)
-	get_filename_component(MK_VERSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../build/mk_version.bat" ABSOLUTE)
-	message("mk_version.bat: ${MK_VERSION_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/")
-	add_custom_command(TARGET trace_server PRE_BUILD
-		COMMAND cmd /c ${MK_VERSION_PATH} ${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/)
-endif (WIN32 AND NOT MINGW)
+#if (WIN32 AND NOT MINGW)
+#	get_filename_component(MK_VERSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../build/mk_version.bat" ABSOLUTE)
+#	message("mk_version.bat: ${MK_VERSION_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/")
+#	add_custom_command(TARGET trace_server PRE_BUILD
+#		COMMAND cmd /c ${MK_VERSION_PATH} ${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/)
+#endif (WIN32 AND NOT MINGW)
 
 
 

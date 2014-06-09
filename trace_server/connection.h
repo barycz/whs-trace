@@ -73,6 +73,8 @@ public:
 	QString const & getAppName () const { return m_app_name; }
 	QString const & getCurrPreset () const { return m_curr_preset; }
 	AppData const & appData () const { return m_app_data; }
+	E_SrcProtocol protocol () const { return m_src_protocol; }
+	//QString const & separator () const { return m_config.m_csv_separator; } // csv
 
 	void run ();
 
@@ -227,17 +229,19 @@ private:
 	MainWindow * m_main_window;
 	E_SrcStream m_src_stream;
 	E_SrcProtocol m_src_protocol;
+	QString m_src_name;
 	ConnectionConfig m_config;
 
 	AppData m_app_data;
 	QString m_pid;
 	int m_storage_idx;
-	unsigned m_recv_bytes;
+	qint64 m_recv_bytes;
 	bool m_marked_for_close;
 	QString m_curr_preset;
 	ControlBarCommon * m_control_bar;
-	QTextStream * m_file_csv_stream;
 	QDataStream * m_file_tlv_stream;
+	QTextStream * m_file_csv_stream;
+	qint64 m_file_size;
 
 	// data receiving stuff
 	enum { e_ringbuff_size = 128 * 1024 };

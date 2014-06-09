@@ -36,28 +36,39 @@ void ColorizerRegex::doneUI ()
 {
 }
 
-bool ColorizerRegex::action (DecodedCommand const & cmd)
+//@TODO: dedup
+void ColorizerRegex::actionColor (DecodedCommand const & cmd, ColorizedText const & ct, QColor const & fg, QColor const & bg) const
 {
-	QString msg;
-	if (!cmd.getString(tlv::tag_msg, msg))
-		return true;
-
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	for (size_t i = 0, ie = cmd.m_tvs.size(); i < ie; ++i)
 	{
-		ColorizedText const & ct = m_data[i];
+		QString const & val = cmd.m_tvs[i].m_val;
 
-		bool const is_match = ct.accept(msg);
-
-		int const col = m_src_model->logWidget().findColumn4TagCst(tlv::tag_msg);
-		QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
-		if (is_match && idx.isValid())
+		if (bool const is_match = ct.accept(val))
 		{
-			m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
-			m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
-			return true;
+			int const col = m_src_model->storage2Column(i);
+			//@TODO: if column != level
+			//@TODO: if column != tid
+			QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
+			if (ct.m_is_enabled && is_match && idx.isValid())
+			{
+				m_src_model->setData(idx, bg, Qt::BackgroundRole);
+				m_src_model->setData(idx, fg, Qt::ForegroundRole);
+			}
 		}
 	}
+}
+void ColorizerRegex::actionUncolor (DecodedCommand const & cmd, ColorizedText const & ct) const
+{
+	actionColor(cmd, ct, QColor(Qt::black), QColor(Qt::white));
+}
 
+bool ColorizerRegex::action (DecodedCommand const & cmd)
+{
+	for (size_t i = 0, ie = m_data.size(); i < ie; ++i)
+	{
+		ColorizedText const & ct = m_data[i];
+		actionColor(cmd, ct, ct.m_fgcolor, ct.m_bgcolor);
+	}
 	return false;
 }
 
@@ -212,7 +223,7 @@ ColorizedText & ColorizerRegex::findOrCreateColorizedText (QString const & item)
 			return ct;
 		}
 	m_data.push_back(ColorizedText(item, Qt::blue, Qt::white));
-    return m_data.back();
+	return m_data.back();
 }
 
 //////// slots
@@ -242,48 +253,16 @@ void ColorizerRegex::onClickedAt (QModelIndex idx)
 	{
 		append(str);
 		recompileColorRegex(ct);
-		updateColorRegex(ct);
+		updateColor(ct);
 	}
 	else
 	{
 		recompileColorRegex(ct);
-		updateColorRegex(ct);
+		updateColor(ct);
 		remove(str);
 	}
 
 	emitFilterChangedSignal();
-
-/*
-		if (!idx.isValid()) return;
-		QStandardItemModel * model = static_cast<QStandardItemModel *>(m_config_ui.ui()->viewColorRegex->model());
-		QStandardItem * item = model->itemFromIndex(idx);
-		Q_ASSERT(item);
-
-		QString const & val = model->data(idx, Qt::DisplayRole).toString();
-		bool const checked = (item->checkState() == Qt::Checked);
-
-		// @TODO: if state really changed
-		for (int i = 0, ie = m_filter_state.m_colorized_texts.size(); i < ie; ++i)
-		{
-			ColorizedText & ct = m_filter_state.m_colorized_texts[i];
-			if (ct.m_regex_str == val)
-			{
-				if (checked)
-				{
-					m_filter_state.setColorRegexChecked(val, checked);
-					recompileColorRegex(ct);
-					updateColorRegex(ct);
-				}
-				else
-				{
-					uncolorRegex(ct);
-					m_filter_state.setColorRegexChecked(val, checked);
-					recompileColorRegex(ct);
-				}
-				break;
-			}
-		}
-*/
 }
 
 
@@ -301,225 +280,183 @@ void ColorizerRegex::recompile ()
 	}
 }*/
 
-	//@TODO: dedup
-	void ColorizerRegex::actionColorRegex (DecodedCommand const & cmd, ColorizedText const & ct) const
+void ColorizerRegex::updateColor (ColorizedText const & ct)
+{
+	for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
 	{
-		for (size_t i = 0, ie = cmd.m_tvs.size(); i < ie; ++i)
-		{
-			QString const & val = cmd.m_tvs[i].m_val;
-
-			bool const is_match = ct.accept(val);
-			//@TODO: cache QMI in DecodedCommand
-			int const col = m_src_model->logWidget().findColumn4TagCst(cmd.m_tvs[i].m_tag);
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
-			if (ct.m_is_enabled && is_match && idx.isValid())
-			{
-				m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
-				m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
-			}
-
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}
+		DecodedCommand const & dcmd = m_src_model->dcmds()[r];
+		actionColor(dcmd, ct, ct.m_fgcolor, ct.m_bgcolor);
 	}
-	void ColorizerRegex::actionUncolorRegex (DecodedCommand const & cmd, ColorizedText const & ct) const
-	{
-		for (size_t i = 0, ie = cmd.m_tvs.size(); i < ie; ++i)
-		{
-			QString const & val = cmd.m_tvs[i].m_val;
+}
 
-			bool const is_match = ct.accept(val);
-			//@TODO: cache QMI in DecodedCommand?
-			int const col = m_src_model->logWidget().findColumn4TagCst(cmd.m_tvs[i].m_tag);
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
-			if (is_match && idx.isValid())
-			{
-				m_src_model->setData(idx, QColor(Qt::white), Qt::BackgroundRole);
-				m_src_model->setData(idx, QColor(Qt::black), Qt::ForegroundRole);
-			}
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}
+void ColorizerRegex::uncolor (ColorizedText const & ct)
+{
+	for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
+	{
+		DecodedCommand const & dcmd = m_src_model->dcmds()[r];
+		actionUncolor(dcmd, ct);
 	}
+}
 
-
-	void ColorizerRegex::updateColorRegex (ColorizedText const & ct)
+void ColorizerRegex::onActivate (int)
+{
+}
+void ColorizerRegex::onFgChanged () { onColorButtonChanged(Qt::ForegroundRole); }
+void ColorizerRegex::onBgChanged () { onColorButtonChanged(Qt::BackgroundRole); }
+void ColorizerRegex::onColorButtonChanged (int role)
+{
+	for (int i = 0, ie = m_data.size(); i < ie; ++i)
 	{
-		for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
-		{
-			DecodedCommand const & dcmd = m_src_model->dcmds()[r];
-			actionColorRegex(dcmd, ct);
-		}
-	}
-
-
-	void ColorizerRegex::uncolorRegex (ColorizedText const & ct)
-	{
-		for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
-		{
-			DecodedCommand const & dcmd = m_src_model->dcmds()[r];
-			actionUncolorRegex(dcmd, ct);
-		}
-	}
-
-	void ColorizerRegex::onActivate (int)
-	{
-	}
-	void ColorizerRegex::onFgChanged () { onColorRegexChanged(Qt::ForegroundRole); }
-	void ColorizerRegex::onBgChanged () { onColorRegexChanged(Qt::BackgroundRole); }
-	void ColorizerRegex::onColorRegexChanged (int role)
-	{
-		for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		{
-			ColorizedText & ct = m_data[i];
-			QStandardItem * const root = m_model->invisibleRootItem();
-			QString const qregex = ct.m_regex_str;
-			QStandardItem * const child = findChildByText(root, qregex);
-
-			if (!child)
-				continue;
-
-			QModelIndex const fgidx = m_model->index(child->row(), 1);
-			if (fgidx.isValid())
-			{
-				if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(fgidx)))
-					ct.m_fgcolor = w->currentColor();
-			}
-			QModelIndex const bgidx = m_model->index(child->row(), 2);
-			if (bgidx.isValid())
-			{
-				if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(bgidx)))
-					ct.m_bgcolor = w->currentColor();
-			}
-
-			//TODO: this updates all of them, fixit
-			updateColorRegex(ct);
-		}
-	}
-
-	void ColorizerRegex::recompileColorRegex (ColorizedText & ct)
-	{
-		QStandardItem * root = m_model->invisibleRootItem();
+		ColorizedText & ct = m_data[i];
+		QStandardItem * const root = m_model->invisibleRootItem();
 		QString const qregex = ct.m_regex_str;
-		QStandardItem * child = findChildByText(root, qregex);
-		QModelIndex const idx = m_model->indexFromItem(child);
-		ct.m_is_enabled = false;
+		QStandardItem * const child = findChildByText(root, qregex);
+
 		if (!child)
-			return;
+			continue;
 
-		QRegExp regex(qregex);
-		QString reason;
-		if (regex.isValid())
+		QModelIndex const fgidx = m_model->index(child->row(), 1);
+		if (fgidx.isValid())
 		{
-			ct.m_regex = regex;
-
-			bool const checked = (child->checkState() == Qt::Checked);
-			if (child && checked)
-			{
-				child->setData(QBrush(Qt::green), Qt::BackgroundRole);
-				reason = "ok";
-				ct.m_is_enabled = true;
-			}
-			else if (child && !checked)
-			{
-				child->setData(QBrush(Qt::yellow), Qt::BackgroundRole);
-				reason = "not checked";
-			}
+			if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(fgidx)))
+				ct.m_fgcolor = w->currentColor();
 		}
-		else
+		QModelIndex const bgidx = m_model->index(child->row(), 2);
+		if (bgidx.isValid())
 		{
-			if (child)
-			{
-				child->setData(QBrush(Qt::red), Qt::BackgroundRole);
-				reason = regex.errorString();
-			}
+			if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(bgidx)))
+				ct.m_bgcolor = w->currentColor();
 		}
 
-		child->setToolTip(reason);
-		QStandardItem * item = m_model->item(child->row(), 3);
-		item->setText(reason);
+		//TODO: this updates all of them, fixit
+		updateColor(ct);
 	}
+}
 
-	void ColorizerRegex::recompileColorRegexps ()
+void ColorizerRegex::recompileColorRegex (ColorizedText & ct)
+{
+	QStandardItem * root = m_model->invisibleRootItem();
+	QString const qregex = ct.m_regex_str;
+	QStandardItem * child = findChildByText(root, qregex);
+	QModelIndex const idx = m_model->indexFromItem(child);
+	ct.m_is_enabled = false;
+	if (!child)
+		return;
+
+	QRegExp regex(qregex);
+	QString reason;
+	if (regex.isValid())
 	{
-		for (int i = 0, ie = m_data.size(); i < ie; ++i)
+		ct.m_regex = regex;
+
+		bool const checked = (child->checkState() == Qt::Checked);
+		if (child && checked)
 		{
-			ColorizedText & ct = m_data[i];
-			recompileColorRegex(ct);
-			//updateColorRegex(ct);
+			child->setData(QBrush(Qt::green), Qt::BackgroundRole);
+			reason = "ok";
+			ct.m_is_enabled = true;
+		}
+		else if (child && !checked)
+		{
+			child->setData(QBrush(Qt::yellow), Qt::BackgroundRole);
+			reason = "not checked";
 		}
 	}
-	//void ColorizerRegex::onDoubleClickedAtColorRegexList (QModelIndex idx) { }
-
-	ColorizedText & ColorizerRegex::add (QString const & regex, QColor const & fg, QColor const & bg)
+	else
 	{
-		QStandardItem * root = m_model->invisibleRootItem();
-		QStandardItem * child = findChildByText(root, regex);
-		if (child == 0)
+		if (child)
 		{
-			QList<QStandardItem *> row_items = addRow(regex, true);
-			root->appendRow(row_items);
-			child = findChildByText(root, regex);
-
-			QStandardItem * fgitem = new QStandardItem("fg");
-			QStandardItem * bgitem = new QStandardItem("bg");
-			QStandardItem * stitem = new QStandardItem("status");
-			stitem->setCheckable(false);
-			m_model->setItem(child->row(), 1, fgitem);
-			m_model->setItem(child->row(), 2, bgitem);
-			m_model->setItem(child->row(), 3, stitem);
-			append(regex);
-
-			ColorizedText & ct = findOrCreateColorizedText(regex);
-			ct.m_fgcolor = fg;
-			ct.m_bgcolor = bg;
-			{
-				QtColorPicker * w = mkColorPicker(m_ui->view, "fg", ct.m_fgcolor);
-				connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onFgChanged()));
-				QModelIndex const idx = m_model->indexFromItem(fgitem);
-				m_ui->view->setIndexWidget(idx, w);
-			}
-			{
-				QtColorPicker * w = mkColorPicker(m_ui->view, "bg", ct.m_bgcolor);
-				connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onBgChanged()));
-				QModelIndex const idx = m_model->indexFromItem(bgitem);
-				m_ui->view->setIndexWidget(idx, w);
-			}
-			return ct;
-		}
-		else
-		{
-			ColorizedText & ct = findOrCreateColorizedText(regex);
-			return ct;
+			child->setData(QBrush(Qt::red), Qt::BackgroundRole);
+			reason = regex.errorString();
 		}
 	}
 
-	void ColorizerRegex::onAdd ()
-	{
-		QString const qItem = m_ui->comboBox->currentText();
-		if (!qItem.length())
-			return;
-		QColor const qFg = m_ui->fgButton->currentColor();
-		QColor const qBg = m_ui->bgButton->currentColor();
-		ColorizedText & ct = add(qItem, qFg, qBg);
+	child->setToolTip(reason);
+	QStandardItem * item = m_model->item(child->row(), 3);
+	item->setText(reason);
+}
 
+void ColorizerRegex::recompileColorRegexps ()
+{
+	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	{
+		ColorizedText & ct = m_data[i];
 		recompileColorRegex(ct);
-		updateColorRegex(ct);
+		//updateColor(ct);
 	}
+}
+//void ColorizerRegex::onDoubleClickedAtColorRegexList (QModelIndex idx) { }
 
-	void ColorizerRegex::onRm ()
+ColorizedText & ColorizerRegex::add (QString const & regex, QColor const & fg, QColor const & bg)
+{
+	QStandardItem * root = m_model->invisibleRootItem();
+	QStandardItem * child = findChildByText(root, regex);
+	if (child == 0)
 	{
-		QModelIndex const idx = m_ui->view->currentIndex();
-		QStandardItem * item = m_model->itemFromIndex(idx);
-		if (!item)
-			return;
-		QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
-		m_model->removeRow(idx.row());
+		QList<QStandardItem *> row_items = addRow(regex, true);
+		root->appendRow(row_items);
+		child = findChildByText(root, regex);
 
-		ColorizedText & ct = findOrCreateColorizedText(val);
-		uncolorRegex(ct);
-		remove(val);
+		QStandardItem * fgitem = new QStandardItem("fg");
+		QStandardItem * bgitem = new QStandardItem("bg");
+		QStandardItem * stitem = new QStandardItem("status");
+		stitem->setCheckable(false);
+		m_model->setItem(child->row(), 1, fgitem);
+		m_model->setItem(child->row(), 2, bgitem);
+		m_model->setItem(child->row(), 3, stitem);
+		append(regex);
+
+		ColorizedText & ct = findOrCreateColorizedText(regex);
+		ct.m_fgcolor = fg;
+		ct.m_bgcolor = bg;
+		ct.m_is_enabled = true;
+		{
+			QtColorPicker * w = mkColorPicker(m_ui->view, "fg", ct.m_fgcolor);
+			connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onFgChanged()));
+			QModelIndex const idx = m_model->indexFromItem(fgitem);
+			m_ui->view->setIndexWidget(idx, w);
+		}
+		{
+			QtColorPicker * w = mkColorPicker(m_ui->view, "bg", ct.m_bgcolor);
+			connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onBgChanged()));
+			QModelIndex const idx = m_model->indexFromItem(bgitem);
+			m_ui->view->setIndexWidget(idx, w);
+		}
+		return ct;
 	}
+	else
+	{
+		ColorizedText & ct = findOrCreateColorizedText(regex);
+		return ct;
+	}
+}
+
+void ColorizerRegex::onAdd ()
+{
+	QString const qItem = m_ui->comboBox->currentText();
+	if (!qItem.length())
+		return;
+	QColor const qFg = m_ui->fgButton->currentColor();
+	QColor const qBg = m_ui->bgButton->currentColor();
+	ColorizedText & ct = add(qItem, qFg, qBg);
+
+	recompileColorRegex(ct);
+	updateColor(ct);
+}
+
+void ColorizerRegex::onRm ()
+{
+	QModelIndex const idx = m_ui->view->currentIndex();
+	QStandardItem * item = m_model->itemFromIndex(idx);
+	if (!item)
+		return;
+	QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
+	m_model->removeRow(idx.row());
+
+	ColorizedText & ct = findOrCreateColorizedText(val);
+	uncolor(ct);
+	remove(val);
+}
 
 
 

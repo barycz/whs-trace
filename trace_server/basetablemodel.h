@@ -92,7 +92,7 @@ public:
 	unsigned long long row_stime (int const row) const { return m_row_stimes[row]; }
 	unsigned long long col_time (int const col) const { return m_col_times[col]; }
 
-	void clearModel ();
+	virtual void clearModel ();
 	void clearModelData ();
 
 protected:

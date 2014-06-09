@@ -57,7 +57,7 @@
           </font>
          </property>
          <property name="toolTip">
-          <string>quick inclusive filter: adds string to regex filter as regex .*string.*</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;String to filter out&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="frame">
           <bool>false</bool>
@@ -83,6 +83,9 @@
            <pointsize>8</pointsize>
           </font>
          </property>
+         <property name="toolTip">
+          <string>Add item to filter</string>
+         </property>
          <property name="text">
           <string>+</string>
          </property>
@@ -100,6 +103,9 @@
           <font>
            <pointsize>8</pointsize>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>Remove item from filter</string>
          </property>
          <property name="text">
           <string>-</string>

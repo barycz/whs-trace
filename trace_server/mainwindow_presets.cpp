@@ -213,9 +213,9 @@ void MainWindow::loadState ()
 		m_dock_mgr.controlUI()->levelSpinBox->setValue(m_start_level);
 	}
 
-	ui->dockManagerButton->blockSignals(1);
-	ui->dockManagerButton->setChecked(m_dock_mgr.m_config.m_show);
-	ui->dockManagerButton->blockSignals(0);
+	m_dock_mgr_button->blockSignals(1);
+	m_dock_mgr_button->setChecked(m_dock_mgr.m_config.m_show);
+	m_dock_mgr_button->blockSignals(0);
 	m_dock_mgr.m_dockwidget->setVisible(m_dock_mgr.m_config.m_show);
 
 	unsigned const hotkeyCode = settings.value("hotkeyCode").toInt();
@@ -232,5 +232,5 @@ void MainWindow::loadState ()
 void MainWindow::onDockManagerVisibilityChanged (bool state)
 {
 	m_dock_mgr.m_config.m_show = state;
-	ui->dockManagerButton->setChecked(m_dock_mgr.m_config.m_show);
+	m_dock_mgr_button->setChecked(m_dock_mgr.m_config.m_show);
 }

@@ -10,22 +10,6 @@
 
 #include <logs/logwidget.h> // @TODO: fuck off
 
-/*bool ColorizerRow::isMatchedColorizerText (QString str, QColor & fgcolor, QColor & bgcolor) const
-{
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
-	{
-		ColorizedRow const & ct = m_data.at(i);
-		if (ct.exactMatch(str))
-		{
-			fgcolor = ct.m_qcolor;
-			bgcolor = ct.m_bgcolor;
-			//role = ct.m_role;
-			return ct.m_is_enabled;
-		}
-	}
-	return false;
-}*/
-
 ColorizerRow::ColorizerRow (QWidget * parent)
 	: FilterBase(parent)
 	, m_ui(new Ui_ColorizerRow)
@@ -52,6 +36,30 @@ void ColorizerRow::doneUI ()
 {
 }
 
+void ColorizerRow::actionColor (DecodedCommand const & cmd, ColorizedRow const & ct, QColor const & fg, QColor const & bg) const
+{
+	bool const is_match = ct.m_row == cmd.m_src_row;
+	if (!is_match)
+		return;
+
+	for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
+	{
+		QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
+
+		//@TODO: cache QMI in DecodedCommand
+		m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
+		m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
+
+		//@TODO: if column != level
+		//@TODO: if column != tid
+	}
+}
+void ColorizerRow::actionUncolor (DecodedCommand const & cmd, ColorizedRow const & ct) const
+{
+	actionColor(cmd, ct, QColor(Qt::black), QColor(Qt::white));
+}
+
+
 bool ColorizerRow::action (DecodedCommand const & cmd)
 {
 	QString msg;
@@ -61,32 +69,7 @@ bool ColorizerRow::action (DecodedCommand const & cmd)
 	for (int i = 0, ie = m_data.size(); i < ie; ++i)
 	{
 		ColorizedRow const & ct = m_data[i];
-
-		bool const is_match = ct.m_row == cmd.m_src_row;
-		if (!is_match)
-			continue;
-		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
-		{
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
-
-			//@TODO: cache QMI in DecodedCommand
-			m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
-			m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
-
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}
-
-		/*bool const is_match = cmd.m_src_row == ct.m_row;
-
-		int const col = m_src_model->logWidget().findColumn4TagCst(tlv::tag_msg);
-		QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
-		if (is_match && idx.isValid())
-		{
-			m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
-			m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
-			return true;
-		}*/
+		actionColor(cmd, ct, ct.m_fgcolor, ct.m_bgcolor);
 	}
 
 	return false;
@@ -206,17 +189,6 @@ ColorizedRow const * ColorizerRow::findMatch (QString const & item) const
 	return 0;
 }
 
-bool ColorizerRow::isRowColored (int row) const
-{
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
-	{
-		ColorizedRow const & cr = m_data.at(i);
-		if (cr.m_row == row && cr.m_is_enabled)
-			return true;
-	}
-	return false;
-}
-
 void ColorizerRow::append (QString const & item)
 {
 	for (int i = 0, ie = m_data.size(); i < ie; ++i)
@@ -277,12 +249,12 @@ void ColorizerRow::onClickedAt (QModelIndex idx)
 	{
 		append(str);
 		recompileColorRow(ct);
-		updateColorRow(ct);
+		updateColor(ct);
 	}
 	else
 	{
 		recompileColorRow(ct);
-		updateColorRow(ct);
+		updateColor(ct);
 		remove(str);
 	}
 
@@ -307,11 +279,11 @@ void ColorizerRow::onClickedAt (QModelIndex idx)
 				{
 					m_filter_state.setColorRowChecked(val, checked);
 					recompileColorRow(ct);
-					updateColorRow(ct);
+					updateColor(ct);
 				}
 				else
 				{
-					uncolorRow(ct);
+					uncolor(ct);
 					m_filter_state.setColorRowChecked(val, checked);
 					recompileColorRow(ct);
 				}
@@ -336,213 +308,175 @@ void ColorizerRow::recompile ()
 	}
 }*/
 
-	//@TODO: dedup
-	void ColorizerRow::actionColorRow (DecodedCommand const & cmd, ColorizedRow const & ct) const
+void ColorizerRow::updateColor (ColorizedRow const & ct)
+{
+	for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
 	{
-		bool const is_match = ct.m_row == cmd.m_src_row;
-		if (!is_match)
-			return;
-
-		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
-		{
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
-
-			//@TODO: cache QMI in DecodedCommand
-			m_src_model->setData(idx, ct.m_bgcolor, Qt::BackgroundRole);
-			m_src_model->setData(idx, ct.m_fgcolor, Qt::ForegroundRole);
-
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}
+		DecodedCommand const & dcmd = m_src_model->dcmds()[r];
+		actionColor(dcmd, ct, ct.m_fgcolor, ct.m_bgcolor);
 	}
-	void ColorizerRow::actionUncolorRow (DecodedCommand const & cmd, ColorizedRow const & ct) const
+}
+
+void ColorizerRow::uncolor (ColorizedRow const & ct)
+{
+	for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
 	{
-		bool const is_match = ct.m_row == cmd.m_src_row;
-		if (!is_match)
-			return;
-
-		for (int i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
-		{
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, i, QModelIndex());
-
-			//@TODO: cache QMI in DecodedCommand
-			m_src_model->setData(idx, QColor(Qt::white), Qt::BackgroundRole);
-			m_src_model->setData(idx, QColor(Qt::black), Qt::ForegroundRole);
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}
-		/*for (size_t i = 0, ie = m_src_model->columnCount(); i < ie; ++i)
-		{
-			bool const is_match = ct.accept(val);
-			//@TODO: cache QMI in DecodedCommand?
-			int const col = m_src_model->logWidget().findColumn4TagCst(cmd.m_tvs[i].m_tag);
-			QModelIndex const idx = m_src_model->index(cmd.m_src_row, col, QModelIndex());
-			if (is_match && idx.isValid())
-			{
-				m_src_model->setData(idx, QColor(Qt::white), Qt::BackgroundRole);
-				m_src_model->setData(idx, QColor(Qt::black), Qt::ForegroundRole);
-			}
-			//@TODO: if column != level
-			//@TODO: if column != tid
-		}*/
+		DecodedCommand const & dcmd = m_src_model->dcmds()[r];
+		actionUncolor(dcmd, ct);
 	}
+}
 
-	void ColorizerRow::updateColorRow (ColorizedRow const & ct)
+void ColorizerRow::onActivate (int)
+{
+}
+void ColorizerRow::onFgChanged () { onColorButtonChanged(Qt::ForegroundRole); }
+void ColorizerRow::onBgChanged () { onColorButtonChanged(Qt::BackgroundRole); }
+void ColorizerRow::onColorButtonChanged (int role)
+{
+	for (int i = 0, ie = m_data.size(); i < ie; ++i)
 	{
-		for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
-		{
-			DecodedCommand const & dcmd = m_src_model->dcmds()[r];
-			actionColorRow(dcmd, ct);
-		}
-	}
-
-	void ColorizerRow::uncolorRow (ColorizedRow const & ct)
-	{
-		for (size_t r = 0, re = m_src_model->dcmds().size(); r < re; ++r)
-		{
-			DecodedCommand const & dcmd = m_src_model->dcmds()[r];
-			actionUncolorRow(dcmd, ct);
-		}
-	}
-
-	void ColorizerRow::onActivate (int)
-	{
-	}
-	void ColorizerRow::onFgChanged () { onColorRowChanged(Qt::ForegroundRole); }
-	void ColorizerRow::onBgChanged () { onColorRowChanged(Qt::BackgroundRole); }
-	void ColorizerRow::onColorRowChanged (int role)
-	{
-		for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		{
-			ColorizedRow & ct = m_data[i];
-			QStandardItem * const root = m_model->invisibleRootItem();
-			QString const qrow = ct.m_row_str;
-			QStandardItem * const child = findChildByText(root, qrow);
-
-			if (!child)
-				continue;
-
-			QModelIndex const fgidx = m_model->index(child->row(), 1);
-			if (fgidx.isValid())
-			{
-				if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(fgidx)))
-					ct.m_fgcolor = w->currentColor();
-			}
-			QModelIndex const bgidx = m_model->index(child->row(), 2);
-			if (bgidx.isValid())
-			{
-				if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(bgidx)))
-					ct.m_bgcolor = w->currentColor();
-			}
-
-			//TODO: this updates all of them, fixit
-			updateColorRow(ct);
-		}
-	}
-
-	void ColorizerRow::recompileColorRow (ColorizedRow & ct)
-	{
-		ct.m_is_enabled = true;
-	}
-
-	void ColorizerRow::recompileColorRows ()
-	{
-		for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		{
-			ColorizedRow & ct = m_data[i];
-			recompileColorRow(ct);
-			//updateColorRow(ct);
-		}
-	}
-	//void ColorizerRow::onDoubleClickedAtColorRowList (QModelIndex idx) { }
-
-	ColorizedRow & ColorizerRow::add (QString const & row, QColor const & fg, QColor const & bg)
-	{
-		QStandardItem * root = m_model->invisibleRootItem();
-		QStandardItem * child = findChildByText(root, row);
-		if (child == 0)
-		{
-			QList<QStandardItem *> row_items = addRow(row, true);
-			root->appendRow(row_items);
-			child = findChildByText(root, row);
-
-			QStandardItem * fgitem = new QStandardItem("fg");
-			QStandardItem * bgitem = new QStandardItem("bg");
-			QStandardItem * stitem = new QStandardItem("status");
-			stitem->setCheckable(false);
-			m_model->setItem(child->row(), 1, fgitem);
-			m_model->setItem(child->row(), 2, bgitem);
-			m_model->setItem(child->row(), 3, stitem);
-			append(row);
-
-			ColorizedRow & ct = findOrCreateColorizedRow(row);
-			ct.m_fgcolor = fg;
-			ct.m_bgcolor = bg;
-			{
-				QtColorPicker * w = mkColorPicker(m_ui->view, "fg", ct.m_fgcolor);
-				connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onFgChanged()));
-				QModelIndex const idx = m_model->indexFromItem(fgitem);
-				m_ui->view->setIndexWidget(idx, w);
-			}
-			{
-				QtColorPicker * w = mkColorPicker(m_ui->view, "bg", ct.m_bgcolor);
-				connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onBgChanged()));
-				QModelIndex const idx = m_model->indexFromItem(bgitem);
-				m_ui->view->setIndexWidget(idx, w);
-			}
-			return ct;
-		}
-		else
-		{
-			ColorizedRow & ct = findOrCreateColorizedRow(row);
-			return ct;
-		}
-	}
-
-	void ColorizerRow::colorize (QString const & row, QColor const & fg, QColor const & bg)
-	{
-		ColorizedRow & ct = add(row, fg, bg);
-
-		recompileColorRow(ct);
-		updateColorRow(ct);
-	}
-
-	void ColorizerRow::onAdd ()
-	{
-		QString const qItem = m_ui->comboBox->currentText();
-		if (!qItem.length())
-			return;
-		QColor const qFg = m_ui->fgButton->currentColor();
-		QColor const qBg = m_ui->fgButton->currentColor();
-		colorize(qItem, qFg, qBg);
-	}
-
-	void ColorizerRow::uncolorize (QString const & row)
-	{
+		ColorizedRow & ct = m_data[i];
 		QStandardItem * const root = m_model->invisibleRootItem();
-		QStandardItem * const child = findChildByText(root, row);
-		if (child)
+		QString const qrow = ct.m_row_str;
+		QStandardItem * const child = findChildByText(root, qrow);
+
+		if (!child)
+			continue;
+
+		QModelIndex const fgidx = m_model->index(child->row(), 1);
+		if (fgidx.isValid())
 		{
-			//QModelIndex const idx = m_model->index(child->row(), 1);
-			m_model->removeRow(child->row());
+			if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(fgidx)))
+				ct.m_fgcolor = w->currentColor();
 		}
+		QModelIndex const bgidx = m_model->index(child->row(), 2);
+		if (bgidx.isValid())
+		{
+			if (QtColorPicker * w = static_cast<QtColorPicker *>(m_ui->view->indexWidget(bgidx)))
+				ct.m_bgcolor = w->currentColor();
+		}
+
+		//TODO: this updates all of them, fixit:413
+		//
+		updateColor(ct);
+	}
+}
+
+void ColorizerRow::recompileColorRow (ColorizedRow & ct)
+{
+	ct.m_is_enabled = true;
+}
+
+void ColorizerRow::recompileColorRows ()
+{
+	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	{
+		ColorizedRow & ct = m_data[i];
+		recompileColorRow(ct);
+		//updateColor(ct);
+	}
+}
+//void ColorizerRow::onDoubleClickedAtColorRowList (QModelIndex idx) { }
+
+ColorizedRow & ColorizerRow::add (QString const & row, QColor const & fg, QColor const & bg)
+{
+	QStandardItem * root = m_model->invisibleRootItem();
+	QStandardItem * child = findChildByText(root, row);
+	if (child == 0)
+	{
+		QList<QStandardItem *> row_items = addRow(row, true);
+		root->appendRow(row_items);
+		child = findChildByText(root, row);
+
+		QStandardItem * fgitem = new QStandardItem("fg");
+		QStandardItem * bgitem = new QStandardItem("bg");
+		QStandardItem * stitem = new QStandardItem("status");
+		stitem->setCheckable(false);
+		m_model->setItem(child->row(), 1, fgitem);
+		m_model->setItem(child->row(), 2, bgitem);
+		m_model->setItem(child->row(), 3, stitem);
+		append(row);
 
 		ColorizedRow & ct = findOrCreateColorizedRow(row);
-		recompileColorRow(ct);
-		uncolorRow(ct);
-		remove(row);
+		ct.m_fgcolor = fg;
+		ct.m_bgcolor = bg;
+		{
+			QtColorPicker * w = mkColorPicker(m_ui->view, "fg", ct.m_fgcolor);
+			connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onFgChanged()));
+			QModelIndex const idx = m_model->indexFromItem(fgitem);
+			m_ui->view->setIndexWidget(idx, w);
+		}
+		{
+			QtColorPicker * w = mkColorPicker(m_ui->view, "bg", ct.m_bgcolor);
+			connect(w, SIGNAL(colorChanged(const QColor &)), this, SLOT(onBgChanged()));
+			QModelIndex const idx = m_model->indexFromItem(bgitem);
+			m_ui->view->setIndexWidget(idx, w);
+		}
+		return ct;
 	}
-
-	void ColorizerRow::onRm ()
+	else
 	{
-		QModelIndex const idx = m_ui->view->currentIndex();
-		QStandardItem * item = m_model->itemFromIndex(idx);
-		if (!item)
-			return;
-
-		QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
-		uncolorize(val);
+		ColorizedRow & ct = findOrCreateColorizedRow(row);
+		return ct;
 	}
+}
+
+void ColorizerRow::onAdd ()
+{
+	QString const qItem = m_ui->comboBox->currentText();
+	if (!qItem.length())
+		return;
+	QColor const qFg = m_ui->fgButton->currentColor();
+	QColor const qBg = m_ui->fgButton->currentColor();
+	colorize(qItem, qFg, qBg);
+}
+
+void ColorizerRow::onRm ()
+{
+	QModelIndex const idx = m_ui->view->currentIndex();
+	QStandardItem * item = m_model->itemFromIndex(idx);
+	if (!item)
+		return;
+
+	QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
+	uncolorize(val);
+}
+
+void ColorizerRow::colorize (QString const & row, QColor const & fg, QColor const & bg)
+{
+	ColorizedRow & ct = add(row, fg, bg);
+
+	recompileColorRow(ct);
+	updateColor(ct);
+}
+
+void ColorizerRow::uncolorize (QString const & row)
+{
+	QStandardItem * const root = m_model->invisibleRootItem();
+	QStandardItem * const child = findChildByText(root, row);
+	if (child)
+	{
+		//QModelIndex const idx = m_model->index(child->row(), 1);
+		m_model->removeRow(child->row());
+	}
+
+	ColorizedRow & ct = findOrCreateColorizedRow(row);
+	recompileColorRow(ct);
+	uncolor(ct);
+	remove(row);
+}
+
+bool ColorizerRow::isRowColored (int row) const
+{
+	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+	{
+		ColorizedRow const & cr = m_data.at(i);
+		if (cr.m_row == row && cr.m_is_enabled)
+			return true;
+	}
+	return false;
+}
+
 
 
 

@@ -55,7 +55,7 @@ generator.
 
 First look at sample integrations in sample_integrations/ directory.
 Look at following file, please:
-	.../flogging/sample_integrations/trace_client_wh/CMakeList.txt
+	.../DbgToolkit/sample_integrations/trace_client_wh/CMakeList.txt
 
 This is the input file for cmake generator.
 
@@ -84,7 +84,7 @@ To build debug version use
 
 From source top level:
 
-	cd flogging/trace_server
+	cd DbgToolkit/trace_server
 	mkdir _project
 	cd _project
 	cmake -G "Visual Studio 11 Win64" ..
@@ -99,7 +99,7 @@ in your project(s).
 
 
 Client consists of project located in directory
-	.../flogging/trace_client/
+	.../DbgToolkit/trace_client/
 
 To select building strategy, you need to place one of following
 macros carefully:
@@ -109,7 +109,7 @@ macros carefully:
 (Note: TRACE_DLL should not be specified on projects that uses trace_client)
 
 The important file is trace.h which normally has to be configured for
-user's debug levels and contexts. See flogging/trace_client_wh how to
+user's debug levels and contexts. See DbgToolkit/trace_client_wh how to
 do that. Essentially there are 3 macros that control inclusion of
 user's files:
 
@@ -119,7 +119,7 @@ user's files:
 
 
 Look into 
-	flogging/sample_integrations/trace_client_wh/CMakeList.txt
+	DbgToolkit/sample_integrations/trace_client_wh/CMakeList.txt
 to get a feel how to integrate tracing facility.
 
 

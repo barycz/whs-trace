@@ -57,7 +57,7 @@
           <string>Find</string>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/images/find.ico</normaloff>:/images/find.ico</iconset>
          </property>
         </item>
@@ -66,7 +66,7 @@
           <string>Filters</string>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/images/filter.ico</normaloff>:/images/filter.ico</iconset>
          </property>
         </item>
@@ -75,7 +75,7 @@
           <string>Tools</string>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/images/tools.ico</normaloff>:/images/tools.ico</iconset>
          </property>
         </item>
@@ -84,7 +84,7 @@
           <string>View</string>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/images/view.ico</normaloff>:/images/view.ico</iconset>
          </property>
         </item>
@@ -99,7 +99,7 @@
         <widget class="QWidget" name="filtersPage">
          <layout class="QGridLayout" name="gridLayout_3">
           <item row="0" column="0">
-           <widget class="FilterWidget" name="widget" native="true"/>
+           <widget class="QWidget" name="widget" native="true"/>
           </item>
          </layout>
         </widget>
@@ -353,20 +353,12 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FilterWidget</class>
-   <extends>QWidget</extends>
-   <header>filterwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>QtColorPicker</class>
    <extends>QPushButton</extends>
-   <header>../qtsln/qtcolorpicker/qtcolorpicker.h</header>
+   <header location="global">qtsln/qtcolorpicker/qtcolorpicker.h</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>color1CheckBox</sender>

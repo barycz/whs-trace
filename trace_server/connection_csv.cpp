@@ -19,7 +19,7 @@ namespace {
 bool Connection::handleCSVStreamCommand (DecodedCommand const & cmd)
 {
 	datalogs_t::iterator it = findOrCreateLog(m_app_name);
-	(*it)->handleCommand(cmd, e_RecvSync);
+	(*it)->handleCommand(cmd, e_RecvBatched);
 	// TODO
 	/*if (!m_session_state.isConfigured())
 	{

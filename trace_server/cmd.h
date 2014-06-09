@@ -56,6 +56,7 @@ struct DecodedCommand : tlv::StringCommand_v1
 	{
 		tlv::StringCommand_v1::reset();
 		m_written_hdr = m_written_payload = false;
+		memset(&m_orig_message[0], 0, m_orig_message.size());
 	}
 
 	template <class T>

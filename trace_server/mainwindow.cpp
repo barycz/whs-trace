@@ -5,29 +5,17 @@
 #include "server.h"
 #include "connection.h"
 #include <QTime>
-#include <QTableView>
-#include <QListView>
 #include <QShortcut>
-#include <QInputDialog>
 #include <QFileDialog>
-#include <QFontDialog>
 #include <QMessageBox>
-#include <QSettings>
-#include <QMetaType>
-#include <QMimeData>
-#include <QVariant>
-#include <QDropEvent>
-#include <QDragEnterEvent>
-#include <QItemDelegate>
-#include <QStandardItemModel>
-#include <QUrl>
-#include <QClipboard>
 #include <QTimer>
 #include <tlv_parser/tlv_parser.h>
 #include "help.h"
 #include "version.h"
 #include "constants.h"
 #include "dockwidget.h"
+#include "setupdialogcsv.h"
+#include "ui_setupdialogcsv.h"
 #include <ui_controlbarcommon.h>
 #include "utils.h"
 #include "utils_qstandarditem.h"
@@ -44,13 +32,17 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	, m_timer(new QTimer(this))
 	, m_server(0)
 	, m_windows_menu(0)
+	, m_file_menu(0)
+	, m_before_action(0)
 	, m_minimize_action(0)
 	, m_maximize_action(0)
 	, m_restore_action(0)
 	, m_quit_action(0)
 	, m_tray_menu(0)
+	, m_dock_mgr_button(0)
 	, m_tray_icon(0)
 	, m_settings_dialog(0)
+	, m_setup_dialog_csv(0)
 	, m_dock_mgr(this, QStringList(QString(g_traceServerName)))
 	, m_docked_name(g_traceServerName)
 	, m_log_name(log_name)
@@ -61,22 +53,27 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	qDebug("%s this=0x%08x", __FUNCTION__, this);
 	ui->setupUi(this);
 
-    setStyleSheet( "QMainWindow::separator { background: rgb(150, 150, 150); width: 1px; height: 1px; }");
+	setStyleSheet( "QMainWindow::separator { background: rgb(150, 150, 150); width: 1px; height: 1px; }");
 
 	m_settings_dialog = new QDialog(this);
 	m_settings_dialog->setWindowFlags(Qt::Sheet);
 	ui_settings = new Ui::SettingsDialog();
 	ui_settings->setupUi(m_settings_dialog);
 
+	m_setup_dialog_csv = new SetupDialogCSV(this);
+	m_setup_dialog_csv->ui->preView->setModel(new QStandardItemModel());
+	m_setup_dialog_csv->ui->columnList->setModel(new QStandardItemModel());
+
 	m_config.m_appdir = m_appdir;
 	m_config.m_dump_mode = dump_mode;
 	loadConfig();
+	m_config.loadHistory(m_appdir);
 	setConfigValuesToUI(m_config);
 
 	// tray stuff
 	createTrayActions();
 	createTrayIcon();
-	QIcon icon(":images/Icon1.ico");
+	QIcon icon(":images/Icon.ico");
 	setWindowIcon(icon);
 	m_tray_icon->setVisible(true);
 	m_tray_icon->show();
@@ -101,10 +98,6 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	m_timer->start();
 	setupMenuBar();
 
-	connect(ui->dockManagerButton, SIGNAL(clicked()), this, SLOT(onDockManagerButton()));
-	connect(ui->saveButton, SIGNAL(clicked()), this, SLOT(onSave()));
-	connect(ui->saveAsButton, SIGNAL(clicked()), this, SLOT(onSaveAs()));
-
 	connect(m_dock_mgr.controlUI()->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onLevelValueChanged(int)));
 	connect(m_dock_mgr.controlUI()->buffCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onBufferingStateChanged(int)));
 	connect(m_dock_mgr.controlUI()->presetComboBox, SIGNAL(activated(int)), this, SLOT(onPresetChanged(int)));
@@ -121,9 +114,7 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 
 	/// status bar
 	m_status_label = new QLabel(m_server->getStatus());
-	QString human_version(g_Version);
-	human_version.chop(human_version.size() - human_version.lastIndexOf(QChar('-')));
-	QLabel * version_label = new QLabel(tr("Ver: %1").arg(human_version));
+	QLabel * version_label = new QLabel(tr("Ver: %1").arg(g_Version));
 	statusBar()->addPermanentWidget(version_label);
 	statusBar()->addWidget(m_status_label);
 
@@ -194,7 +185,7 @@ void MainWindow::createTrayIcon ()
 	m_tray_menu->addSeparator();
 	m_tray_menu->addAction(m_quit_action);
 
-	QIcon icon(":/images/Icon1.ico");
+	QIcon icon(":/images/Icon.ico");
 	m_tray_icon = new QSystemTrayIcon(icon, this);
 	m_tray_icon->setContextMenu(m_tray_menu);
 
@@ -278,14 +269,16 @@ void MainWindow::onQuitReally ()
 
 void MainWindow::onDockManagerButton ()
 {
-	if (ui->dockManagerButton->isChecked())
+	if (m_dock_mgr_button->isChecked())
 	{
+		m_dock_mgr.show();
 		m_dock_mgr.m_dockwidget->show();
 		m_dock_mgr.m_config.m_show = true;
 		restoreDockWidget(m_dock_mgr.m_dockwidget);
 	}
 	else
 	{
+		m_dock_mgr.hide();
 		m_dock_mgr.m_dockwidget->hide();
 		m_dock_mgr.m_config.m_show = false;
 	}
@@ -293,7 +286,18 @@ void MainWindow::onDockManagerButton ()
 
 void MainWindow::onDockManagerClosed ()
 {
-	ui->dockManagerButton->setChecked(false);
+	m_dock_mgr_button->setChecked(false);
+}
+
+void MainWindow::onReloadFile ()
+{
+	for (size_t i = 0, ie = m_reload_fnames.size(); i < ie; ++i)
+	{
+		QString const fname = m_reload_fnames[i];
+		if (!fname.isEmpty())
+			createTailDataStream(fname);
+	}
+	m_reload_fnames.clear();
 }
 
 void MainWindow::tailFiles (QStringList const & files)
@@ -312,6 +316,14 @@ void MainWindow::onFileTail ()
 	QStringList files;
 	files << fname;
 	tailFiles(files);
+}
+
+void MainWindow::onFileLoadCSV ()
+{
+	QString fname = QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("CSV File(s) (*.%1)").arg(g_traceFileExtCSV));
+	QStringList files;
+	files << fname;
+	tailFiles(files); // spunt, @TODO
 }
 
 void MainWindow::onLogTail ()
@@ -432,49 +444,71 @@ void MainWindow::onDockRestoreButton ()
 	restoreGeometry(settings.value("geometry").toByteArray());
 }
 
+void MainWindow::onRecentFile ()
+{
+	QAction * action = qobject_cast<QAction *>(sender());
+	if (action)
+	{
+		QString const fname = action->data().toString();
+		QString const ext = QFileInfo(fname).suffix();
+
+		bool const is_tlv = (0 == QString::compare(ext, g_traceFileExtTLV, Qt::CaseInsensitive));
+		bool const is_csv = (0 == QString::compare(ext, g_traceFileExtCSV, Qt::CaseInsensitive));
+		if (is_tlv)
+			importDataStream(fname);
+		else if (is_csv)
+			createTailDataStream(fname);
+		else
+			createTailDataStream(fname);
+	}
+}
+
 void MainWindow::setupMenuBar ()
 {
 	qDebug("%s", __FUNCTION__);
+	m_dock_mgr_button = new QToolButton(0);
+	m_dock_mgr_button->setObjectName(QStringLiteral("dockManagerButton"));
+	m_dock_mgr_button->setMinimumSize(QSize(0, 0));
+	//m_dock_mgr_button->setFont(font);
+	m_dock_mgr_button->setCheckable(true);
+	m_dock_mgr_button->setChecked(false);
+	m_dock_mgr_button->setToolTip(QApplication::translate("MainWindow", "Central management of docked data widgets", 0));
+	m_dock_mgr_button->setText(QApplication::translate("MainWindow", "Widget Manager", 0));
+	menuBar()->setCornerWidget(m_dock_mgr_button, Qt::TopLeftCorner);
+	connect(m_dock_mgr_button, SIGNAL(clicked()), this, SLOT(onDockManagerButton()));
+	m_dock_mgr_button->setStyleSheet("\
+		QToolButton  { border: 1px solid #8f8f91; border-radius: 4px; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #e6e7fa, stop: 1 #dadbff); } \
+		QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #dadbdd, stop: 1 #d6d7da); }");
+
 	// File
-	QMenu * fileMenu = menuBar()->addMenu(tr("&File"));
-	fileMenu->addAction(tr("File &Load..."), this, SLOT(onFileLoad()), QKeySequence(Qt::ControlModifier + Qt::Key_O));
-	fileMenu->addAction(tr("File &Tail..."), this, SLOT(onFileTail()), QKeySequence(Qt::ControlModifier + Qt::Key_T));
-	fileMenu->addAction(tr("Traceserver log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
-	fileMenu->addAction(tr("&Save data..."), this, SLOT(onSaveData()), QKeySequence(Qt::ControlModifier + Qt::Key_S));
-	fileMenu->addAction(tr("&Export data ss CSV format"), this, SLOT(onExportDataToCSV()), QKeySequence(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_S));
-	fileMenu->addSeparator();
-	fileMenu->addAction(tr("Quit program"), this, SLOT(onQuit()), QKeySequence::Quit);
+	m_file_menu = menuBar()->addMenu(tr("&File"));
+	m_file_menu->addAction(tr("Data file &Load..."), this, SLOT(onFileLoad()), QKeySequence(Qt::ControlModifier + Qt::Key_O));
+	m_file_menu->addAction(tr("&Save raw client data as..."), this, SLOT(onSaveData()));
+	m_file_menu->addAction(tr("&Export data as CSV format..."), this, SLOT(onExportDataToCSV()));
+	m_file_menu->addSeparator();
+	m_file_menu->addAction(tr("Load &CSV file..."), this, SLOT(onFileLoadCSV()));
+	m_file_menu->addAction(tr("&Follow text file..."), this, SLOT(onFileTail()), QKeySequence(Qt::ControlModifier + Qt::Key_T));
+
+	m_file_menu->addSeparator();
+	syncHistoryToRecent(m_config.m_recent_history);
+
+	m_before_action = m_file_menu->addSeparator();
+	m_file_menu->addAction(tr("Quit program"), this, SLOT(onQuit()), QKeySequence::Quit);
 
 	// View
+	QMenu * viewMenu = menuBar()->addMenu(tr("&View"));
+	viewMenu->addAction(tr("&Save preset"), this, SLOT(onSave()), QKeySequence::Save);
+	viewMenu->addAction(tr("Save preset &as..."), this, SLOT(onSaveAs()), QKeySequence(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_S));
+	viewMenu->addSeparator();
+
+	// widget's tool dockable widgets.
 	m_windows_menu = menuBar()->addMenu(tr("&Windows"));
-	//fileMenu->addAction(tr("Show &Tool Widget"), this, SLOT(onShowToolWidget()), QKeySequence(Qt::ControlModifier + Qt::Key_O));
 
-	// Panic!
-	QMenu * panicMenu = menuBar()->addMenu(tr("&Panic"));
-	panicMenu->addAction(tr("&Remove configuration files"), this, SLOT(onRemoveConfigurationFiles()));
-
-	// Edit
-	//QMenu * editMenu = menuBar()->addMenu(tr("&Edit"));
-/*
-	editMenu->addAction(tr("Find"), this, SLOT(onFind()), QKeySequence::Find);
-	//editMenu->addAction(tr("Find"), this, SLOT(onFind()),	Qt::ControlModifier + Qt::Key_F);
-	editMenu->addAction(tr("Find"), this, SLOT(onFindAllRefs()), Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_F);
-	editMenu->addAction(tr("Find Next"), this, SLOT(onFindNext()), QKeySequence::FindNext);
-	editMenu->addAction(tr("Find Prev"), this, SLOT(onFindPrev()), QKeySequence::FindPrevious);
-	new QShortcut(QKeySequence(Qt::Key_Slash), this, SLOT(onFind()));
-*/
-	//editMenu->addAction(tr("Find and Select All"), this, SLOT(onFindAllButton()));
-	//editMenu->addAction(tr("Goto Next Tag or Selection"), this, SLOT(onNextToView()));
-
-	//editMenu->addSeparator();
-	//editMenu->addAction(tr("Close Tab"), this, SLOT(onCloseCurrentTab()), QKeySequence(Qt::ControlModifier + Qt::Key_W));
-
-	// Filter
-	//QMenu * filterMenu = menuBar()->addMenu(tr("Fi&lter"));
-	//filterMenu->addAction(tr("Goto file filter"), this, SLOT(onGotoFileFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F1));
-	//filterMenu->addAction(tr("Goto level filter"), this, SLOT(onGotoLevelFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F2));
-	//filterMenu->addAction(tr("Goto regex filter"), this, SLOT(onGotoRegexFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F3));
-	//filterMenu->addAction(tr("Goto color filter"), this, SLOT(onGotoColorFilter()), QKeySequence(Qt::ControlModifier + Qt::Key_F4));
+	// Help
+	QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
+	helpMenu->addSeparator();
+	helpMenu->addAction(tr("&Remove configuration files"), this, SLOT(onRemoveConfigurationFiles()));
+	helpMenu->addAction(tr("Show server log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
 
 	// Tools
 	//QMenu * tools = menuBar()->addMenu(tr("&Settings"));
@@ -486,9 +520,6 @@ void MainWindow::setupMenuBar ()
 	// Help
 	//QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
 	//helpMenu->addAction(tr("Help"), this, SLOT(onShowHelp()));
-	//helpMenu->addAction(tr("Dump filters"), this, SLOT(onDumpFilters()));
-
-	//new QShortcut(QKeySequence(Qt::AltModifier + Qt::Key_Space), this, SLOT(onAutoScrollHotkey()));
 }
 
 void MainWindow::addWindowAction (QAction * action)

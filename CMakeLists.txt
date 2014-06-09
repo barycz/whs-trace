@@ -1,10 +1,12 @@
 cmake_minimum_required (VERSION 2.8)
-project (Flogging)
+
+project (DbgToolkit)
+
 set (CMAKE_VERBOSE_MAKEFILE on)
-set (FLOGGING_MAJOR_VERSION 0)
-set (FLOGGING_MINOR_VERSION 1)
-set (FLOGGING_PATCH_VERSION 0)
-set (FLOGGING_VERSION ${FLOGGING_MAJOR_VERSION}.${FLOGGING_MINOR_VERSION}.${FLOGGING_PATCH_VERSION})
+set (DBGTOOLKIT_MAJOR_VERSION 0)
+set (DBGTOOLKIT_MINOR_VERSION 1)
+set (DBGTOOLKIT_PATCH_VERSION 0)
+set (DBGTOOLKIT_VERSION ${DBGTOOLKIT_MAJOR_VERSION}.${DBGTOOLKIT_MINOR_VERSION}.${DBGTOOLKIT_PATCH_VERSION})
 
 # Offer the user the choice of overriding the installation directories
 set (INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
@@ -13,7 +15,7 @@ set (INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header f
 if (WIN32 AND NOT CYGWIN)
 	set (DEF_INSTALL_CMAKE_DIR CMake)
 else ()
-	set (DEF_INSTALL_CMAKE_DIR lib/CMake/Flogging)
+	set (DEF_INSTALL_CMAKE_DIR lib/CMake/DbgToolkit)
 endif ()
 set (INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 
@@ -33,15 +35,15 @@ include_directories (
 # Add all targets to the build-tree export set
 
 # Export the package for use from the build-tree (this registers the build-tree with a global CMake-registry)
-export (PACKAGE Flogging)
+export (PACKAGE DbgToolkit)
 
-# Create a FloggingBuildTreeSettings.cmake file for the use from the build tree
-configure_file (FloggingBuildTreeSettings.cmake.in "${PROJECT_BINARY_DIR}/FloggingBuildTreeSettings.cmake" @ONLY)
+# Create a DbgToolkitBuildTreeSettings.cmake file for the use from the build tree
+configure_file (DbgToolkitBuildTreeSettings.cmake.in "${PROJECT_BINARY_DIR}/DbgToolkitBuildTreeSettings.cmake" @ONLY)
 
-# Create the FloggingConfig.cmake and FloggingConfigVersion files
+# Create the DbgToolkitConfig.cmake and DbgToolkitConfigVersion files
 file (RELATIVE_PATH CONF_REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
-configure_file (FloggingConfig.cmake.in "${PROJECT_BINARY_DIR}/FloggingConfig.cmake" @ONLY)
-configure_file (FloggingConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/FloggingConfigVersion.cmake" @ONLY)
+configure_file (DbgToolkitConfig.cmake.in "${PROJECT_BINARY_DIR}/DbgToolkitConfig.cmake" @ONLY)
+configure_file (DbgToolkitConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/DbgToolkitConfigVersion.cmake" @ONLY)
 
 # Install the export set for use with the install-tree
-#install (EXPORT FloggingLibraryDepends DESTINATION "${INSTALL_DATA_DIR}/Flogging/CMake" COMPONENT dev)
+#install (EXPORT DbgToolkitLibraryDepends DESTINATION "${INSTALL_DATA_DIR}/DbgToolkit/CMake" COMPONENT dev)

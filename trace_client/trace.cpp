@@ -34,11 +34,20 @@
 		context_t GetRuntimeContextMask () { return g_RuntimeContextMask; }
 
 		inline void SetCustomUserDictionnary (CtxDictPair const * ptr, size_t n);
+		inline void SetCustomUserDictionnary (LvlDictPair const * ptr, size_t n);
 		void SetCustomUserDictionnary ()
 		{
-			CtxDictPair const * ptr = 0;
-			size_t const n = getContextDictionnary(ptr);
-			SetCustomUserDictionnary(ptr, n);
+			{
+				CtxDictPair const * ptr = 0;
+				size_t const n = getContextDictionnary(ptr);
+				SetCustomUserDictionnary(ptr, n);
+			}
+
+			{
+				LvlDictPair const * ptr = 0;
+				size_t const n = getLevelDictionnary(ptr);
+				SetCustomUserDictionnary(ptr, n);
+			}
 		}
 
 		void AddCallback (I_TraceCallback* pCallback)

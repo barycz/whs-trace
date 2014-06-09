@@ -57,8 +57,9 @@ namespace logs {
 			QString const & item = cfg.m_columns_setup.at(i);
 			if (item.isEmpty())
 				return false;
-			if (tlv::tag_for_name(item.toStdString().c_str()) == 0)
-				return false;
+			//@NOTE: this is not compatible with csv FIXME
+			//if (tlv::tag_for_name(item.toStdString().c_str()) == 0)
+			//	return false;
 		}
 
 		for (int i = 0, ie = cfg.m_columns_sizes.size(); i < ie; ++i)

@@ -28,7 +28,7 @@ DockManager::DockManager (MainWindow * mw, QStringList const & path)
 	dock->setObjectName(name);
 	dock->setWindowTitle(name);
 	dock->setAllowedAreas(Qt::AllDockWidgetAreas);
-	m_main_window->addDockWidget(Qt::BottomDockWidgetArea, dock);
+	m_main_window->addDockWidget(Qt::TopDockWidgetArea, dock);
 	dock->setAttribute(Qt::WA_DeleteOnClose, false);
 	dock->setWidget(this);
 
@@ -36,7 +36,7 @@ DockManager::DockManager (MainWindow * mw, QStringList const & path)
 	//	m_main_window->restoreDockWidget(dock);
 	m_dockwidget = dock;
 
-	connect(m_dockwidget, SIGNAL(widgetVisibilityChanged()), m_main_window, SLOT(onDockManagerVisibilityChanged(bool)));
+	connect(m_dockwidget, SIGNAL(widgetVisibilityChanged(bool)), m_main_window, SLOT(onDockManagerVisibilityChanged(bool)));
 	m_control_bar = new ControlBarCommon();
 
 	connect(header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(onColumnResized(int, int, int)));
@@ -122,6 +122,11 @@ void DockManager::saveConfig (QString const & path)
 
 DockManager::~DockManager ()
 {
+	disconnect(m_dockwidget, SIGNAL(dockClosed()), m_main_window, SLOT(onDockManagerClosed()));
+	disconnect(this, SIGNAL(removeCurrentIndex(QModelIndex const &)), this, SLOT(onRemoveCurrentIndex(QModelIndex const &)));
+	disconnect(m_dockwidget, SIGNAL(widgetVisibilityChanged(bool)), m_main_window, SLOT(onDockManagerVisibilityChanged(bool)));
+	disconnect(header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(onColumnResized(int, int, int)));
+
 	setParent(0);
 	m_dockwidget->setWidget(0);
 	delete m_dockwidget;

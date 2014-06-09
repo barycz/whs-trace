@@ -212,7 +212,7 @@ void BaseTableModel::createRows (unsigned long long time, int first, int last, Q
 	if (first >= m_rows.size())
 	{
 		//qDebug("+ model: y>rows.sz resize m_rows.sz=%i y=%i", m_rows.size(), first);
-		beginInsertRows(QModelIndex(), m_rows.size(), first);
+		beginInsertRows(QModelIndex(), static_cast<int>(m_rows.size()), first);
 		size_t const curr_sz = m_rows.size();
 		m_rows.resize(last + 1);
 		m_row_ctimes.resize(last + 1);

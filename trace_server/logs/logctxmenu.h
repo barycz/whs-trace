@@ -32,8 +32,8 @@ namespace logs {
 
 		void onAutoScrollStateChanged (int state)
 		{
-			if (state == Qt::Checked)
-				m_ui->inViewCheckBox->setCheckState(Qt::Unchecked);
+			//if (state == Qt::Checked)
+			//	m_ui->inViewCheckBox->setCheckState(Qt::Unchecked);
 		}
 
 		~LogCtxMenu ()

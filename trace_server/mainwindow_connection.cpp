@@ -1,8 +1,12 @@
 #include "mainwindow.h"
 #include "connection.h"
-#include <QClipboard>
 #include <QStatusBar>
+#include <QMessageBox>
 #include <QTimer>
+#include "setupdialogcsv.h"
+#include "ui_setupdialogcsv.h"
+#include "utils.h"
+#include "serialize.h"
 
 Connection * MainWindow::findConnectionByName (QString const & app_name)
 {
@@ -29,54 +33,6 @@ Connection * MainWindow::createNewConnection ()
 	return connection;
 }
 
-void MainWindow::importDataStream (QString const & fname)
-{
-	QFile file(fname);
-	if (!file.open(QIODevice::ReadOnly))
-	{
-		qWarning(QString(tr("Could not open file %1").arg(fname)).toLatin1());
-		return;
-	}
-
-	Connection * connection = createNewConnection();
-	connection->setImportFile(fname);
-	statusBar()->showMessage(tr("Importing file!"));
-
-	QDataStream import_stream(&file);
-	connection->processDataStream(import_stream);
-	file.close();
-}
-
-void MainWindow::createTailLogStream (QString const & fname, QString const & separator)
-{
-	Connection * connection = createNewConnection();
-	connection->setTailFile(fname);
-	QFileInfo fi(fname);
-	QString const tag = fi.fileName();
-	
-	connection->handleCSVSetup(tag);
-	datalogs_t::iterator it = connection->findOrCreateLog(tag);
-	(*it)->config().m_csv_separator = separator;
-
-	connection->processTailCSVStream();
-	emit newConnection(connection);
-}
-
-void MainWindow::createTailDataStream (QString const & fname)
-{
-	Connection * connection = createNewConnection();
-	connection->setTailFile(fname);
-	QFileInfo fi(fname);
-	QString const tag = fi.fileName();
-	
-	connection->handleCSVSetup(tag);
-	datalogs_t::iterator it = connection->findOrCreateLog(tag);
-	//(*it)->config().m_csv_separator = separator;
-
-	connection->processTailCSVStream();
-	emit newConnection(connection);
-}
-
 void MainWindow::onCloseConnection (Connection * c)
 {
 	qDebug("MainWindow::onCloseConection(Connection *=0x%08x)", c);
@@ -89,7 +45,6 @@ void MainWindow::onCloseConnection (Connection * c)
 		connection = 0;
 	}
 }
-
 void MainWindow::onCloseMarkedConnections ()
 {
 	qDebug("%s", __FUNCTION__);
@@ -109,9 +64,29 @@ void MainWindow::onCloseMarkedConnections ()
 		to_delete.pop_back();
 	}
 }
-
 void MainWindow::markConnectionForClose (Connection * conn)
 {
 	conn->m_marked_for_close = true;
 	QTimer::singleShot(0, this, SLOT(onCloseMarkedConnections()));
 }
+
+// tlv file
+void MainWindow::importDataStream (QString const & fname)
+{
+	QFile file(fname);
+	if (!file.open(QIODevice::ReadOnly))
+	{
+		qWarning(QString(tr("Could not open file %1").arg(fname)).toLatin1());
+		return;
+	}
+
+	Connection * connection = createNewConnection();
+	connection->setImportFile(fname);
+	statusBar()->showMessage(tr("Importing file!"));
+
+	QDataStream import_stream(&file);
+	connection->processDataStream(import_stream);
+	file.close();
+}
+
+

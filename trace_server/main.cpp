@@ -1,16 +1,14 @@
 #include <QApplication>
-//#include <QtGui/QTableWidget.h>
 #include <QSystemTrayIcon>
 #include <QMessageBox>
 #include <QThread>
 #include <QAbstractNativeEventFilter>
 #include <QKeyEvent>
 #include "mainwindow.h"
+#include "utils.h"
 #include <sysfn/os.h>
 #include <sysfn/time_query.h>
 #include <time.h>
-
-#include "version.cpp"
 
 #ifdef WIN32
 #	define WIN32_LEAN_AND_MEAN
@@ -28,14 +26,12 @@ struct Application : QApplication, public QAbstractNativeEventFilter
 {
 	MainWindow * m_main_window;
 
-	Application (int & argc, char *argv[])
+	Application (int & argc, char * argv[])
 		: QApplication(argc, argv)
 		, m_main_window(0)
 	{}
 
-	~Application ()
-	{
-	}
+	~Application () { }
 
 	void setMainWindow (MainWindow * mw)
 	{
@@ -62,16 +58,6 @@ struct Application : QApplication, public QAbstractNativeEventFilter
 
 	virtual bool notify (QObject * receiver, QEvent * e)
 	{
-		/*if (e->type() == QKeyEvent::KeyPress)
-		{
-			QKeyEvent * ke = static_cast<QKeyEvent *>(e);
-			if (ke->key() == Qt::Key_Tab || ke->key() == Qt::Key_Backtab)
-			{
-				if (m_main_window->handleTab(ke))
-					return true;
-			}
-		}*/
-
 		try
 		{
 			return QApplication::notify(receiver, e);
@@ -96,8 +82,8 @@ struct Application : QApplication, public QAbstractNativeEventFilter
 
 void usage ()
 {
-	printf("\n(f)Logging server, Copyright (C) 2011 Mojmir Svoboda\n");
-	printf("http://developer.berlios.de/projects/flogging\n\n");
+	printf("\nDbgToolkit's trace server, Copyright (C) 2011-2014 Mojmir Svoboda\n");
+	printf("https://github.com/mojmir-svoboda/DbgToolkit\n\n");
 	printf("Available options:\n");
 	printf("\t\t-q\t\tquit immeadiately if another instance running\n");
 	printf("\t\t-n\t\tno visible window at start (can be activated by ScrollLock hotkey)\n");
@@ -111,7 +97,7 @@ void qDebugHandler (QtMsgType type, QMessageLogContext const & ctx, QString cons
 	time(&timer);
 	tm_info = localtime(&timer);
 	char t[48];
-	strftime(t, 25, "%Y:%m:%d%H:%M:%S", tm_info);
+	strftime(t, 25, "%Y:%m:%d %H:%M:%S", tm_info);
 
 	//@TODO: dump context info
 	switch (type)
@@ -135,9 +121,12 @@ void qDebugHandler (QtMsgType type, QMessageLogContext const & ctx, QString cons
 int main (int argc, char * argv[])
 {
 	sys::setTimeStart();
+
+	QString const path = QDir::homePath() + "/" + g_traceServerDirName + "/logs";
+	mkPath(path);
 	QFileInfo fi(argv[0]);
-	QString const log_name = QString("%1.%2").arg(fi.completeBaseName()).arg("log");
-	g_LogRedirect = fopen(log_name.toLatin1(), "a");
+	QString const log_name = path + "/" + QString("%1.%2").arg(fi.completeBaseName()).arg("log");
+	g_LogRedirect = fopen(log_name.toLatin1(), "w");
 	bool quit_delay = true;
 	bool start_hidden = false;
 	bool dump_mode = false;
@@ -180,9 +169,10 @@ int main (int argc, char * argv[])
 		}
 	}
 
-	qInstallMessageHandler(qDebugHandler);
+	if (g_LogRedirect)
+		qInstallMessageHandler(qDebugHandler);
 
-	Application a(argc, argv);
+	Application app(argc, argv);
 
 #ifdef WIN32
 	if (!QSystemTrayIcon::isSystemTrayAvailable()) {
@@ -198,11 +188,14 @@ int main (int argc, char * argv[])
 		w.setVisible(true);
 		w.show();
 	}
-	a.setMainWindow(&w);
+	app.setMainWindow(&w);
 	if (start_hidden)
 		w.onHotkeyShowOrHide();
-	bool const retval = a.exec();
+
+	bool const retval = app.exec(); // main loop
+
 	qInstallMessageHandler(0);
-	fclose(g_LogRedirect);
+	if (g_LogRedirect)
+		fclose(g_LogRedirect);
 	return retval;
 }

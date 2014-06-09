@@ -49,7 +49,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;case sensitivity&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Case sensitivity&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Aa</string>
@@ -65,7 +65,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;whole word match&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Whole word match&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>ww</string>
@@ -81,7 +81,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;regexp&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use regular expression&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>^.*</string>
@@ -143,6 +143,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Verdana</family>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -198,7 +199,7 @@
         <enum>Qt::StrongFocus</enum>
        </property>
        <property name="toolTip">
-        <string>Find previous</string>
+        <string>Find previous occurence</string>
        </property>
        <property name="text">
         <string/>
@@ -220,7 +221,7 @@
         <enum>Qt::StrongFocus</enum>
        </property>
        <property name="toolTip">
-        <string>Find next</string>
+        <string>Find next occurence</string>
        </property>
        <property name="text">
         <string/>
@@ -245,7 +246,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;selects all occurences in current document&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selects all occurences in current document&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Select</string>
@@ -261,7 +262,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lists all occurences as references in a new widget. &lt;/p&gt;&lt;p&gt;New widget shares the data with original and propagates selection to source widget.&lt;/p&gt;&lt;p&gt;New widget will be closed if the source widget is closed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lists all occurences as references in a new log widget. &lt;/p&gt;&lt;p&gt;New widget shares the data with original and propagates selection to source widget.&lt;/p&gt;&lt;p&gt;New widget will be closed if the source widget is closed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Refs</string>

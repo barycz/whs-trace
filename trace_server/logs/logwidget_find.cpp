@@ -406,14 +406,25 @@ void LogWidget::noMoreMatches ()
 	m_warnimage->warningFindNoMoreMatches();
 }
 
-QString LogWidget::findString4Tag (tlv::tag_t tag, QModelIndex const & row_index) const
+QString LogWidget::findString4Tag (int tag, QModelIndex const & src_idx) const
 {
-	return findVariant4Tag(tag, row_index).toString();
+	QString val;
+	if (src_idx.isValid())
+	{
+		DecodedCommand const * dcmd = getDecodedCommand(src_idx);
+		if (dcmd)
+		{
+			bool const exists = dcmd->getString(tag, val);
+			if (!exists)
+				qWarning("cannot find tag, src_row=%i %i", tag, src_idx.row());
+		}
+	}
+	return val;
 }
-
-QVariant LogWidget::findVariant4Tag (tlv::tag_t tag, QModelIndex const & row_index) const
+/*
+QVariant LogWidget::findVariant4Tag (int tag, QModelIndex const & row_index) const
 {
-	int const idx = m_tags2columns[tag];
+	int const idx = findColumn4TagCst(tag);
 	if (idx == -1)
 		return QVariant();
 
@@ -426,7 +437,7 @@ QVariant LogWidget::findVariant4Tag (tlv::tag_t tag, QModelIndex const & row_ind
 		return value;
 	}
 	return QVariant();
-}
+}*/
 
 }
 

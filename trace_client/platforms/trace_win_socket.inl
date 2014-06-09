@@ -61,7 +61,7 @@ namespace trace {
 
 		inline bool WriteToSocket (char const * buff, size_t ln)
 		{
-			if (is_connected(socks::g_Socket))
+			if (sys::socks::is_connected(socks::g_Socket))
 			{
 				int result = SOCKET_ERROR;
 				if (!g_ClottedTimer.enabled())

@@ -27,6 +27,7 @@ Connection::Connection (QString const & app_name, QObject * parent)
 	, m_control_bar(0)
 	, m_file_tlv_stream(0)
 	, m_file_csv_stream(0)
+	, m_file_size(0)
 	, m_buffer(e_ringbuff_size)
 	, m_current_cmd()
 	, m_decoded_cmds(e_ringcmd_size)
@@ -38,7 +39,6 @@ Connection::Connection (QString const & app_name, QObject * parent)
 
 	m_control_bar = new ControlBarCommon();
 
-	//m_main_window->dockManager().addActionTreeItem(*this, true); // TODO: m_config.m_show
 	m_config.m_auto_scroll = getGlobalConfig().m_auto_scroll;
 	m_config.m_level = getGlobalConfig().m_level;
 	m_config.m_buffered = getGlobalConfig().m_buffered;
@@ -153,23 +153,23 @@ Connection::~Connection ()
 	qDebug("destroying docked widgets");
 	recurse(m_data, DestroyDockedWidgets(*m_main_window, *this));
 
-	/*if (m_file_tlv_stream)
+	if (m_file_tlv_stream)
 	{
-		QDevice * const f = m_file_tlv_stream->device();
+		QIODevice * const f = m_file_tlv_stream->device();
 		f->close();
 		delete m_file_tlv_stream;
 		m_file_tlv_stream = 0;
 		delete f;
-	}*/
+	}
 
-/*	if (m_file_csv_stream)
+	if (m_file_csv_stream)
 	{
 		QIODevice * const f = m_file_csv_stream->device();
 		f->close();
 		delete m_file_csv_stream;
 		m_file_csv_stream = 0;
 		delete f;
-	}*/
+	}
 }
 
 void Connection::mkWidgetPath (E_DataWidgetType type, QString const tag, QStringList & path)
@@ -188,7 +188,6 @@ void Connection::mkWidgetPath (E_DataWidgetType type, QString const tag, QString
 void Connection::onDisconnected ()
 {
 	qDebug("onDisconnected()");
-	//if (m_statswindow) m_statswindow->stopUpdate();
 
 	if (m_main_window->dumpModeEnabled())
 	{
@@ -318,7 +317,7 @@ void Connection::applyConfigs ()
 
 void Connection::onSaveData (QString const & dir)
 {
-	copyStorageTo(dir + "/" + "in_stream." + g_traceFileExtTLV);
+	copyStorageTo(dir + "/" + "raw_data." + g_traceFileExtTLV);
 	//recurse(m_data, SaveData(dir));
 }
 

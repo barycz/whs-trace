@@ -1,7 +1,7 @@
 #pragma once
 #include "filtermgr.h"
 //#include "colorizer_script.h"
-//#include "colorizer_string.h"
+#include "colorizer_string.h"
 #include "colorizer_regex.h"
 //#include "colorizer_ctx.h"
 //#include "colorizer_lvl.h"
@@ -38,8 +38,8 @@ struct ColorizerMgr : FilterMgr
 	ColorizerRow const *		getColorizerRow () const { return static_cast<ColorizerRow const *>(m_cache[e_Colorizer_Row]); }
 	//ColorizerScript *		getColorizerScript () { return static_cast<ColorizerScript *>(m_cache[e_Colorizer_Script]); }
 	//ColorizerScript const *	getColorizerScript () const { return static_cast<ColorizerScript const *>(m_cache[e_Colorizer_Script]); }
-	//ColorizerString *			getColorizerString () { return static_cast<ColorizerString *>(m_cache[e_Colorizer_String]); }
-	//ColorizerString const *	getColorizerString () const { return static_cast<ColorizerString const *>(m_cache[e_Colorizer_String]); }
+	ColorizerString *			getColorizerString () { return static_cast<ColorizerString *>(m_cache[e_Colorizer_String]); }
+	ColorizerString const *	getColorizerString () const { return static_cast<ColorizerString const *>(m_cache[e_Colorizer_String]); }
 	ColorizerRegex *			getColorizerRegex () { return static_cast<ColorizerRegex *>(m_cache[e_Colorizer_Regex]); }
 	ColorizerRegex const *		getColorizerRegex () const { return static_cast<ColorizerRegex const *>(m_cache[e_Colorizer_Regex]); }
 	//ColorizerCtx *				getColorizerCtx () { return static_cast<ColorizerCtx *>(m_cache[e_Colorizer_Ctx]); }

@@ -334,6 +334,7 @@ void Connection::setSocketDescriptor (int sd)
 {
 	m_src_stream = e_Stream_TCP;
 	m_src_protocol = e_Proto_TLV;
+	m_src_name = QString("tcp ").arg(sd);
 
 	m_tcpstream = new QTcpSocket(this);
 	m_tcpstream->setSocketDescriptor(sd);
@@ -344,12 +345,14 @@ void Connection::setImportFile (QString const & fname)
 {
 	m_src_stream = e_Stream_File;
 	m_src_protocol = e_Proto_TLV;
+	m_src_name = fname;
 }
 
 void Connection::setTailFile (QString const & fname)
 {
 	m_src_stream = e_Stream_File;
 	m_src_protocol = e_Proto_CSV;
+	m_src_name = fname;
 
 	QFile * f = new QFile(fname);
 	if (!f->open(QIODevice::ReadOnly))
@@ -401,17 +404,44 @@ void Connection::processDataStream (QDataStream & stream)
 	}
 }
 
+#ifdef WIN32
+#	include <io.h>
+	inline qint64 getFileSize (QFile * f)
+	{
+		qint64 sz = -1;
+		if (f)
+		{
+			LARGE_INTEGER arg;
+			HANDLE h = (HANDLE)_get_osfhandle(f->handle());
+			if (::GetFileSizeEx(h, &arg) != 0)
+				sz = arg.QuadPart;
+		}
+		return sz;
+	}
+#endif
+
 void Connection::processTailCSVStream ()
 {
+	qint64 const sz = getFileSize(qobject_cast<QFile *>(m_file_csv_stream->device()));
+	if (sz > m_file_size)
+		m_file_size = sz;
+	
+	if (sz < m_file_size)
+	{
+		m_file_size = 0;
+		m_main_window->requestReloadFile(m_src_name);
+		QTimer::singleShot(32, m_main_window, SLOT(onReloadFile()));
+		m_main_window->onCloseConnection(this); // deletes it immeadiately
+		return;
+	}
 	while (!m_file_csv_stream->atEnd())
 	{
 		while (!m_decoded_cmds.full() && !m_file_csv_stream->atEnd())
 		{
 			QString const data = m_file_csv_stream->readLine(2048);
-			tlv::TV tv;
-			tv.m_tag = tlv::tag_msg;
-			tv.m_val = data;
-			m_current_cmd.m_tvs.push_back(tv);
+			QByteArray ba = data.toLatin1();
+			memcpy(&m_current_cmd.m_orig_message[0], ba.data(), ba.size() < 2048? ba.size() : 2048 - 1);
+
 			m_decoded_cmds.push_back(m_current_cmd);
 			m_current_cmd.reset(); // reset current command for another decoding pass
 		}

@@ -9,8 +9,8 @@ inline void syncHistoryToWidget (QComboBox * c, History<QString> const & h)
 		c->clear();
 		for (size_t i = 0, ie = h.size(); i < ie; ++i)
 			c->addItem(h[i]);
-    if (h.m_current_item < h.size())
-      c->setCurrentIndex(h.m_current_item);
+		if (h.m_current_item < h.size())
+			c->setCurrentIndex(h.m_current_item);
 	}
 }
 

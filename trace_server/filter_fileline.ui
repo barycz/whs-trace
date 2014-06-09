@@ -12,7 +12,7 @@
   </property>
   <layout class="QVBoxLayout" name="filterFileLayout">
    <property name="spacing">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -49,7 +49,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Find string in the file filter view&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Find string in the file filter tree&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="editable">
         <bool>true</bool>
@@ -69,10 +69,14 @@
        </property>
        <property name="font">
         <font>
-         <pointsize>9</pointsize>
+         <family>Verdana</family>
+         <pointsize>8</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
+       </property>
+       <property name="toolTip">
+        <string>Cancel search</string>
        </property>
        <property name="text">
         <string>X</string>
@@ -135,6 +139,9 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Hide all files and lines</string>
+       </property>
        <property name="text">
         <string>None</string>
        </property>
@@ -147,6 +154,9 @@
          <width>32</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>Show all files and lines</string>
        </property>
        <property name="text">
         <string>All</string>

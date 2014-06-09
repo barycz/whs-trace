@@ -54,6 +54,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>Show all levels</string>
+         </property>
          <property name="text">
           <string>All</string>
          </property>
@@ -72,6 +75,9 @@
            <width>32</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>Hide all levels</string>
          </property>
          <property name="text">
           <string>None</string>

@@ -1,5 +1,6 @@
 #include "logtableview.h"
 #include "logwidget.h"
+#include "colorizewidget.h"
 #include <connection.h>
 
 namespace logs {
@@ -70,6 +71,11 @@ namespace logs {
 					m_log_widget.m_find_widget->onCancel();
 					e->accept();
 				}
+				if (m_log_widget.m_colorize_widget && m_log_widget.m_colorize_widget->isVisible())
+				{
+					m_log_widget.m_colorize_widget->onCancel();
+					e->accept();
+				}
 			}
 			if (!ctrl && shift && !alt && e->key() == Qt::Key_Delete)
 			{
@@ -93,6 +99,23 @@ namespace logs {
 				e->accept();
 			}
 
+			if (ctrl && e->key() == Qt::Key_D)
+			{
+				m_log_widget.onColorize();
+				e->accept();
+			}
+			/*if (!ctrl && !shift && !alt && e->key() == Qt::Key_Slash)
+			{
+				m_log_widget.onFind();
+				e->accept();
+			}
+			if (ctrl && shift && e->key() == Qt::Key_F)
+			{
+				m_log_widget.onFindAllRefs();
+				e->accept();
+			}*/
+
+
 			if (e->matches(QKeySequence::FindNext))
 			{
 				m_log_widget.onFindNext();
@@ -103,19 +126,33 @@ namespace logs {
 				m_log_widget.onFindPrev();
 				e->accept();
 			}
+			// findwidget Tab navigation
 			if (e->key() == Qt::Key_Tab && m_log_widget.m_find_widget && m_log_widget.m_find_widget->isVisible())
 			{
 				m_log_widget.m_find_widget->focusNext();
 				e->ignore();
 				return;
 			}
-
 			if (e->key() == Qt::Key_Backtab && m_log_widget.m_find_widget && m_log_widget.m_find_widget->isVisible())
 			{
 				m_log_widget.m_find_widget->focusPrev();
 				e->ignore();
 				return;
 			}
+			// colorizewidget Tab navigation
+			if (e->key() == Qt::Key_Tab && m_log_widget.m_colorize_widget && m_log_widget.m_colorize_widget->isVisible())
+			{
+				m_log_widget.m_colorize_widget->focusNext();
+				e->ignore();
+				return;
+			}
+			if (e->key() == Qt::Key_Backtab && m_log_widget.m_colorize_widget && m_log_widget.m_colorize_widget->isVisible())
+			{
+				m_log_widget.m_colorize_widget->focusPrev();
+				e->ignore();
+				return;
+			}
+
 		}
 		QTableView::keyPressEvent(e);
 	}

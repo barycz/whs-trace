@@ -38,10 +38,12 @@ class QMenu;
 class QListView;
 class QStandardItemModel;
 class QLabel;
+class QToolButton;
 class TreeView;
 class QTreeView;
 class QTimer;
 class Connection;
+class SetupDialogCSV;
 
 class MainWindow : public QMainWindow
 {
@@ -69,6 +71,10 @@ public:
 	bool dumpModeEnabled () const { return m_config.m_dump_mode; }
 	unsigned getHotKey () const;
 	bool onTopEnabled () const;
+	void mentionStringInRecentHistory_NoRef (QString const & str, History<QString> & h);
+	void removeStringFromRecentHistory (QString const & str, History<QString> & h);
+	void mentionStringInRecentHistory_Ref (QString const & str, History<QString> & h);
+	void syncHistoryToRecent (History<QString> const & h);
 
 	// drag and drop
 	void changeEvent (QEvent * e);
@@ -93,11 +99,14 @@ public:
 	Connection * createNewConnection ();
 	Connection * createNewConnection (QString const & app_name);
 	void markConnectionForClose (Connection * conn);
+	bool executeSetupDialogCSV (QString const & fname);
 
 public slots:
 	void newConnection (Connection * connection);
 	void onStatusChanged (QString const & status);
 	void onCloseMarkedConnections ();
+	void onReloadFile ();
+	void requestReloadFile (QString const & fname) { m_reload_fnames.push_back(fname); }
 
 	void onHotkeyShowOrHide ();
 	void hide ();
@@ -111,6 +120,14 @@ public slots:
 	void onDockManagerClosed ();
 	void onSave ();
 	void onSaveAs ();
+
+	void onChangeSetupDialogCSV (int n);
+	void onChangeSeparatorDialogCSV (int n);
+	void onChangeColumnDialogCSV (QModelIndex const &);
+	void onChangeColumnRadioDialogCSV (bool toggled);
+	void onChangeColumnImport ();
+	void onChangeColumnReset ();
+	void onChangeColumnSkipAll ();
 
 	friend class Connection;
 private slots:
@@ -127,12 +144,14 @@ private slots:
 
 	void onFileLoad ();
 	void onFileTail ();
+	void onFileLoadCSV ();
 	void onLogTail ();
 	void tailFiles (QStringList const & list);
 	void onSaveData ();
 	void onExportDataToCSV ();
 	void closeEvent (QCloseEvent *event);
 	void iconActivated (QSystemTrayIcon::ActivationReason reason);
+	void onRecentFile ();
 
 	// control widget
 	void onLevelValueChanged (int i);
@@ -174,6 +193,7 @@ private:
 	Ui::MainWindow * 	ui;
 	Ui::SettingsDialog * ui_settings;
 	QDialog *			m_settings_dialog;
+	SetupDialogCSV *	m_setup_dialog_csv;
 
 	Ui::HelpDialog * 	m_help;
 	GlobalConfig 		m_config;
@@ -181,13 +201,18 @@ private:
 	QTimer *  			m_timer;
 	Server *  			m_server;
 	QMenu * 			m_windows_menu;
+	QMenu * 			m_file_menu;
+	QAction * 			m_before_action;
+	std::vector<QAction *> m_recent_files;
 	QAction * 			m_minimize_action;
 	QAction * 			m_maximize_action;
 	QAction * 			m_restore_action;
 	QAction * 			m_quit_action;
 	QMenu *   			m_tray_menu;
+	QToolButton *		m_dock_mgr_button;
 	QSystemTrayIcon * 	m_tray_icon;
 	QLabel *			m_status_label;
+	std::vector<QString> m_reload_fnames;
 
 	// docked widgets
 	DockManager 		m_dock_mgr;

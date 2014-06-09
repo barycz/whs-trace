@@ -5,16 +5,15 @@
 
 namespace logs {
 
+	class LogWidget;
+
 	class LogDelegate : public QStyledItemDelegate
 	{
 		LogWidget const & m_log_widget;
 		AppData const & m_app_data;
-	public: 
-		LogDelegate (LogWidget & lw, AppData const & ad, QObject * parent = 0) 
-			: QStyledItemDelegate(parent), m_log_widget(lw), m_app_data(ad)
-		{ }
-
-    ~LogDelegate() {}
+	public:
+		LogDelegate (LogWidget & lw, AppData const & ad, QObject * parent = 0);
+		virtual ~LogDelegate() { }
 
 		void paint (QPainter * painter, QStyleOptionViewItem const & option, QModelIndex const & index) const;
 		void paintCustom (QPainter * painter, QStyleOptionViewItem const & option, QModelIndex const & index) const;

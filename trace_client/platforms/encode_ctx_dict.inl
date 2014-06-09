@@ -5,9 +5,10 @@
 
 namespace trace {
 
-	inline void encode_ctx_dict (msg_t & msg, CtxDictPair const * ptr, size_t n)
+	template <class DictT>
+	inline void encode_dict (msg_t & msg, tlv::cmd_t cmd, DictT const * ptr, size_t n)
 	{
-		tlv::Encoder_v1 e(tlv::cmd_dict_ctx, msg.m_data, msg_t::e_data_sz);
+		tlv::Encoder_v1 e(cmd, msg.m_data, msg_t::e_data_sz);
 		size_t const tlv_buff_sz = 256;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;

@@ -10,7 +10,7 @@
 # software is retrieved through a tarball which does not contain the `.git'
 # directory. Hence, there is no way to search in the Git history to generate
 # the version number.
-# In this case, a 'bbversion.h' file is put at the top-directory of the source
+# In this case, a 'version.cpp' file is put at the top-directory of the source
 # tree which contains the project version.
 #
 # - the softwares comes from git (possibly unstable version).
@@ -39,12 +39,12 @@
 set(PROJECT_STABLE False)
 
 # Check if a version is embedded in the project.
-if(EXISTS ${CMAKE_SOURCE_DIR}/bbversion.h)
-	# Yes, use it. This is a stable version.
-	FILE(COPY ${CMAKE_SOURCE_DIR}/bbversion.h DESTINATION ${CMAKE_BINARY_DIR})
-	SET(PROJECT_STABLE True)
-else(EXISTS ${CMAKE_SOURCE_DIR}/bbversion.h)
-	# No, there is no 'bbversion.h' file. Deduce the version from git.
+#if(EXISTS ${CMAKE_SOURCE_DIR}/version.cpp)
+#	# Yes, use it. This is a stable version.
+#	FILE(COPY ${CMAKE_SOURCE_DIR}/version.cpp DESTINATION ${CMAKE_BINARY_DIR})
+#	SET(PROJECT_STABLE True)
+#else(EXISTS ${CMAKE_SOURCE_DIR}/version.cpp)
+	# No, there is no 'version.cpp' file. Deduce the version from git.
 
 	# Search for git.
 	find_program(GIT git)
@@ -131,11 +131,9 @@ else(EXISTS ${CMAKE_SOURCE_DIR}/bbversion.h)
 	if(PROJECT_DIRTY)
 		set(PROJECT_VERSION "${PROJECT_VERSION}-dirty")
 	endif()
-	file(WRITE bbversion.h "#define BBLEAN_VERSION \"${PROJECT_VERSION}\"\n")
-	file(APPEND bbversion.h "#define BBLEAN_RELDATE \"${PROJECT_RELDATE}\"\n")
+	file(WRITE version.cpp "#include <version.h>\n")
+	file(APPEND version.cpp "char const g_Version[] = \"${PROJECT_VERSION}\";\n")
 
-	# FIXME: fill BBLEAN_NUMVERSION corectly (used for blackbox/resource.rc)
-	file(APPEND bbversion.h "#define BBLEAN_NUMVERSION 1,17,2\n")
-	message("bb version : ${PROJECT_VERSION}")
+	message("DbgToolkit version : ${PROJECT_VERSION}")
 
-endif(EXISTS ${CMAKE_SOURCE_DIR}/bbversion.h)
+#endif(EXISTS ${CMAKE_SOURCE_DIR}/version.cpp)
