@@ -178,7 +178,7 @@ void MainWindow::loadLayout (QString const & fname)
 void MainWindow::storeState ()
 {
 	qDebug("%s", __FUNCTION__);
-	QSettings settings("MojoMir", "TraceServer");
+	QSettings settings;
 
 	settings.setValue("geometry", saveGeometry());
 	settings.setValue("windowState", saveState());
@@ -187,7 +187,7 @@ void MainWindow::storeState ()
 
 void MainWindow::restoreDockedWidgetGeometry ()
 {
-	QSettings settings("MojoMir", "TraceServer");
+	QSettings settings;
 
 	//restoreGeometry(settings.value("geometry").toByteArray());
 	restoreState(settings.value("windowState").toByteArray());
@@ -203,7 +203,7 @@ void MainWindow::loadState ()
 	m_dock_mgr.loadConfig(m_config.m_appdir);
 	m_dock_mgr.applyConfig();
 
-	QSettings settings("MojoMir", "TraceServer");
+	QSettings settings;
 	restoreGeometry(settings.value("geometry").toByteArray());
 	restoreState(settings.value("windowState").toByteArray());
 

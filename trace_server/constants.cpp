@@ -1,5 +1,7 @@
 #include "constants.h"
 
+char const * g_OrganizationName		= "MojoMir";
+char const * g_TraceServerAppName	= "TraceServer";
 char const * g_traceServerName		= "trace_server";
 char const * g_traceServerDirName	= ".trace_server";
 char const * g_traceFileExtTLV    	= "trace";

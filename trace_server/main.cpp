@@ -173,6 +173,8 @@ int main (int argc, char * argv[])
 		qInstallMessageHandler(qDebugHandler);
 
 	Application app(argc, argv);
+	app.setOrganizationName(g_OrganizationName);
+	app.setApplicationName(g_TraceServerAppName);
 
 #ifdef WIN32
 	if (!QSystemTrayIcon::isSystemTrayAvailable()) {

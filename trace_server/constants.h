@@ -1,5 +1,7 @@
 #pragma once
 
+extern char const * g_OrganizationName;
+extern char const * g_TraceServerAppName;
 extern char const * g_traceServerName;
 extern char const * g_traceServerDirName;
 extern char const * g_traceFileExtTLV;

@@ -431,7 +431,7 @@ void MainWindow::onShowHelp ()
 void MainWindow::storeGeometry ()
 {
 	qDebug("%s", __FUNCTION__);
-	QSettings settings("MojoMir", "TraceServer");
+	QSettings settings;
 	settings.setValue("geometry", saveGeometry());
 	settings.setValue("windowState", saveState());
 }
@@ -439,7 +439,7 @@ void MainWindow::storeGeometry ()
 void MainWindow::onDockRestoreButton ()
 {
 	qDebug("%s", __FUNCTION__);
-	QSettings settings("MojoMir", "TraceServer");
+	QSettings settings;
 	restoreState(settings.value("windowState").toByteArray());
 	restoreGeometry(settings.value("geometry").toByteArray());
 }
@@ -595,6 +595,9 @@ void MainWindow::onRemoveConfigurationFiles ()
 
 	QDir d_new;
 	d_new.mkpath(path);
+
+	QSettings settings;
+	settings.clear();
 }
 
 
