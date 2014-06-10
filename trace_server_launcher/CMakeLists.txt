@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 project (trace_server_launcher)
+# mojo's hardcoded path in his home directory :(
 set (CMAKE_MODULE_PATH "~/devel/DbgToolkit;${CMAKE_MODULE_PATH}")
+# try also relative paths
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../;${CMAKE_CURRENT_SOURCE_DIR}/../_project/")
 
 find_package (DbgToolkit REQUIRED)
 find_package (Threads)
