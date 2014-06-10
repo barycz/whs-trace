@@ -23,7 +23,7 @@ inline bool isTraceServerRunning (char const * port = "13127")
 	if (is_running)
 	{
 		char data[64];
-		tlv::Encoder e(tlv::cmd_ping, data, 64);
+		tlv::Encoder_v1 e(tlv::cmd_ping, data, 64);
 		size_t const tlv_buff_sz = 64;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
@@ -48,7 +48,7 @@ inline bool tryTraceServerShutdown (char const * host = "localhost", char const 
 	if (is_running)
 	{
 		char data[64];
-		tlv::Encoder e(tlv::cmd_shutdown, data, 64);
+		tlv::Encoder_v1 e(tlv::cmd_shutdown, data, 64);
 		size_t const tlv_buff_sz = 64;
 		char tlv_buff[tlv_buff_sz];
 		using namespace tlv;
