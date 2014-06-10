@@ -350,6 +350,8 @@ set(trace_server_UI
 	colorizer_string.ui
 	)
 
+file(GLOB trace_server_INLINES *.inl)
+
 set(trace_server_RESOURCES resources.qrc)
 
 if (WIN32)
@@ -367,8 +369,14 @@ add_executable(trace_server WIN32
 		${trace_server_UI_SRCS}
 		${trace_server_RESOURCES_RCC}
 		${trace_server_SOURCES}
+		${trace_server_HEADERS}
+		${trace_server_INLINES}
 		${trace_server_WIN32_RESOURCES}
 )
+
+source_group("UI" FILES ${trace_server_UI})
+source_group("Resources" FILES ${trace_server_RESOURCES} ${trace_server_WIN32_RESOURCES})
+source_group("Generated" FILES ${trace_server_UI_HDRS} ${trace_server_RESOURCES_RCC})
 
 ####################### Platform specific ######################
 if (WIN32)
