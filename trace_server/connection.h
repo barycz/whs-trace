@@ -55,6 +55,23 @@ struct SelectConfig { typedef typename boost::tuples::element<TypeN, data_widget
 template <int TypeN>
 struct SelectIterator { typedef typename boost::tuples::element<TypeN, data_widgets_t>::type::iterator type; };
 
+template <typename T_D, typename T_F, size_t size>
+struct for_each_helper {
+	static void run_f(T_D & d, T_F & f) {
+		for_each_helper<T_D, T_F, size - 1>::run_f(d, f);
+		f(d.get<size-1>());
+	}
+};
+
+template <typename T_D, typename T_F>
+struct for_each_helper<T_D, T_F, 0> {
+	static void run_f(T_D & , T_F & ) {}
+};
+
+template <typename T_D, typename T_F>
+void for_each_data_widget_t( T_D & d, T_F f ) {
+	return for_each_helper<T_D, T_F, boost::tuples::length<T_D>::value>::run_f(d, f);
+}
 
 /**@class		Connection
  * @brief		represents incoming connection (or file stream)
@@ -73,6 +90,8 @@ public:
 	QString const & getAppName () const { return m_app_name; }
 	QString const & getCurrPreset () const { return m_curr_preset; }
 	AppData const & appData () const { return m_app_data; }
+	data_widgets_t const & data() const { return m_data; }
+	//data_widgets_t & data() { return m_data; }
 	E_SrcProtocol protocol () const { return m_src_protocol; }
 	//QString const & separator () const { return m_config.m_csv_separator; } // csv
 

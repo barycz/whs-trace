@@ -29,6 +29,11 @@ Connection * MainWindow::createNewConnection ()
 	QString const tmp_name = QString("new_app_") + QString::number(++conn_counter);
 	Connection * connection = new Connection(tmp_name, this);
 	m_connections.push_back(connection);
+	for_each_data_widget_t(connection->data(), [&](const DockedWidgetsBase & dwb)
+	{
+		QObject::connect(&dwb, SIGNAL(widgetAdded(QString, QWidget *)), this, SLOT(onWidgetAdded(QString, QWidget *)));
+		QObject::connect(&dwb, SIGNAL(widgetRemoved(QString, QWidget *)), this, SLOT(onWidgetRemoved(QString, QWidget *)));
+	});
 	qDebug("created new connection[%u] for connection @ 0x%08x", m_connections.size(), connection);
 	return connection;
 }

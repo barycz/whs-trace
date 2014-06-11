@@ -531,6 +531,28 @@ void MainWindow::rmWindowAction (QAction * action)
 	m_windows_menu->removeAction(action);
 }
 
+void MainWindow::onWidgetAdded(const QString & path, QWidget * w)
+{
+	QAction * showAction = new QAction(path, this);
+	connect(showAction, SIGNAL(triggered()), w, SLOT(show()));
+	addWindowAction(showAction);
+
+	qDebug() << __FUNCTION__ << path;
+}
+
+void MainWindow::onWidgetRemoved(const QString & path, QWidget *)
+{
+	qDebug() << __FUNCTION__ << path;
+	foreach(QAction * a, m_windows_menu->actions())
+	{
+		if(a->text() == path)
+		{
+			rmWindowAction(a);
+			break;
+		}
+	}
+}
+
 void MainWindow::iconActivated (QSystemTrayIcon::ActivationReason reason)
 {
 	switch (reason) {

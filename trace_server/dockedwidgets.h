@@ -66,8 +66,9 @@ public:
 	DockedWidgetsBase(QObject * parent = NULL): QObject(parent) {}
 
 signals:
-	void widgetAdded(const QString & tag);
-	void widgetRemoved(const QString & tag);
+	// TODO: change the type after we create some qt-friendly base for all the widgets
+	void widgetAdded(const QString & path, QWidget * w);
+	void widgetRemoved(const QString & path, QWidget * w);
 
 };
 
@@ -115,22 +116,29 @@ public:
 	iterator insert(const key_t & key, const value_t & value)
 	{
 		iterator ret = m_map.insert(key, value);
-		emit widgetAdded(key);
+		emit widgetAdded(value->joinedPath(), value);
 		return ret;
 	}
 
 	void remove(const key_t & key)
 	{
-		emit widgetRemoved(key);
-		m_map.remove(key);
+		// TODO: this does not delete the widget - remove this inconsistency
+		iterator it = find(key);
+		if(it == end())
+		{
+			return;
+		}
+		emit widgetRemoved((*it)->joinedPath(), *it);
+		m_map.erase(it);
 	}
 
 	void clear()
 	{
-		key_list_t keys = m_map.keys();
-		for (typename key_list_t::iterator it = keys.begin(); it != keys.end(); ++it)
+		for (iterator it = begin(); it != end(); ++it)
 		{
-			emit widgetRemoved(*it);
+			emit widgetRemoved((*it)->joinedPath(), *it);
+			(*it)->setParent(0);
+			delete *it;
 		}
 		m_map.clear();
 	}
@@ -140,12 +148,6 @@ public:
 	{
 		if (a->type() == e_Close)
 		{
-			for (iterator it = begin(), ite = end(); it != ite; ++it)
-			{
-				//m_main_window->dockManager().removeActionAble(*it);
-				(*it)->setParent(0);
-				delete *it;
-			}
 			clear();
 			return true;
 		}
