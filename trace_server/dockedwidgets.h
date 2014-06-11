@@ -20,6 +20,7 @@
  * SOFTWARE.
  **/
 #pragma once
+#include <QObject>
 #include <QString>
 #include <QMap>
 #include "controlbardockedwidgets.h"
@@ -56,17 +57,36 @@ struct DockedWidgetsConfig {
 	}
 };
 
-template <class WidgetT, class ConfigT>
-struct DockedWidgets
-	: QMap<QString, WidgetT *>
-	, ActionAble
+// Q_OBJECT cannot handle templates, so we do the QObject stuff here
+class DockedWidgetsBase: public QObject
 {
+	DockedWidgetsBase(const DockedWidgetsBase &);
+	Q_OBJECT
+public:
+	DockedWidgetsBase(QObject * parent = NULL): QObject(parent) {}
+
+signals:
+	void widgetAdded(const QString & tag);
+	void widgetRemoved(const QString & tag);
+
+};
+
+template <class WidgetT, class ConfigT>
+class DockedWidgets
+	: public DockedWidgetsBase
+	, public ActionAble
+{
+	DockedWidgets(const DockedWidgets &);
+public:
 	enum { e_type = WidgetT::e_type };
 	typedef WidgetT widget_t;
 	typedef ConfigT config_t;
-	DockedWidgetsConfig m_config;
-	ControlBarDockedWidgets * m_control_bar;
-	QList<DecodedCommand> m_queue;
+	typedef QString key_t;
+	typedef widget_t * value_t;
+	typedef QMap<key_t, value_t> widget_map_t;
+	typedef typename widget_map_t::iterator iterator;
+	typedef typename widget_map_t::const_iterator const_iterator;
+	typedef QList<key_t> key_list_t;
 
 	DockedWidgets ()
 		: ActionAble(QStringList())
@@ -80,6 +100,41 @@ struct DockedWidgets
 	{
 		//m_main_window->dockManager().removeActionAble(*this);
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// QMap-compatible interface
+	iterator begin() { return m_map.begin(); }
+	iterator end() { return m_map.end(); }
+	const_iterator begin() const { return m_map.begin(); }
+	const_iterator end() const { return m_map.end(); }
+	iterator find(const key_t & key) { return m_map.find(key); }
+	const_iterator find(const key_t & key) const { return m_map.find(key); }
+	const value_t value(const key_t & key, const value_t & defaultValue = value_t()) const { return m_map.value(key, defaultValue); }
+	key_list_t keys() const { return m_map.keys(); }
+
+	iterator insert(const key_t & key, const value_t & value)
+	{
+		iterator ret = m_map.insert(key, value);
+		emit widgetAdded(key);
+		return ret;
+	}
+
+	void remove(const key_t & key)
+	{
+		emit widgetRemoved(key);
+		m_map.remove(key);
+	}
+
+	void clear()
+	{
+		key_list_t keys = m_map.keys();
+		for (typename key_list_t::iterator it = keys.begin(); it != keys.end(); ++it)
+		{
+			emit widgetRemoved(*it);
+		}
+		m_map.clear();
+	}
+	//////////////////////////////////////////////////////////////////////////
 
 	virtual bool handleAction (Action * a, E_ActionHandleType sync)
 	{
@@ -103,6 +158,15 @@ struct DockedWidgets
 	}
 
 	virtual QWidget * controlWidget () { return m_control_bar; }
+
+	QList<DecodedCommand> & queue() { return m_queue; }
+	const QList<DecodedCommand> & queue() const { return m_queue; }
+
+private:
+	DockedWidgetsConfig m_config;
+	ControlBarDockedWidgets * m_control_bar;
+	QList<DecodedCommand> m_queue;
+	widget_map_t m_map;
 };
 
 

@@ -102,7 +102,7 @@ namespace {
 		void operator() (T & t)
 		{
 			if (t.e_type == m_type)
-				t.m_queue.push_back(m_cmd);
+				t.queue().push_back(m_cmd);
 		}
 	};
 }
@@ -185,14 +185,14 @@ namespace {
 		template <typename T>
 		void operator() (T & t)
 		{
-			while (!t.m_queue.isEmpty())
+			while (!t.queue().isEmpty())
 			{
-				DecodedCommand const & cmd = t.m_queue.front();
+				DecodedCommand const & cmd = t.queue().front();
 				m_conn.tryHandleCommand(cmd, e_RecvBatched);
-				t.m_queue.pop_front();
+				t.queue().pop_front();
 			}
-			foreach (typename T::widget_t * w, t)
-				w->commitCommands(e_RecvBatched);
+			for (typename T::iterator it = t.begin(); it != t.end(); ++it)
+				(*it)->commitCommands(e_RecvBatched);
 		}
 	};
 }
