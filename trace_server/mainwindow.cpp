@@ -250,6 +250,7 @@ void MainWindow::onQuit ()
 	m_tray_icon->setVisible(false);
 	m_tray_icon->hide();
 	storeState();
+	saveDefaultPreset();
 
 	while (!m_connections.empty())
 	{
@@ -606,10 +607,13 @@ void MainWindow::onRemoveConfigurationFiles ()
 	if (path.isEmpty())
 		return;
 	QMessageBox msg_box;
-	QPushButton * b_del = msg_box.addButton(tr("Yes, Delete"), QMessageBox::ActionRole);
-	QPushButton * b_abort = msg_box.addButton(QMessageBox::Abort);
+	msg_box.setWindowTitle("Remove configuration");
+	msg_box.setText("Are you sure to delete configuration files?");
+	msg_box.setIcon(QMessageBox::Question);
+	msg_box.addButton(tr("Yes, delete"), QMessageBox::ActionRole);
+	QPushButton *b_cancel = msg_box.addButton(QMessageBox::Cancel);
 	msg_box.exec();
-	if (msg_box.clickedButton() == b_abort)
+	if (msg_box.clickedButton() == b_cancel)
 		return;
 
 	QDir d_out(path);

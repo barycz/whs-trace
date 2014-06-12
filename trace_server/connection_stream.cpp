@@ -469,14 +469,14 @@ bool Connection::handlePingCommand (DecodedCommand const & cmd)
 	qDebug("ping from client!");
 	disconnect(m_tcpstream, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 	m_marked_for_close = true;
-	QTimer::singleShot(0, m_main_window, SLOT(onCloseMarkedTabs()));
+	QTimer::singleShot(0, m_main_window, SLOT(onCloseMarkedConnections()));
 	return true;
 }
 
 bool Connection::handleShutdownCommand (DecodedCommand const & cmd)
 {
 	qDebug("shutdown from client requested (update?)");
-	m_main_window->onQuit();
+	QTimer::singleShot(0, m_main_window, SLOT(onQuit()));	
 	return true;
 }
 

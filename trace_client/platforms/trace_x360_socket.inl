@@ -249,6 +249,8 @@ namespace trace {
 			{
 				socks::WriteToSocket(msg.m_data, msg.m_length);
 
+				TRACE_SET_CTX_DICT();
+
 				socks::g_ThreadRecv.Create(socks::receive_thread, 0);
 				socks::g_ThreadRecv.Resume();
 				return true;

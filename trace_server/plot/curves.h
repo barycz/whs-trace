@@ -60,7 +60,7 @@ namespace plot {
 			{
 				case e_Visibility:
 				{
-					Q_ASSERT(m_args.size() > 0);
+					Q_ASSERT(a->m_args.size() > 0);
 					bool const on = a->m_args.at(0).toBool();
 					if (m_curve)
 						m_curve->setVisible(on);

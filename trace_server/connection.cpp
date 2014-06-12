@@ -189,6 +189,8 @@ void Connection::onDisconnected ()
 {
 	qDebug("onDisconnected()");
 
+	m_main_window->saveDefaultPreset();
+
 	if (m_main_window->dumpModeEnabled())
 	{
 		QString const path = tr("%1_%2").arg(getAppName()).arg(m_pid);

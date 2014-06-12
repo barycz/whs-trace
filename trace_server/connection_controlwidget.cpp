@@ -68,18 +68,23 @@ void Connection::setGanttsState (int state) { m_control_bar->ui->ganttSlider->se
 void Connection::onLogsStateChanged (int state)
 {
 	m_config.m_logs_recv_level = state;
+	saveDefaultPreset();
+
 }
 void Connection::onPlotsStateChanged (int state)
 {
 	m_config.m_plots_recv_level = state;
+	saveDefaultPreset();
 }
 void Connection::onTablesStateChanged (int state)
 {
 	m_config.m_tables_recv_level = state;
+	saveDefaultPreset();
 }
 void Connection::onGanttsStateChanged (int state)
 {
 	m_config.m_gantts_recv_level = state;
+	saveDefaultPreset();
 }
 
 
@@ -104,6 +109,8 @@ void Connection::onLevelValueChanged (int val)
 			m_tcpstream->write(e.buffer, e.total_len);
 			m_tcpstream->flush();
 		}
+
+		saveDefaultPreset();
 	}
 }
 
@@ -132,6 +139,8 @@ void Connection::onBufferingStateChanged (int state)
 			m_tcpstream->write(e.buffer, e.total_len);
 			m_tcpstream->flush();
 		}
+
+		saveDefaultPreset();
 	}
 }
 
@@ -153,6 +162,13 @@ void Connection::onPresetSave ()
 {
 	QString const txt = getCurrentPresetName();
 	onPresetSave(txt);
+}
+
+void Connection::saveDefaultPreset()
+{
+	QString const txt = getCurrentPresetName();
+	if (txt == g_defaultPresetName)
+		onPresetSave(txt);
 }
 
 void Connection::onPresetAdd ()

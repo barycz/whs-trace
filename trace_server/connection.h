@@ -143,6 +143,7 @@ public slots:
 	void onLevelValueChanged (int i);
 	void onBufferingStateChanged (int state);
 	void onPresetChanged (int idx);
+	void saveDefaultPreset();
 	void onPresetApply ();
 	void onPresetSave ();
 	void onPresetAdd ();

@@ -564,7 +564,7 @@ namespace plot {
 			case e_Visibility:
 			{
 				m_connection->getMainWindow()->onDockRestoreButton();
-				Q_ASSERT(m_args.size() > 0);
+				Q_ASSERT(a->m_args.size() > 0);
 				bool const on = a->m_args.at(0).toBool();
 				setVisible(on);
 				return true;

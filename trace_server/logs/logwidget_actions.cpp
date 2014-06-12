@@ -20,7 +20,7 @@ bool LogWidget::handleAction (Action * a, E_ActionHandleType sync)
 
 		case e_Visibility:
 		{
-			Q_ASSERT(m_args.size() > 0);
+			Q_ASSERT(a->m_args.size() > 0);
 			bool const on = a->m_args.at(0).toBool();
 			setVisible(on);
 			m_connection->getMainWindow()->onDockRestoreButton();

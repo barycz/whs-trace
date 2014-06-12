@@ -65,6 +65,7 @@ public:
 	void setPresetAsCurrent (QString const & pname);
 	void mentionInPresetHistory (QString const & str);
 	QString getCurrentPresetName () const;
+	void saveDefaultPreset();
 
 	// global config
 	GlobalConfig const & getConfig () const { return m_config; }

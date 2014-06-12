@@ -12,6 +12,8 @@ void MainWindow::onLevelValueChanged (int val)
 	m_config.m_level = val;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setLevelValue(val);
+
+	saveDefaultPreset();
 }
 
 void MainWindow::onBufferingStateChanged (int state)
@@ -19,12 +21,16 @@ void MainWindow::onBufferingStateChanged (int state)
 	m_config.m_buffered = state == Qt::Checked ? true : false;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setBufferingState(state);
+
+	saveDefaultPreset();
 }
 
 void MainWindow::onPresetChanged (int idx)
 {
 	m_config.m_preset_history.m_current_item = idx;
 	m_config.saveHistory(m_appdir);
+
+	saveDefaultPreset();
 }
 
 void MainWindow::onPresetApply ()
@@ -36,7 +42,14 @@ void MainWindow::onPresetApply ()
 void MainWindow::onPresetSave ()
 {
 	QString const txt = getCurrentPresetName();
-    onPresetSave(txt);
+  onPresetSave(txt);
+}
+
+void MainWindow::saveDefaultPreset()
+{
+	QString const txt = getCurrentPresetName();
+	if (txt == g_defaultPresetName)
+		onPresetSave(txt);
 }
 
 void MainWindow::onPresetAdd ()
@@ -81,24 +94,32 @@ void MainWindow::onLogsStateChanged (int state)
 	m_config.m_logs_recv_level = state;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setLogsState(state);
+
+	saveDefaultPreset();
 }
 void MainWindow::onPlotsStateChanged (int state)
 {
 	m_config.m_plots_recv_level = state;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setPlotsState(state);
+
+	saveDefaultPreset();
 }
 void MainWindow::onTablesStateChanged (int state)
 {
 	m_config.m_tables_recv_level = state;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setTablesState(state);
+
+	saveDefaultPreset();
 }
 void MainWindow::onGanttsStateChanged (int state)
 {
 	m_config.m_gantts_recv_level = state;
 	for (connections_t::iterator it = m_connections.begin(), ite = m_connections.end(); it != ite; ++it)
 		(*it)->setGanttsState(state);
+
+	saveDefaultPreset();
 }
 
 void MainWindow::setConfigValuesToUI (GlobalConfig const & cfg)
