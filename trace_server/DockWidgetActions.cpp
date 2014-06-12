@@ -1,6 +1,8 @@
 // Copyright (c) 2014 WarhorseStudios
 // author: Tomas Barak
 
+#include <QTimer>
+
 #include "DockWidgetActions.h"
 #include "mainwindow.h"
 #include "dock.h"
@@ -34,6 +36,10 @@ void RestoreDockWidgetAction::onTriggered()
 	Q_ASSERT(dock);
 	Q_ASSERT(content);
 	content->setVisible(true);
-	dock->setWidget(content);
+	if(dock->widget() != content)
+	{
+		dock->setWidget(content);
+	}
 	mainWindow()->restoreDockWidget(dock);
+	QTimer::singleShot(0, dock, SLOT(raise()));
 }
