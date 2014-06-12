@@ -64,7 +64,7 @@ bool LogWidget::handleAction (Action * a, E_ActionHandleType sync)
 
 void LogWidget::onTableClicked (QModelIndex const & row_index)
 {
-	autoScrollOff();
+	enableAutoScroll(false);
 
 	QModelIndex const curr_src_idx = currentSourceIndex();
 	if (!curr_src_idx.isValid())

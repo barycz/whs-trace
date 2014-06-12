@@ -183,7 +183,7 @@ namespace logs {
 
 	QModelIndex LogTableView::moveCursor (CursorAction cursor_action, Qt::KeyboardModifiers modifiers)
 	{
-		m_log_widget.autoScrollOff();
+		m_log_widget.enableAutoScroll(false);
 		if (modifiers & Qt::ControlModifier)
 		{
 			if (cursor_action == MoveHome)
@@ -194,7 +194,7 @@ namespace logs {
 			else if (cursor_action == MoveEnd)
 			{
 				scrollToBottom();
-				m_log_widget.autoScrollOn();
+				m_log_widget.enableAutoScroll(true);
 				return QModelIndex(); // @FIXME too
 			}
 			else
