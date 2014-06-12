@@ -206,6 +206,7 @@ private:
 	Server *  			m_server;
 	QMenu * 			m_windows_menu;
 	QMenu * 			m_file_menu;
+	QMenu *				m_tools_menu;
 	QAction * 			m_before_action;
 	std::vector<QAction *> m_recent_files;
 	QAction * 			m_minimize_action;
@@ -213,7 +214,7 @@ private:
 	QAction * 			m_restore_action;
 	QAction * 			m_quit_action;
 	QMenu *   			m_tray_menu;
-	QToolButton *		m_dock_mgr_button;
+	QAction *			m_widget_manager_action;
 	QSystemTrayIcon * 	m_tray_icon;
 	QLabel *			m_status_label;
 	std::vector<QString> m_reload_fnames;
