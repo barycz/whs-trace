@@ -16,8 +16,8 @@ enum E_FilterType {
 	e_Filter_FileLine,
 	e_Filter_Row,
 	e_Filter_Time,
-	e_Filter_Function,
-	e_Filter_dt,
+	//e_Filter_Function,
+	//e_Filter_dt,
 	e_Colorizer_Mgr,
 	e_Colorizer_Script,
 	e_Colorizer_String,
@@ -28,8 +28,8 @@ enum E_FilterType {
 	e_Colorizer_FileLine,
 	e_Colorizer_Row,
 	e_Colorizer_Time,
-	e_Colorizer_Function,
-	e_Colorizer_dt,
+	//e_Colorizer_Function,
+	//e_Colorizer_dt,
 
 	e_filtertype_max_value
 };
@@ -45,8 +45,8 @@ QString const g_filterNames[] = {
 	QString("FileLn"),
 	QString("Row"),
 	QString("Time"),
-	QString("Fn"),
-	QString("dt"),
+	//QString("Fn"),
+	//QString("dt"),
 	QString("Col_Mgr"),
 	QString("Col_Script"),
 	QString("Col_String"),
@@ -57,8 +57,8 @@ QString const g_filterNames[] = {
 	QString("Col_FileLn"),
 	QString("Col_Row"),
 	QString("Col_Time"),
-	QString("Col_Fn"),
-	QString("Col_dt"),
+	//QString("Col_Fn"),
+	//QString("Col_dt"),
 	QString("max")
 };
 

@@ -62,7 +62,7 @@ struct FilterString : FilterBase
 	void destroyModel ();
 	void appendToStringFilters (QString const & str, bool checked, int state);
 	void appendToStringWidgets (FilteredString const & flt);
-	void removeFromStringFilters (QString const & str);
+	void removeFromStringFilters(const QString& itemText);
 	bool isMatchedStringExcluded (QString str) const;
 	void setStringChecked (QString const & s, bool checked);
 	void setStringState (QString const & s, int state);
@@ -72,8 +72,12 @@ struct FilterString : FilterBase
 	QTreeView const * getWidget () const { return m_ui->view; }
 
 	QList<FilteredString>	m_data;
-	QStandardItemModel *	m_model;
-	QStyledItemDelegate *   m_delegate;
+	QStandardItemModel*	m_model;
+	QStyledItemDelegate*   m_delegate;
+		
+	QList<FilteredString> m_enabledFilter;
+
+	void CheckEnabledFilter();
 
 	Q_OBJECT
 public slots:

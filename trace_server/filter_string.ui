@@ -6,9 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>256</width>
+    <width>263</width>
     <height>219</height>
    </rect>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_8">
    <property name="spacing">
@@ -59,8 +62,14 @@
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;String to filter out&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
-         <property name="frame">
+         <property name="autoFillBackground">
           <bool>false</bool>
+         </property>
+         <property name="frame">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>&lt;enter string&gt;</string>
          </property>
         </widget>
        </item>
@@ -130,7 +139,11 @@
     </layout>
    </item>
    <item>
-    <widget class="QTreeView" name="view"/>
+    <widget class="QTreeView" name="view">
+     <property name="indentation">
+      <number>0</number>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

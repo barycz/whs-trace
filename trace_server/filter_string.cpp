@@ -40,48 +40,48 @@ void FilterString::doneUI ()
 {
 }
 
-bool FilterString::accept (DecodedCommand const & cmd) const
-{
-	/*bool inclusive_filters = false;
-	for (int i = 0, ie = m_data.size(); i < ie; ++i)
+void FilterString::CheckEnabledFilter()
+{	
+	m_enabledFilter.clear();
+	for (auto it = m_data.begin(); it != m_data.end(); ++it)
 	{
-		FilteredString const & fr = m_data.at(i);
-		if (!fr.m_is_enabled)
-			continue;
-		else
+		if (it->m_is_enabled)
+			m_enabledFilter.push_back(*it);
+	}
+}
+
+bool FilterString::accept(const DecodedCommand& cmd) const
+{	
+	if (m_enabledFilter.size() == 0)
+		return true;
+
+	int acceptedFilters = 0;
+	for (auto it = m_enabledFilter.begin(); it != m_enabledFilter.end(); ++it)
+	{
+		int excluded = 0;
+		for (size_t c = 0; c < cmd.m_tvs.size(); ++c)
 		{
-			if (fr.m_state)
+			const QString& val = cmd.m_tvs[c].m_val;
+			const auto matched = it->match(val);
+
+			// Any column for inclusion
+			if (matched && it->m_state == e_Include)
 			{
-				inclusive_filters = true;
+				acceptedFilters++;
 				break;
 			}
+
+			// Excluded from all columns
+			if (!matched && it->m_state == e_Exclude)
+				++excluded;
 		}
-	}*/
-	if (m_data.size() > 0)
-	{
-		for (int i = 0, ie = m_data.size(); i < ie; ++i)
-		{
-			FilteredString const & fr = m_data.at(i);
-			for (size_t c = 0, ce = cmd.m_tvs.size(); c < ce; ++c)
-			{
-				QString const & val = cmd.m_tvs[c].m_val;
-				if (fr.match(val))
-				{
-					if (!fr.m_is_enabled)
-						continue;
-					else
-					{
-						if (fr.m_state)
-							return true;
-						else
-							return false;
-					}
-				}
-			}
-		}
-		return true;
+
+		if (excluded > 0 && excluded == cmd.m_tvs.size())
+			acceptedFilters++;
 	}
-	return true; // no strings at all
+
+	// Text must be accepted by all filter
+	return m_enabledFilter.count() == acceptedFilters;
 }
 
 void FilterString::defaultConfig ()
@@ -94,6 +94,20 @@ void FilterString::loadConfig (QString const & path)
 	QString const fname = path + "/" + g_filterTag + "/" + typeName();
 	if (!::loadConfigTemplate(*this, fname))
 		defaultConfig();
+
+	for (auto it = m_data.begin(); it != m_data.end(); ++it)
+	{
+		QStandardItem * root = m_model->invisibleRootItem();
+		QStandardItem * child = findChildByText(root, it->m_string);
+		if (child == 0)
+		{
+			QList<QStandardItem *> row_items = addTriRow(it->m_string, it->m_is_enabled ? Qt::Checked : Qt::Unchecked, it->m_state == e_Include);
+			root->appendRow(row_items);
+		}
+	}
+
+	CheckEnabledFilter();
+	emitFilterChangedSignal();
 }
 
 void FilterString::saveConfig (QString const & path)
@@ -172,6 +186,8 @@ void FilterString::setStringState (QString const & s, int state)
 			fr.m_state = state;
 		}
 	}
+
+	CheckEnabledFilter();
 }
 void FilterString::setStringChecked (QString const & s, bool checked)
 {
@@ -183,18 +199,21 @@ void FilterString::setStringChecked (QString const & s, bool checked)
 			fr.m_is_enabled = checked;
 		}
 	}
+
+	CheckEnabledFilter();
 }
-void FilterString::removeFromStringFilters (QString const & s)
+void FilterString::removeFromStringFilters(const QString& itemText)
 {
 	for (int i = 0, ie = m_data.size(); i < ie; ++i)
 	{
 		FilteredString & fr = m_data[i];
-		if (fr.m_string == s)
+		if (fr.m_string == itemText)
 		{
 			m_data.removeAt(i);
 			return;
 		}
 	}
+	CheckEnabledFilter();
 	emitFilterChangedSignal();
 }
 void FilterString::appendToStringFilters (QString const & s, bool enabled, int state)
@@ -203,6 +222,7 @@ void FilterString::appendToStringFilters (QString const & s, bool enabled, int s
 		if (m_data[i].m_string == s)
 			return;
 	m_data.push_back(FilteredString(s, enabled, state));
+	CheckEnabledFilter();
 	emitFilterChangedSignal();
 }
 
@@ -227,33 +247,30 @@ void FilterString::onClickedAtStringList (QModelIndex idx)
 
 	if (idx.column() == 1)
 	{
-		/*QString const & filter_item = m_model->data(m_model->index(idx.row(), 0, QModelIndex()), Qt::DisplayRole).toString();
+		QString const & filter_item = m_model->data(m_model->index(idx.row(), 0, QModelIndex()), Qt::DisplayRole).toString();
 		QString const & mod = m_model->data(idx, Qt::DisplayRole).toString();
 		E_FilterMode const curr = stringToFltMod(mod.toStdString().c_str()[0]);
 		size_t const i = (curr + 1) % e_max_fltmod_enum_value;
 		E_FilterMode const new_mode = static_cast<E_FilterMode>(i);
 		m_model->setData(idx, QString(fltModToString(new_mode)));
-
-		bool const is_inclusive = new_mode == e_Include;
-		setStringState(filter_item, is_inclusive);
+				
+		setStringState(filter_item, new_mode);
 		recompile();
-		emitFilterChangedSignal();*/
+		emitFilterChangedSignal();
 	}
 	else
 	{
 		QStandardItem * item = m_model->itemFromIndex(idx);
 		Q_ASSERT(item);
-		bool const orig_checked = (item->checkState() == Qt::Checked);
-		Qt::CheckState const checked = orig_checked ? Qt::Unchecked : Qt::Checked;
-		item->setCheckState(checked);
-
+		const bool checked = item->checkState() == Qt::Checked;
+		
 		QString const & mod = m_model->data(m_model->index(idx.row(), 1, QModelIndex()), Qt::DisplayRole).toString();
-		E_FilterMode const curr = stringToFltMod(mod.toStdString().c_str()[0]);
-		bool const is_inclusive = curr == e_Include;
+		E_FilterMode const curr = stringToFltMod(mod.toStdString().c_str()[0]);		
 		QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
-		// @TODO: if state really changed
-		setStringState(val, is_inclusive);
+		
+		setStringState(val, curr);
 		setStringChecked(val, checked);
+		CheckEnabledFilter();
 		recompile();
 		emitFilterChangedSignal();
 	}
@@ -262,34 +279,33 @@ void FilterString::onClickedAtStringList (QModelIndex idx)
 void FilterString::recompile ()
 { }
 
-void FilterString::onStringRm ()
-{
-	QModelIndex const idx = m_ui->view->currentIndex();
-	QStandardItem * item = m_model->itemFromIndex(idx);
-	if (!item)
-		return;
-	QString const & val = m_model->data(idx, Qt::DisplayRole).toString();
-	m_model->removeRow(idx.row());
-	removeFromStringFilters(val);
-	recompile();
-	emitFilterChangedSignal();
+void FilterString::onStringRm()
+{	
+	auto index = m_ui->view->currentIndex();
+	QStandardItem* item = m_model->item(index.row(), 0);
+	if (item)
+	{		
+		m_model->takeRow(index.row());
+		removeFromStringFilters(item->text());
+		recompile();
+		emitFilterChangedSignal();
+	}
 }
 
-void FilterString::onStringAdd ()
+void FilterString::onStringAdd()
 {
-	QString const qItem = m_ui->qFilterLineEdit->text();
-
+	const QString qItem = m_ui->qFilterLineEdit->text();
 	if (!qItem.length())
 		return;
+
 	QStandardItem * root = m_model->invisibleRootItem();
 	QStandardItem * child = findChildByText(root, qItem);
 	if (child == 0)
 	{
-		QList<QStandardItem *> row_items = addTriRow(qItem, Qt::Checked, false);
+		QList<QStandardItem *> row_items = addTriRow(qItem, Qt::Checked, true);
 		root->appendRow(row_items);
-		appendToStringFilters(qItem, true, false);
-		row_items[0]->setCheckState(Qt::Checked);
-		recompile();
+		appendToStringFilters(qItem, true, e_Include);		
+		recompile();		
 	}
 }
 
