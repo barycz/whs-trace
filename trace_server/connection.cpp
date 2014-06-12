@@ -111,12 +111,6 @@ namespace {
 	template <class ContainerT>
 	void destroyDockedWidgets (ContainerT & c, MainWindow & mw, Connection & conn)
 	{
-		for (typename ContainerT::iterator it = c.begin(), ite = c.end(); it != ite; ++it)
-		{
-			typename ContainerT::iterator::value_type ptr = *it;
-			ptr->setParent(0);
-			delete ptr;
-		}
 		c.clear();
 	}
 }

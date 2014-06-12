@@ -172,7 +172,7 @@ private slots:
 	void onPresetSave (QString const & preset_name);
 	void onRemoveConfigurationFiles ();
 
-	void onWidgetAdded(const QString & path, QWidget * w);
+	void onWidgetAdded(const QString & path, DockedWidgetBase * dw);
 	void onWidgetRemoved(const QString & path, QWidget * w);
 
 	//void onSaveCurrentStateTo (QString const & name);

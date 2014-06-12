@@ -72,6 +72,8 @@ namespace gantt {
 		//void requestWheelEventSync (QWheelEvent * ev, QGanttView const * source);
 		//void requestActionSync (unsigned long long t, int cursorAction, Qt::KeyboardModifiers modifiers, QGanttView const * source);
 
+		virtual QWidget * widget() { return this; }
+
 	protected:
 		//virtual void wheelEvent (QWheelEvent * event);
 		//virtual QModelIndex	moveCursor (CursorAction cursorAction, Qt::KeyboardModifiers modifiers);

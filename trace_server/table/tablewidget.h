@@ -58,6 +58,8 @@ namespace table {
 		void findNearestRow4Time (bool ctime, unsigned long long t);
 		void performSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
 
+		virtual QWidget * widget() { return this; }
+
 	protected:
 		virtual void wheelEvent (QWheelEvent * event);
 		virtual QModelIndex	moveCursor (CursorAction cursorAction, Qt::KeyboardModifiers modifiers);

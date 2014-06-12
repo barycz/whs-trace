@@ -21,6 +21,10 @@ public:
 	void setDockWidget (DockWidget * w) { m_dockwidget = w; }
 	DockWidget * dockWidget () { return m_dockwidget; }
 	DockWidget const * dockWidget () const { return m_dockwidget; }
+
+	// TODO: this is a workaround to be able to have a QWidget-compatible this
+	// delete the method after DockedWidgetBase class is rewritten to derive from QWidget (or QFrame)
+	virtual QWidget * widget() = 0;
 };
 
 

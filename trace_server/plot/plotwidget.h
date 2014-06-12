@@ -52,6 +52,8 @@ namespace plot {
 
 		void stopUpdate ();
 
+		virtual QWidget * widget() { return this; }
+
 	protected:
 		void applyAxis (AxisConfig const & acfg);
 		void applyConfig (PlotConfig const & pcfg);
