@@ -72,6 +72,7 @@ namespace logs {
 		DecodedCommand const * getDecodedCommand (int row) const;
 
 		///virtual void scrollTo (QModelIndex const & index, ScrollHint hint = EnsureVisible);
+		virtual QWidget * widget() { return this; }
 
 	protected:
 		friend class LogTableModel;

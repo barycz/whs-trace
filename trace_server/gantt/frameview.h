@@ -41,6 +41,7 @@ struct FrameView : QWidget, DockedWidgetBase
 	void applyConfig (FrameViewConfig & cfg);
 	void applyConfig ();
 	virtual QWidget * controlWidget () { return 0; }
+	virtual QWidget * widget() { return this; }
 
 signals:
 	void requestSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);

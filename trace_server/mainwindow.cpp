@@ -22,6 +22,7 @@
 #include "utils_qsettings.h"
 #include "utils_history.h"
 #include "qt_plugins.h"
+#include "DockWidgetActions.h"
 
 MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QString const & log_name, int level)
 	: QMainWindow(parent)
@@ -520,23 +521,14 @@ void MainWindow::rmWindowAction (QAction * action)
 	m_windows_menu->removeAction(action);
 }
 
-void MainWindow::onWidgetAdded(const QString & path, QWidget * w)
+void MainWindow::onWidgetAdded(const QString & path, DockedWidgetBase * dw)
 {
-	QAction * showAction = new QAction(path, this);
-	connect(showAction, SIGNAL(triggered()), w, SLOT(show()));
-	addWindowAction(showAction);
+	RestoreDockWidgetAction * action = new RestoreDockWidgetAction(dw, this);
+	addWindowAction(action);
 }
 
-void MainWindow::onWidgetRemoved(const QString & path, QWidget *)
+void MainWindow::onWidgetRemoved(const QString & , QWidget *)
 {
-	foreach(QAction * a, m_windows_menu->actions())
-	{
-		if(a->text() == path)
-		{
-			rmWindowAction(a);
-			break;
-		}
-	}
 }
 
 void MainWindow::iconActivated (QSystemTrayIcon::ActivationReason reason)

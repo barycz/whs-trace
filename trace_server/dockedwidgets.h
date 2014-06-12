@@ -67,7 +67,7 @@ public:
 
 signals:
 	// TODO: change the type after we create some qt-friendly base for all the widgets
-	void widgetAdded(const QString & path, QWidget * w);
+	void widgetAdded(const QString & path, DockedWidgetBase * dw);
 	void widgetRemoved(const QString & path, QWidget * w);
 
 };

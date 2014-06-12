@@ -100,6 +100,7 @@ set(trace_server_SOURCES
 	config.cpp
 	dock.cpp
 	dockwidget.cpp
+	DockWidgetActions.cpp
 	dockdelegates.cpp
 	dockmanagerconfig.cpp
 	dockmanager.cpp
@@ -220,6 +221,7 @@ set(trace_server_HEADERS
 	utils.h
 	dock.h
 	dockwidget.h
+	DockWidgetActions.h
 	dockdelegates.h
 	dockedwidgets.h
 	dockmanagerconfig.h
