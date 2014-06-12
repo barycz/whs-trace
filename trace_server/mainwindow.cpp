@@ -33,13 +33,14 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	, m_server(0)
 	, m_windows_menu(0)
 	, m_file_menu(0)
+	, m_tools_menu(0)
 	, m_before_action(0)
 	, m_minimize_action(0)
 	, m_maximize_action(0)
 	, m_restore_action(0)
 	, m_quit_action(0)
 	, m_tray_menu(0)
-	, m_dock_mgr_button(0)
+	, m_widget_manager_action(0)
 	, m_tray_icon(0)
 	, m_settings_dialog(0)
 	, m_setup_dialog_csv(0)
@@ -270,7 +271,7 @@ void MainWindow::onQuitReally ()
 
 void MainWindow::onDockManagerButton ()
 {
-	if (m_dock_mgr_button->isChecked())
+	if (m_widget_manager_action->isChecked())
 	{
 		m_dock_mgr.show();
 		m_dock_mgr.m_dockwidget->show();
@@ -287,7 +288,7 @@ void MainWindow::onDockManagerButton ()
 
 void MainWindow::onDockManagerClosed ()
 {
-	m_dock_mgr_button->setChecked(false);
+	m_widget_manager_action->setChecked(false);
 }
 
 void MainWindow::onReloadFile ()
@@ -467,19 +468,6 @@ void MainWindow::onRecentFile ()
 void MainWindow::setupMenuBar ()
 {
 	qDebug("%s", __FUNCTION__);
-	m_dock_mgr_button = new QToolButton(0);
-	m_dock_mgr_button->setObjectName(QStringLiteral("dockManagerButton"));
-	m_dock_mgr_button->setMinimumSize(QSize(0, 0));
-	//m_dock_mgr_button->setFont(font);
-	m_dock_mgr_button->setCheckable(true);
-	m_dock_mgr_button->setChecked(false);
-	m_dock_mgr_button->setToolTip(QApplication::translate("MainWindow", "Central management of docked data widgets", 0));
-	m_dock_mgr_button->setText(QApplication::translate("MainWindow", "Widget Manager", 0));
-	menuBar()->setCornerWidget(m_dock_mgr_button, Qt::TopLeftCorner);
-	connect(m_dock_mgr_button, SIGNAL(clicked()), this, SLOT(onDockManagerButton()));
-	m_dock_mgr_button->setStyleSheet("\
-		QToolButton  { border: 1px solid #8f8f91; border-radius: 4px; background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #e6e7fa, stop: 1 #dadbff); } \
-		QToolButton:checked { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #dadbdd, stop: 1 #d6d7da); }");
 
 	// File
 	m_file_menu = menuBar()->addMenu(tr("&File"));
@@ -498,29 +486,29 @@ void MainWindow::setupMenuBar ()
 
 	// View
 	QMenu * viewMenu = menuBar()->addMenu(tr("&View"));
+	m_widget_manager_action = viewMenu->addAction(tr("Widget &Manager"), this, SLOT(onDockManagerButton()));
+	m_widget_manager_action->setCheckable(true);
+	m_widget_manager_action->setToolTip(tr("Central management of docked data widgets"));
+	viewMenu->addSeparator();
 	viewMenu->addAction(tr("&Save preset"), this, SLOT(onSave()), QKeySequence::Save);
 	viewMenu->addAction(tr("Save preset &as..."), this, SLOT(onSaveAs()), QKeySequence(Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_S));
 	viewMenu->addSeparator();
-
 	// widget's tool dockable widgets.
-	m_windows_menu = menuBar()->addMenu(tr("&Windows"));
-
-	// Help
-	QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
-	helpMenu->addSeparator();
-	helpMenu->addAction(tr("&Remove configuration files"), this, SLOT(onRemoveConfigurationFiles()));
-	helpMenu->addAction(tr("Show server log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
+	m_windows_menu = viewMenu->addMenu(tr("&Data Windows"));
+	viewMenu->addAction(tr("Show server &log"), this, SLOT(onLogTail()), QKeySequence(Qt::ControlModifier + Qt::AltModifier + Qt::Key_L));
 
 	// Tools
-	//QMenu * tools = menuBar()->addMenu(tr("&Settings"));
+	m_tools_menu = menuBar()->addMenu(tr("&Tools"));
+	m_tools_menu->addAction(tr("&Remove configuration files"), this, SLOT(onRemoveConfigurationFiles()));
+
 	//tools->addAction(tr("&Options"), this, SLOT(onSetupAction()), QKeySequence(Qt::AltModifier + Qt::ShiftModifier + Qt::Key_O));
 	//tools->addAction(tr("Save Current Filter As..."), this, SLOT(onSaveCurrentFileFilter()));
 	//tools->addSeparator();
 	//tools->addAction(tr("Save options now (this will NOT save presets)"), this, SLOT(storeState()), QKeySequence(Qt::AltModifier + Qt::ControlModifier + Qt::ShiftModifier + Qt::Key_O));
 
 	// Help
-	//QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
-	//helpMenu->addAction(tr("Help"), this, SLOT(onShowHelp()));
+	QMenu * helpMenu = menuBar()->addMenu(tr("&Help"));
+	helpMenu->addAction(tr("&Help"), this, SLOT(onShowHelp()));
 }
 
 void MainWindow::addWindowAction (QAction * action)
@@ -537,13 +525,10 @@ void MainWindow::onWidgetAdded(const QString & path, QWidget * w)
 	QAction * showAction = new QAction(path, this);
 	connect(showAction, SIGNAL(triggered()), w, SLOT(show()));
 	addWindowAction(showAction);
-
-	qDebug() << __FUNCTION__ << path;
 }
 
 void MainWindow::onWidgetRemoved(const QString & path, QWidget *)
 {
-	qDebug() << __FUNCTION__ << path;
 	foreach(QAction * a, m_windows_menu->actions())
 	{
 		if(a->text() == path)
