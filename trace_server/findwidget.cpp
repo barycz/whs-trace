@@ -237,6 +237,8 @@ void FindWidget::setConfigValuesToUI (FindConfig const & cfg)
 	m_ui->wholeWordCheckBox->setChecked(cfg.m_whole_word);
 	m_ui->regexCheckBox->setChecked(cfg.m_regexp);
 	m_ui->widgetComboBox->addItems(cfg.m_to_widgets);
+	m_ui->wrapSearchCheckBox->setChecked(cfg.m_wrapSearch);
+	m_ui->selectedColumnCheckBox->setChecked(cfg.m_selectedColumn);
 }
 
 void FindWidget::setUIValuesToConfig (FindConfig & cfg)
@@ -245,5 +247,7 @@ void FindWidget::setUIValuesToConfig (FindConfig & cfg)
 	cfg.m_whole_word = m_ui->wholeWordCheckBox->isChecked();
 	cfg.m_regexp = m_ui->regexCheckBox->isChecked();
 	cfg.m_str = m_ui->findBox->currentText();
+	cfg.m_wrapSearch = m_ui->wrapSearchCheckBox->isChecked();
+	cfg.m_selectedColumn = m_ui->selectedColumnCheckBox->isChecked();
 }
 

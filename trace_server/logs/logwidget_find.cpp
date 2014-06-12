@@ -242,7 +242,7 @@ void LogWidget::currSelection (QModelIndexList & sel) const
   qSort(sel.begin(), sel.end());
 }
 
-void LogWidget::findAndSelectNext (FindConfig const & fc)
+void LogWidget::findAndSelectNextFromCurrent(FindConfig const & fc)
 {
 	QModelIndexList l;
 	currSelection(l);
@@ -254,23 +254,39 @@ void LogWidget::findAndSelectNext (FindConfig const & fc)
 		curr_idx = m_tableview->model()->index(0, 0, QModelIndex());
 
 	QModelIndex const idx = m_tableview->model()->index(curr_idx.row() + 1, curr_idx.column(), QModelIndex());
+	int row = idx.row();
 	if (!idx.isValid())
 	{
-		noMoreMatches();
-		return;
+		if (fc.m_wrapSearch)
+		{			
+			row = 0;
+		}
+		else
+		{
+			noMoreMatches();
+			return;
+		}
 	}
 
+	findNext(fc, row, true);
+}
+
+void LogWidget::findNext(const FindConfig& fc, int row, bool recurse)
+{
 	QModelIndexList next;
-	for (int i = idx.row(), ie = m_tableview->model()->rowCount(); i < ie; ++i)
+	for (int i = row, ie = m_tableview->model()->rowCount(); i < ie; ++i)
 	{
 		for (int j = 0, je = m_tableview->model()->columnCount(); j < je; ++j)
 		{
-			QModelIndex const idx = m_tableview->model()->index(i, j, QModelIndex());
-			QString s = m_tableview->model()->data(idx).toString();
-			if (matchToFindConfig(s, fc))
+			if (!fc.m_selectedColumn || j == m_lastSelectedColumn)
 			{
-				next.push_back(idx);
-				break;
+				QModelIndex const idx = m_tableview->model()->index(i, j, QModelIndex());
+				QString s = m_tableview->model()->data(idx).toString();
+				if (matchToFindConfig(s, fc))
+				{
+					next.push_back(idx);
+					break;
+				}
 			}
 		}
 		if (next.size() > 0)
@@ -279,7 +295,14 @@ void LogWidget::findAndSelectNext (FindConfig const & fc)
 
 	if (next.size() == 0)
 	{
-		noMoreMatches();
+		if (fc.m_wrapSearch && recurse)
+		{
+			findNext(fc, 0, false);
+		}
+		else
+		{
+			noMoreMatches();
+		}
 	}
 	else
 	{
@@ -299,7 +322,7 @@ void LogWidget::findAndSelectNext (FindConfig const & fc)
 	}
 }
 
-void LogWidget::findAndSelectPrev (FindConfig const & fc)
+void LogWidget::findAndSelectPrevFromCurrent(FindConfig const & fc)
 {
 	QModelIndexList l;
 	currSelection(l);
@@ -307,17 +330,33 @@ void LogWidget::findAndSelectPrev (FindConfig const & fc)
 	{
 		QModelIndex const & curr_idx = l.at(0);
 		QModelIndex const idx = m_tableview->model()->index(curr_idx.row() - 1, curr_idx.column(), QModelIndex());
+		int row = curr_idx.row();
 		if (!idx.isValid())
 		{
-			noMoreMatches();
-			return;
+			if (fc.m_wrapSearch)
+			{
+				row = m_tableview->model()->rowCount() - 1;
+			}
+			else
+			{
+				noMoreMatches();
+				return;
+			}			
 		}
 
-		QModelIndexList next;
-		/// ????
-		for (int i = curr_idx.row(); i --> 0; )
+		findPrev(fc, row, true);
+	}
+}
+
+void LogWidget::findPrev(const FindConfig& fc, int row, bool recurse)
+{
+	QModelIndexList next;
+	/// ????
+	for (int i = row; i-- > 0;)
+	{
+		for (int j = m_tableview->model()->columnCount(); j-- > 0;)
 		{
-			for (int j = m_tableview->model()->columnCount(); j --> 0; )
+			if (!fc.m_selectedColumn || j == m_lastSelectedColumn)
 			{
 				QModelIndex const idx = m_tableview->model()->index(i, j, QModelIndex());
 				QString s = m_tableview->model()->data(idx).toString();
@@ -327,30 +366,37 @@ void LogWidget::findAndSelectPrev (FindConfig const & fc)
 					break;
 				}
 			}
-			if (next.size() > 0)
-				break;
 		}
+		if (next.size() > 0)
+			break;
+	}
 
-		if (next.size() == 0)
+	if (next.size() == 0)
+	{
+		if (fc.m_wrapSearch && recurse)
 		{
-			noMoreMatches();
+			findPrev(fc, m_tableview->model()->rowCount() - 1, false);
 		}
 		else
 		{
-			QItemSelectionModel * selection_model = m_tableview->selectionModel();
-			QItemSelection selection;
-			foreach(QModelIndex index, next)
-			{
-				QModelIndex left = m_tableview->model()->index(index.row(), 0);
-				QModelIndex right = m_tableview->model()->index(index.row(), m_tableview->model()->columnCount() - 1);
-
-				QItemSelection sel(left, right);
-				selection.merge(sel, QItemSelectionModel::Select);
-			}
-			selection_model->clearSelection();
-			selection_model->select(selection, QItemSelectionModel::Select);
-			m_tableview->scrollTo(next.at(0), QTableView::PositionAtCenter);
+			noMoreMatches();
 		}
+	}
+	else
+	{
+		QItemSelectionModel * selection_model = m_tableview->selectionModel();
+		QItemSelection selection;
+		foreach(QModelIndex index, next)
+		{
+			QModelIndex left = m_tableview->model()->index(index.row(), 0);
+			QModelIndex right = m_tableview->model()->index(index.row(), m_tableview->model()->columnCount() - 1);
+
+			QItemSelection sel(left, right);
+			selection.merge(sel, QItemSelectionModel::Select);
+		}
+		selection_model->clearSelection();
+		selection_model->select(selection, QItemSelectionModel::Select);
+		m_tableview->scrollTo(next.at(0), QTableView::PositionAtCenter);
 	}
 }
 
@@ -371,9 +417,9 @@ void LogWidget::handleFindAction (FindConfig const & fc)
 	if (select_only)
 	{
 		if (fc.m_next)
-			findAndSelectNext(fc);
+			findAndSelectNextFromCurrent(fc);
 		else if (fc.m_prev)
-			findAndSelectPrev(fc);
+			findAndSelectPrevFromCurrent(fc);
 		else
 			findAndSelect(fc);
 	}

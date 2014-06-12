@@ -19,8 +19,9 @@ struct FindConfig
 	QStringList m_to_widgets;
 	QString m_str;
 	QRegExp m_regexp_val;
-
-	FindConfig ()
+	bool m_selectedColumn;
+	bool m_wrapSearch;
+	FindConfig()
 		: m_whole_word(false)
 		, m_case_sensitive(false)
 		, m_regexp(false)
@@ -31,6 +32,8 @@ struct FindConfig
 		, m_clone(false)
 		, m_history_ln(32)
 		, m_history(m_history_ln)
+		, m_wrapSearch(false)
+		, m_selectedColumn(false)
 	{
 	}
 
@@ -49,6 +52,8 @@ struct FindConfig
 		ar & boost::serialization::make_nvp("history", m_history);
 		ar & boost::serialization::make_nvp("to_widget", m_to_widgets);
 		ar & boost::serialization::make_nvp("str", m_str);
+		ar & boost::serialization::make_nvp("wrap_search", m_wrapSearch);
+		ar & boost::serialization::make_nvp("selected_column", m_selectedColumn);
 	}
 
 	void clear ();

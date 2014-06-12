@@ -52,7 +52,7 @@ namespace logs {
 			, m_indent_level(2)
 			, m_cut_path_level(2)
 			, m_cut_namespace_level(3)
-			, m_curr_tooltab(1) // 1 == filters
+			, m_curr_tooltab(0) // 1 == filters
 			, m_in_view(true)
 			, m_filtering(true)
 			, m_clr_filters(true)
@@ -78,7 +78,7 @@ namespace logs {
 			, m_indent_level(2)
 			, m_cut_path_level(2)
 			, m_cut_namespace_level(3)
-			, m_curr_tooltab(1) // 1 == filters
+			, m_curr_tooltab(0) // 1 == filters
 			, m_in_view(true)
 			, m_filtering(true)
 			, m_clr_filters(true)

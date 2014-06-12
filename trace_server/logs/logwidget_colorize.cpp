@@ -67,9 +67,9 @@ void LogWidget::handleColorizeAction (ColorizeConfig const & cc)
 		}
 
 		if (cc.m_next)
-			findAndSelectNext(cc);
+			findAndSelectNextFromCurrent(cc);
 		else if (cc.m_prev)
-			findAndSelectPrev(cc);
+			findAndSelectPrevFromCurrent(cc);
 		//else
 			//findAndSelect(cc)
 	}

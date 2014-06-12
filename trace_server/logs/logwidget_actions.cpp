@@ -73,6 +73,8 @@ void LogWidget::onTableClicked (QModelIndex const & row_index)
 	bool const scroll_to_item = false;
 	bool const expand = false;
 	findTableIndexInFilters(curr_src_idx, scroll_to_item, expand);
+
+	m_lastSelectedColumn = row_index.column();
 }
 
 void LogWidget::onTableFontToolButton ()
@@ -373,7 +375,7 @@ void LogWidget::onGotoPrevErr ()
 	fc.m_whole_word = 0;
 	fc.m_regexp = 0;
 	fc.m_str = "Error";
-	findAndSelectPrev(fc);
+	findAndSelectPrevFromCurrent(fc);
 }
 void LogWidget::onGotoNextErr ()
 {
@@ -387,7 +389,7 @@ void LogWidget::onGotoNextErr ()
 	fc.m_whole_word = 0;
 	fc.m_regexp = 0;
 	fc.m_str = "Error";
-	findAndSelectNext(fc);
+	findAndSelectNextFromCurrent(fc);
 }
 void LogWidget::onGotoPrevWarn ()
 {
@@ -401,7 +403,7 @@ void LogWidget::onGotoPrevWarn ()
 	fc.m_whole_word = 0;
 	fc.m_regexp = 0;
 	fc.m_str = "Warning";
-	findAndSelectPrev(fc);
+	findAndSelectPrevFromCurrent(fc);
 }
 void LogWidget::onGotoNextWarn ()
 {
@@ -415,7 +417,7 @@ void LogWidget::onGotoNextWarn ()
 	fc.m_whole_word = 0;
 	fc.m_regexp = 0;
 	fc.m_str = "Warning";
-	findAndSelectNext(fc);
+	findAndSelectNextFromCurrent(fc);
 }
 
 void LogWidget::onHidePrev ()

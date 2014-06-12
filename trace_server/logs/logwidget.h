@@ -1,6 +1,7 @@
 #pragma once
 #include <QWidget>
 #include <cmd.h>
+#include "dock.h"
 #include "action.h"
 #include "logconfig.h"
 #include "logctxmenu.h"
@@ -12,6 +13,7 @@
 #include "syncwidgets.h"
 #include "buttoncache.h"
 #include "logtableview.h"
+#include "findwidget.h"
 
 class Connection;
 class LogTableModel;
@@ -72,6 +74,7 @@ namespace logs {
 		DecodedCommand const * getDecodedCommand (int row) const;
 
 		///virtual void scrollTo (QModelIndex const & index, ScrollHint hint = EnsureVisible);
+		virtual QWidget * widget() { return this; }
 
 	protected:
 		friend class LogTableModel;
@@ -113,8 +116,14 @@ namespace logs {
 		void registerLinkedWidget (DockedWidgetBase * l);
 		void unregisterLinkedWidget (DockedWidgetBase * l);
 		void findAndSelect (FindConfig const & fc);
-		void findAndSelectNext (FindConfig const & fc);
-		void findAndSelectPrev (FindConfig const & fc);
+		void findAndSelectNextFromCurrent(FindConfig const & fc);
+		void findAndSelectPrevFromCurrent(FindConfig const & fc);
+
+	private:
+		void findNext(const FindConfig& fc, int row, bool recurse);
+		void findPrev(const FindConfig& fc, int row, bool recurse);
+		
+	public:
 		void currSelection (QModelIndexList & sel) const;
 		void noMoreMatches ();
 		LogTableModel * cloneToNewModel (LogWidget * parent, FindConfig const & fc);
@@ -319,6 +328,8 @@ namespace logs {
 		linked_widgets_t m_linked_widgets;
 
 		QTextStream * m_file_csv_stream;
+
+		int m_lastSelectedColumn;
 	};
 }
 
