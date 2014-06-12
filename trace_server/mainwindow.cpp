@@ -54,6 +54,7 @@ MainWindow::MainWindow (QWidget * parent, bool quit_delay, bool dump_mode, QStri
 	qDebug("================================================================================");
 	qDebug("%s this=0x%08x", __FUNCTION__, this);
 	ui->setupUi(this);
+	ui->centralWidget->hide();
 
 	setStyleSheet( "QMainWindow::separator { background: rgb(150, 150, 150); width: 1px; height: 1px; }");
 
