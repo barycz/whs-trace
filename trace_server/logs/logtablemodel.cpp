@@ -311,7 +311,7 @@ void LogTableModel::parseCommand (DecodedCommand const & cmd, E_ReceiveMode mode
 			}
 		}
 
-		for (int i = 0, ie = m_columns2storage.size(); i < ie; ++i)
+		for (int i = 0, ie = qMin(m_columns2storage.size(), columns.size()); i < ie; ++i)
 		{
 			int const src = m_columns2storage[i];
 			if (src < l.size())
