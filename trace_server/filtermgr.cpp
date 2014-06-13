@@ -78,10 +78,14 @@ void FilterMgr::recreateFilters ()
 	//m_cache.clear();
 	m_cache.resize(e_filtertype_max_value);
 
+#define TRACE_INSANE_FILTER_TAB_BUTTONS 0
+
+#if TRACE_INSANE_FILTER_TAB_BUTTONS
 	for (int i = 0, ie = m_tabFilters->tabBar()->count(); i < ie; ++i)
 	{
 		m_tabFilters->tabBar()->setTabButton(i, QTabBar::LeftSide, 0);
 	}
+#endif
 
 	m_tabFilters->clear();
 	for (int i = 0, ie = m_filter_order.size(); i < ie; ++i)
@@ -100,7 +104,9 @@ void FilterMgr::recreateFilters ()
 		}
 		m_filters.push_back(fb);
 		m_tabFilters->insertTab(i, fb, fb->typeName());
+#if TRACE_INSANE_FILTER_TAB_BUTTONS
 		m_tabFilters->tabBar()->setTabButton(i, QTabBar::LeftSide, fb->m_button);
+#endif
 	}
 
 	for (size_t c = 0, ce = m_cache.size(); c < ce; ++c)
