@@ -210,9 +210,10 @@ void FilterString::removeFromStringFilters(const QString& itemText)
 		if (fr.m_string == itemText)
 		{
 			m_data.removeAt(i);
-			return;
+			break;
 		}
 	}
+
 	CheckEnabledFilter();
 	emitFilterChangedSignal();
 }
