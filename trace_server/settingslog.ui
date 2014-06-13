@@ -72,12 +72,6 @@
       </property>
       <item>
        <widget class="QTabWidget" name="groupingWidget">
-        <property name="font">
-         <font>
-          <family>MS Shell Dlg 2</family>
-          <pointsize>7</pointsize>
-         </font>
-        </property>
         <property name="tabShape">
          <enum>QTabWidget::Rounded</enum>
         </property>
@@ -160,7 +154,7 @@
            <normaloff>:/images/tools.png</normaloff>:/images/tools.png</iconset>
          </attribute>
          <attribute name="title">
-          <string>Tools</string>
+          <string>Columns</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <property name="spacing">
@@ -254,7 +248,7 @@
                <item row="3" column="0">
                 <widget class="QPushButton" name="addButton">
                  <property name="text">
-                  <string>Add Row</string>
+                  <string>Add Column</string>
                  </property>
                 </widget>
                </item>
@@ -271,7 +265,7 @@
                <item row="3" column="1">
                 <widget class="QPushButton" name="rmButton">
                  <property name="text">
-                  <string>Rm Row</string>
+                  <string>Remove Column</string>
                  </property>
                 </widget>
                </item>
@@ -484,11 +478,6 @@
             </property>
             <item row="7" column="1">
              <widget class="QToolButton" name="tableFontToolButton">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
@@ -499,12 +488,6 @@
             </item>
             <item row="3" column="0">
              <widget class="QCheckBox" name="indentCheckBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Indent scopes delimited by the { } blocks</string>
               </property>
@@ -515,12 +498,6 @@
             </item>
             <item row="2" column="0">
              <widget class="QCheckBox" name="scopesCheckBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Show scopes</string>
               </property>
@@ -531,12 +508,6 @@
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_3">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Display time units</string>
               </property>
@@ -544,12 +515,6 @@
             </item>
             <item row="4" column="0">
              <widget class="QCheckBox" name="cutPathCheckBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Abbreviate file paths</string>
               </property>
@@ -560,11 +525,6 @@
             </item>
             <item row="6" column="1">
              <widget class="QSpinBox" name="tableRowSizeSpinBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="value">
                <number>18</number>
               </property>
@@ -572,11 +532,6 @@
             </item>
             <item row="4" column="1">
              <widget class="QSpinBox" name="cutPathSpinBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="minimum">
                <number>1</number>
               </property>
@@ -590,11 +545,6 @@
             </item>
             <item row="5" column="1">
              <widget class="QSpinBox" name="cutNamespaceSpinBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="minimum">
                <number>1</number>
               </property>
@@ -608,12 +558,6 @@
             </item>
             <item row="5" column="0">
              <widget class="QCheckBox" name="cutNamespaceCheckBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Abbreviate functions</string>
               </property>
@@ -624,11 +568,6 @@
             </item>
             <item row="3" column="1">
              <widget class="QSpinBox" name="indentSpinBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="minimum">
                <number>0</number>
               </property>
@@ -641,22 +580,10 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="TimeComboBox" name="timeComboBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
-             </widget>
+             <widget class="TimeComboBox" name="timeComboBox"/>
             </item>
             <item row="0" column="0">
              <widget class="QCheckBox" name="autoScrollCheckBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="toolTip">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -674,12 +601,6 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="6" column="0">
              <widget class="QLabel" name="label_17">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Table row size:</string>
               </property>
@@ -687,12 +608,6 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="7" column="0">
              <widget class="QLabel" name="label_18">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Table font</string>
               </property>
@@ -700,11 +615,6 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="10" column="0">
              <spacer name="verticalSpacer">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
@@ -718,12 +628,6 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="9" column="0">
              <widget class="QLabel" name="label_4">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Open File:Line with</string>
               </property>
@@ -755,11 +659,6 @@ p, li { white-space: pre-wrap; }
             </item>
             <item row="5" column="2">
              <spacer name="horizontalSpacer_2">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -772,13 +671,7 @@ p, li { white-space: pre-wrap; }
              </spacer>
             </item>
             <item row="7" column="2">
-             <widget class="QComboBox" name="tableFontComboBox">
-              <property name="font">
-               <font>
-                <family>MS Shell Dlg 2</family>
-               </font>
-              </property>
-             </widget>
+             <widget class="QComboBox" name="tableFontComboBox"/>
             </item>
            </layout>
           </item>
