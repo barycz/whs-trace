@@ -30,12 +30,6 @@ namespace logs {
 			}
 		}
 
-		void onAutoScrollStateChanged (int state)
-		{
-			//if (state == Qt::Checked)
-			//	m_ui->inViewCheckBox->setCheckState(Qt::Unchecked);
-		}
-
 		~LogCtxMenu ()
 		{
 			m_widget->setVisible(false);
@@ -77,6 +71,9 @@ namespace logs {
 		void onAddButton ();
 		void onRmButton ();
 		void onCommitTagData (QString const &);
+	private slots:
+		void onAutoScrollCheckStateChanged (int state);
+		void onLogWidgetAutoScrollChanged(bool enabled);
 
 	protected:
 		void prepareSettingsWidgets ();

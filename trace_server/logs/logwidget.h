@@ -98,8 +98,6 @@ namespace logs {
 		void normalizeConfig (logs::LogConfig & normalized);
 		void swapSectionsAccordingTo (logs::LogConfig const & cfg);
 		void resizeSections ();
-		void autoScrollOn ();
-		void autoScrollOff ();
 
 		// find & filtering
 		bool filterEnabled () const { return m_config.m_filtering; }
@@ -261,6 +259,7 @@ namespace logs {
 		void onHideNext ();
 		void onChangeTimeUnits (int);
 		void onOpenFileLine ();
+		void enableAutoScroll(bool enable);
 
 		/*void requestTableWheelEventSync (QWheelEvent * ev, QTableView const * source);
 		void requestTableActionSync (unsigned long long t, int cursorAction, Qt::KeyboardModifiers modifiers, QTableView const * source);*/
@@ -268,6 +267,7 @@ namespace logs {
 
 	signals:
 		void requestSynchronization (E_SyncMode mode, int sync_group, unsigned long long time, void * source);
+		void autoScrollChanged(bool enabled);
 
 	protected:
 		Connection * m_connection;

@@ -224,6 +224,8 @@ void LogCtxMenu::prepareSettingsWidgets ()
 	connect(m_ui->addButton, SIGNAL(clicked()), this, SLOT(onAddButton()));
 	connect(m_ui->rmButton, SIGNAL(clicked()), this, SLOT(onRmButton()));
 	//connect(m_ui->cancelButton, SIGNAL(clicked()), this, SLOT(onClickedAtSettingCancelButton()));
+	connect(&m_log_widget, SIGNAL(autoScrollChanged(bool)), this, SLOT(onLogWidgetAutoScrollChanged(bool)));
+	connect(m_ui->autoScrollCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onAutoScrollCheckStateChanged(int)));
 }
 
 
@@ -544,6 +546,16 @@ void LogCtxMenu::onClickedAtSaveButton ()
 void LogCtxMenu::onClickedAtCancelButton ()
 {
 	//m_settings_dialog->close();
+}
+
+void LogCtxMenu::onAutoScrollCheckStateChanged( int state )
+{
+	m_log_widget.enableAutoScroll(state != Qt::Unchecked);
+}
+
+void LogCtxMenu::onLogWidgetAutoScrollChanged( bool enabled )
+{
+	m_ui->autoScrollCheckBox->setChecked(enabled);
 }
 
 	//filterMenu->addAction(tr("Hide previous rows"), m_server, SLOT(onHidePrevFromRow()), QKeySequence(Qt::Key_Delete));

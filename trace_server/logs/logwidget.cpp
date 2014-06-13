@@ -1210,14 +1210,10 @@ void LogWidget::onCopyToClipboard ()
 	clipboard->setText(text);
 }
 
-void LogWidget::autoScrollOff ()
+void LogWidget::enableAutoScroll( bool enable )
 {
-	m_config.m_auto_scroll = false;
-}
-
-void LogWidget::autoScrollOn ()
-{
-	m_config.m_auto_scroll = true;
+	m_config.m_auto_scroll = enable;
+	emit autoScrollChanged(enable);
 }
 
 //@TODO: should be in model probably
@@ -1340,7 +1336,6 @@ void LogWidget::exportStorageToCSV (QString const & path)
 	}
 	csv.close();
 }
-
 
 }
 
