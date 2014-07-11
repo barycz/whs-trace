@@ -41,6 +41,7 @@ bool isCommandQueuable (tlv::tag_t cmd)
 		case tlv::cmd_ping:				return false;
 		case tlv::cmd_shutdown:			return false;
 		case tlv::cmd_dict_ctx:			return false;
+		case tlv::cmd_dict_lvl:			return false;
 		case tlv::cmd_save_tlv:			return false;
 		case tlv::cmd_export_csv:		return false;
 		case tlv::cmd_plot_clear:		return false;
@@ -127,7 +128,8 @@ bool Connection::tryHandleCommand (DecodedCommand const & cmd, E_ReceiveMode mod
 		case tlv::cmd_ping:				handlePingCommand(cmd); break;
 		case tlv::cmd_save_tlv:			handleSaveTLVCommand(cmd); break;
 		case tlv::cmd_export_csv:		handleExportCSVCommand(cmd); break;
-		case tlv::cmd_dict_ctx:			handleDictionnaryCtx(cmd); break;
+		case tlv::cmd_dict_ctx:			handleDictionaryCtx(cmd); break;
+		case tlv::cmd_dict_lvl:			handleDictionaryLvl(cmd); break;
 
 		case tlv::cmd_log:				handleLogCommand(cmd, mode); break;
 		case tlv::cmd_log_clear:		handleLogClearCommand(cmd, mode); break;
@@ -480,27 +482,39 @@ bool Connection::handleShutdownCommand (DecodedCommand const & cmd)
 	return true;
 }
 
-bool Connection::handleDictionnaryCtx (DecodedCommand const & cmd)
+bool Connection::handleDictionaryCtx (DecodedCommand const & cmd)
 {
-	qDebug("received custom context dictionnary");
-	QList<QString> name;
-	QList<QString> value;
+	qDebug("received custom context dictionary");
+	QStringList names, values;
+	parseDictionaryCommand(cmd, names, values);
+	m_app_data.setDictCtx(names, values);
+	return true;
+}
+
+bool Connection::handleDictionaryLvl(DecodedCommand const & cmd)
+{
+	qDebug("received custom level dictionary");
+	QStringList names, values;
+	parseDictionaryCommand(cmd, names, values);
+	m_app_data.setDictLvl(names, values);
+	return true;
+}
+
+void Connection::parseDictionaryCommand( DecodedCommand const & cmd, QStringList & names, QStringList & values )
+{
 	for (size_t i=0, ie=cmd.m_tvs.size(); i < ie; i+=2)
 	{
 		if (cmd.m_tvs[i].m_tag == tlv::tag_string)
 		{
-			name.append(cmd.m_tvs[i].m_val);
+			names.append(cmd.m_tvs[i].m_val);
 		}
 
 		if (cmd.m_tvs[i+1].m_tag == tlv::tag_int)
 		{
-			value.append(cmd.m_tvs[i+1].m_val);
+			values.append(cmd.m_tvs[i+1].m_val);
 		}
 	}
-	m_app_data.addCtxDict(name, value);
-	return true;
 }
-
 
 //////////////////// storage stuff //////////////////////////////
 QString Connection::createStorageName () const

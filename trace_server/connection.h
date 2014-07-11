@@ -196,7 +196,8 @@ protected:
 	bool handleSetupCommand (DecodedCommand const & cmd);
 	bool handlePingCommand (DecodedCommand const & cmd);
 	bool handleShutdownCommand (DecodedCommand const & cmd);
-	bool handleDictionnaryCtx (DecodedCommand const & cmd);
+	bool handleDictionaryCtx (DecodedCommand const & cmd);
+	bool handleDictionaryLvl (DecodedCommand const & cmd);
 	bool handleCSVStreamCommand (DecodedCommand const & cmd);
 	bool handleExportCSVCommand (DecodedCommand const & cmd);
 	bool handleSaveTLVCommand (DecodedCommand const & cmd);
@@ -211,6 +212,8 @@ protected:
 	bool handleGanttFrameBgnCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
 	bool handleGanttFrameEndCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
 	bool handleGanttClearCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
+
+	void parseDictionaryCommand(DecodedCommand const & cmd, QStringList & names, QStringList & values);
 
 	virtual bool handleAction (Action * a, E_ActionHandleType sync);
 	virtual QWidget * controlWidget ();

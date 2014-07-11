@@ -70,6 +70,17 @@ struct Dict {
 	QList<QString> m_strvalues;
 	QList<int> m_values;
 
+	void setContent(QStringList const & names, QStringList const & strvalues)
+	{
+		m_names = names;
+		m_strvalues = strvalues;
+		m_values.clear();
+
+		m_values.reserve(m_strvalues.size());
+		foreach (QString const & item, m_strvalues)
+			m_values.append(item.toInt());
+	}
+
 	QString findNameFor (QString const & strval) const
 	{
 		for (int i = 0, ie = m_strvalues.size(); i < ie; ++i)
