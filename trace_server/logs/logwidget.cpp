@@ -589,6 +589,8 @@ namespace logs {
 
 		if (filterMgr()->getFilterCtx())
 			filterMgr()->getFilterCtx()->setAppData(&m_connection->appData());
+		if (filterMgr()->getFilterLvl())
+			filterMgr()->getFilterLvl()->setAppData(&m_connection->appData());
 
     if (colorizerMgr()->getColorizerString())
       colorizerMgr()->getColorizerString()->setSrcModel(m_src_model);
@@ -1078,6 +1080,8 @@ LogTableModel * LogWidget::cloneToNewModelFromProxy (LogWidget * parent, BasePro
 	// @FIXME
 	if (parent->filterMgr()->getFilterCtx())
 		parent->filterMgr()->getFilterCtx()->setAppData(&m_connection->appData());
+	if (parent->filterMgr()->getFilterLvl())
+		parent->filterMgr()->getFilterLvl()->setAppData(&m_connection->appData());
 
 	if (parent->colorizerMgr()->getColorizerRegex())
 		parent->colorizerMgr()->getColorizerRegex()->setSrcModel(new_model);

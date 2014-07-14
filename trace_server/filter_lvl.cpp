@@ -4,6 +4,7 @@
 #include <QPainter>
 #include "utils_qstandarditem.h"
 #include <boost/function.hpp>
+#include "appdata.h"
 
 FilterLvl::FilterLvl (QWidget * parent)
 	: FilterBase(parent)
@@ -241,15 +242,13 @@ void FilterLvl::locateItem (QString const & item, bool scrollto, bool expand)
 	}
 }
 
-
-//////// delegate
-// @TODO: tmp, via dictionnary in future
-#include <trace_client/default_levels.h>
-namespace trace {
-	FACT_DEFINE_ENUM_STR(E_TraceLevel,TRACELEVEL_ENUM);
-	FACT_DEFINE_ENUM_TO_STRING(E_TraceLevel,TRACELEVEL_ENUM);
+void FilterLvl::setAppData( AppData const * appdata )
+{
+	static_cast<LevelDelegate *>(m_ui->view->itemDelegate())->setAppData(appdata);
 }
 
+
+//////// delegate
 void LevelDelegate::paint (QPainter * painter, QStyleOptionViewItem const & option, QModelIndex const & index) const
 {
 	//if (m_app_data && m_app_data->getDictCtx().m_names.size())
@@ -264,10 +263,13 @@ void LevelDelegate::paint (QPainter * painter, QStyleOptionViewItem const & opti
 		{
 			QString const qs = value.toString();
 			int const lvl = qs.toInt();
-			// @TODO: this should be exchanged via dictionnary in future
-			if (lvl >= 0 && lvl < trace::e_max_trace_level)
+			if (m_app_data && lvl >= 0 && m_app_data->getDictLvl().m_names.size())
 			{
-				option4.text = QString::fromLatin1(trace::enumToString(static_cast<trace::E_TraceLevel>(lvl)));
+				option4.text = m_app_data->getDictLvl().findNameFor(qs);
+			}
+			else
+			{
+				option4.text = qs;
 			}
 
 			if (QWidget const * widget = option4.widget)

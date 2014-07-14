@@ -4,6 +4,7 @@
 #include <QPainter>
 #include "utils_qstandarditem.h"
 #include <boost/function.hpp>
+#include "appdata.h"
 
 FilterCtx::FilterCtx (QWidget * parent)
 	: FilterBase(parent)

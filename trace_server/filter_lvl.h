@@ -8,6 +8,8 @@
 #include <QStandardItemModel>
 #include <QStyledItemDelegate>
 
+struct AppData;
+
 struct FilteredLevel {
 	QString m_level_str;
 	int m_level;
@@ -63,6 +65,7 @@ struct FilterLvl : FilterBase
 	}
 
 	// lvl specific
+	void setAppData (AppData const * appdata);
 	void setupModel ();
 	void destroyModel ();
 	bool isPresent (QString const & item, bool & enabled, E_LevelMode & lvlmode) const;
@@ -90,7 +93,9 @@ signals:
 
 struct LevelDelegate : public QStyledItemDelegate
 {
-	LevelDelegate (QObject * parent = 0) : QStyledItemDelegate(parent) { }
+	AppData const * m_app_data;
+	LevelDelegate (QObject * parent = 0) : QStyledItemDelegate(parent), m_app_data(nullptr) { }
 	void paint (QPainter * painter, QStyleOptionViewItem const & option, QModelIndex const & index) const;
+	void setAppData (AppData const * appdata) { m_app_data = appdata; }
 };
 

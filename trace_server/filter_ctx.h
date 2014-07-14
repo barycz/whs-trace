@@ -7,7 +7,8 @@
 #include <QList>
 #include <QStandardItemModel>
 #include <QStyledItemDelegate>
-#include "appdata.h"
+
+struct AppData;
 
 struct FilteredContext {
 	QString m_ctx_str;
