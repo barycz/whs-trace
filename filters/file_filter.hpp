@@ -84,7 +84,7 @@ struct tree_filter
 		for (; right < end; ++right)
 		{
 			char_type_t const c = *right;
-			if (c == ':' || c == '/' || c == '\\' || c == '\0' || right + 1 == end)
+			if ((c == ':' && right == bgn + 1) || c == '/' || c == '\\' || c == '\0' || right + 1 == end)
 			{
 				if (right - left > 0)
 				{
@@ -132,7 +132,7 @@ struct tree_filter
 		for (; right < end; ++right)
 		{
 			char_type_t const c = *right;
-			if (c == ':' || c == '/' || c == '\\' || c == '\0' || right + 1 == end)
+			if ((c == ':' && right == bgn + 1) || c == '/' || c == '\\' || c == '\0' || right + 1 == end)
 			{
 				if (right - left > 0)
 				{
