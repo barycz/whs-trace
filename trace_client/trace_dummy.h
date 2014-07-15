@@ -29,6 +29,7 @@
 #	define TRACE_DISCONNECT()	((void)0)
 #	define TRACE_MSG(level, context, fmt, ... )		((void)0)
 #	define TRACE_MSG_VA(level, context, fmt, va)	((void)0)
+#	define TRACE_MSG_CUSTOM(level, context, file, line, function, fmt, ...)	((void)0)
 #	define TRACE_SCOPE(level, context)		((void)0)
 #	define TRACE_SETBUFFERED(on)	((void)0)
 #	define TRACE_CODE(code)		((void)0)

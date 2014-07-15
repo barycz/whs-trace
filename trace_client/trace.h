@@ -94,6 +94,11 @@
  **/
 #	define TRACE_MSG_VA(level, context, fmt, vaargs)	\
 		trace::WriteVA(static_cast<trace::level_t>(level), context, __FILE__, __LINE__, __FUNCTION__, fmt, vaargs)
+/**	@macro		TRACE_MSG_CUSTOM
+ *	@brief		TRACE_MSG variant that accepts custom file, line and function arguments
+ */
+#	define TRACE_MSG_CUSTOM(level, context, file, line, function, fmt, ...)	\
+		trace::Write(static_cast<trace::level_t>(level), context, file, line, function, fmt, __VA_ARGS__)
 
 /**	@macro		TRACE_SCOPE_MSG
  *	@brief		logs "entry to" and "exit from" scope
