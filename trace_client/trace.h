@@ -52,6 +52,7 @@
 #	endif
 
 #include "common.h"
+#include "../sysfn/enum_factory.h"
 
 /**	@macro		TRACE_CONFIG_INCLUDE
  *	@brief		overrides default config with user-specified one
@@ -239,6 +240,27 @@
 
 	namespace trace {
 
+		/// type of the traced data
+		/// TODO: merge with E_DataWidgetType declared in the server types.h
+#		define TRACE_DATA_TYPE_ENUM(FN) \
+			FN(DT_Logs,) \
+			FN(DT_Plots,) \
+			FN(DT_Tables,) \
+			FN(DT_Gantts,) \
+			FN(DT_Last,)
+
+		FACT_DECLARE_ENUM(E_DataType, TRACE_DATA_TYPE_ENUM);
+		FACT_DECLARE_ENUM_TO_STRING(E_DataType, TRACE_DATA_TYPE_ENUM);
+
+		/// how to deal with the traced data
+		/// TODO: merge with E_FeatureStates declared in the server types.h
+#		define TRACE_DATA_STATE_ENUM(FN) \
+			FN(DS_DontSend, = 0) \
+			FN(DS_Send, = 1) \
+
+		FACT_DECLARE_ENUM(E_DataState, TRACE_DATA_STATE_ENUM);
+		FACT_DECLARE_ENUM_TO_STRING(E_DataState, TRACE_DATA_STATE_ENUM);
+
 		TRACE_API void SetAppName (char const *);
 		TRACE_API char const * GetAppName ();
 
@@ -256,6 +278,12 @@
 		 **/
 		TRACE_API void SetRuntimeBuffering (bool level);
 		TRACE_API bool GetRuntimeBuffering ();
+
+		/**@fn		SetDataTypeState
+		 * @brief	you can disable sending of certain data types using this function
+		 **/
+		TRACE_API void SetDataTypeState(E_DataType dataType, E_DataState state);
+		TRACE_API E_DataState GetDataTypeState(E_DataType dataType);
 
 		/**@fn		ExportToCSV
 		 * @brief	client sends command to force server dump content to csv
@@ -275,9 +303,11 @@
 		/**@fn		RuntimeFilterPredicate
 		 * @brief	decides if message will be logged or not
 		 */
-		inline bool RuntimeFilterPredicate (level_t level, context_t context)
+		inline bool RuntimeFilterPredicate (E_DataType dataType, level_t level, context_t context)
 		{
-			return (level <= GetRuntimeLevel() && ((context & GetRuntimeContextMask()) != 0));
+			return GetDataTypeState(dataType) != e_DS_DontSend &&
+				level <= GetRuntimeLevel() &&
+				((context & GetRuntimeContextMask()) != 0);
 		}
 		
 		class I_TraceCallback

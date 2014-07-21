@@ -125,12 +125,64 @@ namespace trace {
 			return true;
 		}
 
+		typedef tlv::Command<256, 8> T_RecvTlvCommand;
+
+		void handle_set_state(E_DataType dataType, const T_RecvTlvCommand & cmd)
+		{
+			if(cmd.tlvs_count < 1)
+			{
+				return;
+			}
+			int state = atoi(cmd.tlvs[0].m_val);
+			SetDataTypeState(dataType, state > 0 ? e_DS_Send : e_DS_DontSend);
+		}
+
+		bool handle_command(const T_RecvTlvCommand & cmd)
+		{
+			switch(cmd.hdr.cmd)
+			{
+			case tlv::cmd_set_level:
+				if(cmd.tlvs_count > 0)
+				{
+					printf("level changed!\n");
+					SetRuntimeLevel(static_cast<trace::level_t>(atoi(cmd.tlvs[0].m_val)));
+				}
+				break;
+
+			case tlv::cmd_set_buffering:
+				if(cmd.tlvs_count > 0)
+				{
+					unsigned const buff_state = atoi(cmd.tlvs[0].m_val);
+					char grr[256];
+					_snprintf_s(grr, 256, "buffering changed! val=%u\n", buff_state);
+					OutputDebugString(grr);
+					SetRuntimeBuffering(buff_state == 1);
+				}
+				break;
+
+			case tlv::cmd_set_logs_state:
+				handle_set_state(e_DT_Logs, cmd);
+				break;
+			case tlv::cmd_set_plots_state:
+				handle_set_state(e_DT_Plots, cmd);
+				break;
+			case tlv::cmd_set_tables_state:
+				handle_set_state(e_DT_Tables, cmd);
+				break;
+			case tlv::cmd_set_gantts_state:
+				handle_set_state(e_DT_Gantts, cmd);
+				break;
+			}
+
+			return true;
+		}
+
 		/**@brief	function receiving commands from server **/
 		DWORD WINAPI receive_thread ( LPVOID )
 		{
 			enum { e_buff_sz = 256 };
 			char buff[e_buff_sz];
-			tlv::Command<256, 8> cmd; // reserve 4 tlvs with maximum of 128 bytes of concatenated data
+			T_RecvTlvCommand cmd; // reserve 4 tlvs with maximum of 128 bytes of concatenated data
 			while (!g_Quit)
 			{
 				int const result = recv(g_Socket, buff, e_buff_sz, 0); //@TODO: better recv logic (this is sufficent for now)
@@ -142,20 +194,7 @@ namespace trace {
 					{
 						if (d.decode_payload(buff + tlv::Header::e_Size, cmd.hdr.len, cmd))
 						{
-							if (cmd.hdr.cmd == tlv::cmd_set_level && cmd.tlvs_count > 0)
-							{
-								printf("level changed!\n");
-								SetRuntimeLevel(static_cast<trace::level_t>(atoi(cmd.tlvs[0].m_val)));
-							}
-
-							if (cmd.hdr.cmd == tlv::cmd_set_buffering && cmd.tlvs_count > 0)
-							{
-								unsigned const buff_state = atoi(cmd.tlvs[0].m_val);
-								char grr[256];
-								_snprintf_s(grr, 256, "buffering changed! val=%u\n", buff_state);
-								OutputDebugString(grr);
-								SetRuntimeBuffering(buff_state == 1);
-							}
+							handle_command(cmd);
 						}
 					}
 				}
