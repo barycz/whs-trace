@@ -7,6 +7,8 @@
 #include "mainwindow.h"
 #include "serialize.h"
 #include "controlbarcommon.h"
+#include "tlv_parser/tlv_encoder.h"
+#include "sysfn/os.h"
 #include <ui_controlbarcommon.h>
 
 GlobalConfig const & Connection::getGlobalConfig () const { return m_main_window->getConfig(); }
@@ -339,3 +341,23 @@ QWidget * Connection::controlWidget ()
 {
 	return m_control_bar;
 }
+
+void Connection::sendStateChangeCommand( tlv::cmd_t cmd, int state )
+{
+	static const size_t str_buff_size = 16;
+	char str_buff[str_buff_size];
+	size_t const result = sys::trc_vsnprintf(str_buff, str_buff_size, "%d", state);
+	if (result > 0)
+	{
+		static const size_t tlv_buff_size = 256;
+		char tlv_buff[tlv_buff_size];
+		tlv::Encoder_v1 e(cmd, tlv_buff, tlv_buff_size);
+		e.Encode(tlv::TLV(tlv::tag_int, str_buff));
+		if (m_tcpstream && e.Commit())
+		{
+			m_tcpstream->write(e.buffer, e.total_len);
+			m_tcpstream->flush();
+		}
+	}
+}
+

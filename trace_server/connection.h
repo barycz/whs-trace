@@ -215,6 +215,8 @@ protected:
 
 	void parseDictionaryCommand(DecodedCommand const & cmd, QStringList & names, QStringList & values);
 
+	void sendStateChangeCommand(tlv::cmd_t cmd, int state);
+
 	virtual bool handleAction (Action * a, E_ActionHandleType sync);
 	virtual QWidget * controlWidget ();
 

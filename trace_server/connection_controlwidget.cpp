@@ -68,22 +68,26 @@ void Connection::setGanttsState (int state) { m_control_bar->ui->ganttSlider->se
 void Connection::onLogsStateChanged (int state)
 {
 	m_config.m_logs_recv_level = state;
+	sendStateChangeCommand(tlv::cmd_set_logs_state, state);
 	saveDefaultPreset();
 
 }
 void Connection::onPlotsStateChanged (int state)
 {
 	m_config.m_plots_recv_level = state;
+	sendStateChangeCommand(tlv::cmd_set_plots_state, state);
 	saveDefaultPreset();
 }
 void Connection::onTablesStateChanged (int state)
 {
 	m_config.m_tables_recv_level = state;
+	sendStateChangeCommand(tlv::cmd_set_tables_state, state);
 	saveDefaultPreset();
 }
 void Connection::onGanttsStateChanged (int state)
 {
 	m_config.m_gantts_recv_level = state;
+	sendStateChangeCommand(tlv::cmd_set_gantts_state, state);
 	saveDefaultPreset();
 }
 

@@ -71,6 +71,11 @@ namespace tlv {
 	static cmd_t const cmd_set_proto_version_ack = 0xC8;	/// switch protocol version ack
 	static cmd_t const cmd_dict_lvl          = 0xC7;	/// level dictionnary (string, int)
 
+	static cmd_t const cmd_set_logs_state    = 0xC6;	/// change state of logs (turn off sending)
+	static cmd_t const cmd_set_plots_state   = 0xC5;	/// change state of plots (turn off sending)
+	static cmd_t const cmd_set_tables_state  = 0xC4;	/// change state of tables (turn off sending)
+	static cmd_t const cmd_set_gantts_state  = 0xC3;	/// change state of gantts (turn off sending)
+
 	enum e_Tags
 	{
 		tag_invalid = 0,  /// invalid tag value
