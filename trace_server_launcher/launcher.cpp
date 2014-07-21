@@ -67,6 +67,24 @@ void runTraceServer (char const * runname, char const * args)
 
 bool tryCopyTraceServer (char const * origname, char const * runname)
 {
+	DWORD targetAttribs = GetFileAttributes(runname);
+	if(targetAttribs == INVALID_FILE_ATTRIBUTES)
+	{
+		printf("launcher: cannot get destination file attributes, the file probably does not exist\n");
+	}
+	else
+	{
+		if(targetAttribs & FILE_ATTRIBUTE_READONLY)
+		{
+			printf("launcher: destination is read-only, we will change the attribute.\n");
+			targetAttribs &= ~FILE_ATTRIBUTE_READONLY;
+			if(!SetFileAttributes(runname, targetAttribs))
+			{
+				printf("launcher: cannot clear destination read-only attribute\n");
+			}
+		}
+	}
+
 	if (BOOL res = CopyFile(origname, runname, false))
 	{
 		printf("launcher: copied to destination.\n");
