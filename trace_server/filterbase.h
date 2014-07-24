@@ -5,6 +5,8 @@
 #include <QToolButton>
 #include "cmd.h"
 
+class Connection;
+
 enum E_FilterType {
 	e_Filter_Mgr = 0,
 	e_Filter_Script,
@@ -72,12 +74,10 @@ inline E_FilterType filterName2Type (QString const & name)
 
 QIcon grabIcon (bool enabled);
 
-struct FilterBase : public QWidget
+class FilterBase : public QWidget
 {
-	bool m_enabled;
-	QWidget * m_widget;
-	QToolButton * m_button;
-
+	Q_OBJECT
+public:
 	FilterBase (QWidget * parent = 0);
 	virtual ~FilterBase ();
 
@@ -102,16 +102,30 @@ struct FilterBase : public QWidget
 
 	virtual void clear () = 0;
 
+	void setConnection(Connection * connection);
+	Connection * connection() { return m_connection; }
+	const Connection * connection() const { return m_connection; }
+
 	template <class ArchiveT>
 	void serialize (ArchiveT & ar, unsigned const version)
 	{
 		ar & boost::serialization::make_nvp("enabled", m_enabled);
 	}
 
-	Q_OBJECT
 public slots:
 	void onTabButton ();
+
 signals:
 	void filterEnabledChanged ();
 	void filterChangedSignal ();
+	void connectionChanged(Connection * newConnection);
+
+private slots:
+	void onConnectionDestroyed(QObject * conn);
+
+private:
+	bool m_enabled;
+	QWidget * m_widget;
+	QToolButton * m_button;
+	Connection * m_connection;
 };

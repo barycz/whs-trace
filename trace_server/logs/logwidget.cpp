@@ -17,6 +17,7 @@
 #include <ui_controlbarlog.h>
 #include "mainwindow.h"
 #include "colorizewidget.h"
+#include "connection.h"
 
 namespace logs {
 
@@ -774,6 +775,7 @@ namespace logs {
 		}
 
 		loadAuxConfigs();
+		filterMgr()->setConnection(m_connection);
 	}
 	void LogWidget::loadAuxConfigs ()
 	{
@@ -1279,6 +1281,7 @@ bool LogWidget::isModelProxy () const
 
 void LogWidget::onFilterChanged ()
 {
+	connection()->saveDefaultPreset();
 	onInvalidateFilter();
 }
 

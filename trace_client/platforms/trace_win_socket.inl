@@ -125,7 +125,7 @@ namespace trace {
 			return true;
 		}
 
-		typedef tlv::Command<256, 8> T_RecvTlvCommand;
+		typedef tlv::Command<1024, 64> T_RecvTlvCommand;
 
 		void handle_set_state(E_DataType dataType, const T_RecvTlvCommand & cmd)
 		{
@@ -160,6 +160,15 @@ namespace trace {
 				}
 				break;
 
+			case tlv::cmd_set_ctx_level:
+				for(unsigned i = 0; i + 1 < cmd.tlvs_count; i += 2)
+				{
+					context_t const ctxId = atol(cmd.tlvs[i].m_val);
+					level_t const lvl = static_cast<trace::level_t>(atoi(cmd.tlvs[i + 1].m_val));
+					SetRuntimeContextLevel(ctxId, lvl);
+				}
+				break;
+
 			case tlv::cmd_set_logs_state:
 				handle_set_state(e_DT_Logs, cmd);
 				break;
@@ -180,9 +189,9 @@ namespace trace {
 		/**@brief	function receiving commands from server **/
 		DWORD WINAPI receive_thread ( LPVOID )
 		{
-			enum { e_buff_sz = 256 };
+			enum { e_buff_sz = 1024 };
 			char buff[e_buff_sz];
-			T_RecvTlvCommand cmd; // reserve 4 tlvs with maximum of 128 bytes of concatenated data
+			T_RecvTlvCommand cmd;
 			while (!g_Quit)
 			{
 				int const result = recv(g_Socket, buff, e_buff_sz, 0); //@TODO: better recv logic (this is sufficent for now)

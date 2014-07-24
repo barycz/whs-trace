@@ -273,6 +273,12 @@
 		TRACE_API void SetRuntimeLevel (level_t level);
 		TRACE_API level_t GetRuntimeLevel ();
 
+		/// per-context log level adjustment (SetRuntimeLevel overrides all)
+		TRACE_API void SetRuntimeContextLevel(context_t ctxId, level_t level);
+		/// returns context mask for a given level (masked with the context mask)
+		/// this is what is used to discards contexts
+		TRACE_API context_t GetMakedRuntimeContextLevelMask(level_t level);
+
 		/**@fn		SetRuntimeBuffering
 		 * @brief	adjusts run-time buffering of log message filtering
 		 **/
@@ -306,8 +312,7 @@
 		inline bool RuntimeFilterPredicate (E_DataType dataType, level_t level, context_t context)
 		{
 			return GetDataTypeState(dataType) != e_DS_DontSend &&
-				level <= GetRuntimeLevel() &&
-				((context & GetRuntimeContextMask()) != 0);
+				((context & GetMakedRuntimeContextLevelMask(level)) != 0);
 		}
 		
 		class I_TraceCallback

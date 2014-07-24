@@ -58,7 +58,7 @@ bool Connection::handleSetupCommand (DecodedCommand const & cmd)
 			if (client_level != server_level)
 			{
 				qDebug("notifying client about new level");
-				onLevelValueChanged(server_level);
+				onGuiLevelValueChanged(server_level);
 			}
 		}
 

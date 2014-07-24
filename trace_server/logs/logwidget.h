@@ -76,6 +76,8 @@ namespace logs {
 		///virtual void scrollTo (QModelIndex const & index, ScrollHint hint = EnsureVisible);
 		virtual QWidget * widget() { return this; }
 
+		Connection * connection() { return m_connection; }
+
 	protected:
 		friend class LogTableModel;
 		friend class MainWindow;

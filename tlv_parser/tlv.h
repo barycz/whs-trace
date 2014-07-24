@@ -76,6 +76,8 @@ namespace tlv {
 	static cmd_t const cmd_set_tables_state  = 0xC4;	/// change state of tables (turn off sending)
 	static cmd_t const cmd_set_gantts_state  = 0xC3;	/// change state of gantts (turn off sending)
 
+	static cmd_t const cmd_set_ctx_level     = 0xC2;	/// change logging level per context (default: all contexts use cmd_set_level)
+
 	enum e_Tags
 	{
 		tag_invalid = 0,  /// invalid tag value

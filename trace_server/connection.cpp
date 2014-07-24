@@ -55,7 +55,7 @@ Connection::Connection (QString const & app_name, QObject * parent)
 
 	setConfigValuesToUI(m_config);
 
-	connect(m_control_bar->ui->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onLevelValueChanged(int)));
+	connect(m_control_bar->ui->levelSpinBox, SIGNAL(valueChanged(int)), this, SLOT(onGuiLevelValueChanged(int)));
 	connect(m_control_bar->ui->buffCheckBox, SIGNAL(stateChanged(int)), this, SLOT(onBufferingStateChanged(int)));
 	connect(m_control_bar->ui->presetComboBox, SIGNAL(activated(int)), this, SLOT(onPresetChanged(int)));
 	connect(m_control_bar->ui->activatePresetButton, SIGNAL(clicked()), this, SLOT(onPresetApply()));
@@ -360,4 +360,3 @@ void Connection::sendStateChangeCommand( tlv::cmd_t cmd, int state )
 		}
 	}
 }
-

@@ -202,7 +202,7 @@ set(trace_server_SOURCES
 	)
 
 set(trace_server_HEADERS
-  ../version.h
+	../version.h
 	mainwindow.h
 	tableview.h
 	treeview.h
@@ -210,6 +210,7 @@ set(trace_server_HEADERS
 	treeproxy.h
 	server.h
 	connection.h
+	../tlv_parser/tlv.h
 	../tlv_parser/tlv_parser.h
 	../tlv_parser/tlv_encoder.h
 	../tlv_parser/tlv_decoder.h

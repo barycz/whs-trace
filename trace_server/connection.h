@@ -103,6 +103,8 @@ public:
 	void saveConfig (QString const & preset_name);
 	void applyConfigs ();
 
+	const ConnectionConfig & connectionConfig() const { return m_config; }
+
 	//@TODO: old call!!
 	void requestTableSynchronization (int sync_group, unsigned long long time);
 
@@ -132,6 +134,7 @@ signals:
 	void readyForUse();
 	void newMessage (QString const & from, QString const & message);
 	void handleCommands ();
+	void levelChanged(int level);
 	
 public slots:
 	void onHandleCommands ();
@@ -140,7 +143,7 @@ public slots:
 	bool tryHandleCommand (DecodedCommand const & cmd, E_ReceiveMode mode);
 
 	// control widget
-	void onLevelValueChanged (int i);
+	void onGuiLevelValueChanged (int i);
 	void onBufferingStateChanged (int state);
 	void onPresetChanged (int idx);
 	void saveDefaultPreset();
@@ -161,6 +164,8 @@ public slots:
 	void setPlotsState (int state);
 	void setTablesState (int state);
 	void setGanttsState (int state);
+	/// array of context/level pairs of length n
+	void setContextLevels(const size_t n, const context_t * ctx, const int * lvl);
 
 	void onSaveData (QString const & dir);
 	void onExportDataToCSV (QString const & dir);

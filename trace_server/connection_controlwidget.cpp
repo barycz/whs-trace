@@ -6,6 +6,7 @@
 #include "utils_history.h"
 #include "controlbarcommon.h"
 #include "mainwindow.h"
+#include "../sysfn/os.h"
 #include <ui_controlbarcommon.h>
 
 QString Connection::getClosestPresetName ()
@@ -91,8 +92,37 @@ void Connection::onGanttsStateChanged (int state)
 	saveDefaultPreset();
 }
 
+void Connection::setContextLevels(const size_t n, const context_t * ctx, const int * lvl )
+{
+	static const size_t tlv_buffer_size = 768;
+	char tlv_buffer[tlv_buffer_size];
+	static const size_t str_buffer_size = 32;
+	char str_buffer[str_buffer_size];
+	tlv::Encoder_v1 e(tlv::cmd_set_ctx_level, tlv_buffer, tlv_buffer_size);
 
-void Connection::onLevelValueChanged (int val)
+	for(size_t i = 0; i < n; ++i)
+	{
+		sys::trc_vsnprintf(str_buffer, str_buffer_size, "%u", static_cast<unsigned>(ctx[i]));
+		e.Encode(tlv::TLV(tlv::tag_ctx, str_buffer));
+		sys::trc_vsnprintf(str_buffer, str_buffer_size, "%u", static_cast<unsigned>(lvl[i]));
+		e.Encode(tlv::TLV(tlv::tag_lvl, str_buffer));
+	}
+
+	if (m_tcpstream)
+	{
+		if(e.Commit())
+		{
+			m_tcpstream->write(e.buffer, e.total_len);
+			m_tcpstream->flush();
+		}
+		else
+		{
+			qFatal("buffer overflow");
+		}
+	}
+}
+
+void Connection::onGuiLevelValueChanged (int val)
 {
 	char tlv_buff[16];
 #ifdef __linux__
@@ -114,6 +144,7 @@ void Connection::onLevelValueChanged (int val)
 			m_tcpstream->flush();
 		}
 
+		emit levelChanged(val);
 		saveDefaultPreset();
 	}
 }

@@ -284,15 +284,8 @@ void LogWidget::appendToCtxFilters (QString const & item, bool checked)
 		if (filterMgr()->getFilterCtx()->isCtxPresent(item, enabled))
 			return;
 
-		QStandardItem * root = filterMgr()->getFilterCtx()->m_model->invisibleRootItem();
-		QStandardItem * child = findChildByText(root, item);
-		if (child == 0)
-		{
-			QList<QStandardItem *> row_items = addRow(item, true);
-			row_items[0]->setCheckState(Qt::Checked);
-			root->appendRow(row_items);
-			filterMgr()->getFilterCtx()->appendCtxFilter(item);
-		}
+		// TODO: use checked
+		filterMgr()->getFilterCtx()->appendCtxFilter(item);
 	}
 }
 

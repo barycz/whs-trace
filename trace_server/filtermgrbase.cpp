@@ -78,7 +78,7 @@ bool FilterMgrBase::someFilterEnabled () const
 
 bool FilterMgrBase::enabled () const
 {
-	return m_enabled && someFilterEnabled();
+	return FilterBase::enabled() && someFilterEnabled();
 }
 
 
@@ -215,9 +215,9 @@ void FilterMgrBase::clear ()
 void FilterMgrBase::onFilterEnabledChanged ()
 {
 	bool const some_enabled = someFilterEnabled();
-	if (m_enabled ^ some_enabled)
+	if (enabled() ^ some_enabled)
 	{
-		m_enabled = some_enabled;
+		enable(some_enabled);
 		emit filterEnabledChanged();
 		qDebug("%s signal filterEnabledChanged", __FUNCTION__);
 	}
@@ -235,6 +235,17 @@ void FilterMgrBase::focusToFilter (E_FilterType type)
 		{
 			m_tabFilters->setCurrentIndex(i);
 			return;
+		}
+	}
+}
+
+void FilterMgrBase::setConnection( Connection * connection )
+{
+	foreach(FilterBase * flt, m_filters)
+	{
+		if(flt)
+		{
+			flt->setConnection(connection);
 		}
 	}
 }

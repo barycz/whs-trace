@@ -1,12 +1,16 @@
-#include "filterbase.h"
+
 #include <QApplication>
 #include <QStyle>
+
+#include "connection.h"
+#include "filterbase.h"
 
 FilterBase::FilterBase (QWidget * parent)
 	: QWidget(parent)
 	, m_enabled(true)
 	, m_widget(0)
 	, m_button(new QToolButton)
+	, m_connection(nullptr)
 {
 	m_button->setCheckable(true);
 	m_button->setToolTip(QApplication::translate("FilterBar", "enables/disables filter", 0));
@@ -58,4 +62,27 @@ void FilterBase::applyConfig ()
 {
 	m_button->setChecked(m_enabled);
 	m_button->setIcon(grabIcon(m_enabled));
+}
+
+void FilterBase::setConnection( Connection * connection )
+{
+	if(m_connection == connection)
+	{
+		return;
+	}
+
+	if(m_connection)
+	{
+		m_connection->disconnect(this);
+	}
+
+	m_connection = connection;
+	connect(m_connection, SIGNAL(destroyed(QObject*)), this, SLOT(onConnectionDestroyed(QObject*)));
+	emit connectionChanged(m_connection);
+}
+
+void FilterBase::onConnectionDestroyed(QObject * conn)
+{
+	Q_ASSERT(conn == connection());
+	setConnection(nullptr);
 }

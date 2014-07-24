@@ -19,16 +19,39 @@
 		E_DataState  g_DataTypeState[e_DT_Last] = {
 			e_DS_Send, e_DS_Send, e_DS_Send, e_DS_Send,
 		};
+		context_t    g_RuntimeLevelContextMask[e_max_trace_level] = {0};
+		context_t    g_MaskedRuntimeLevelContextMask[e_max_trace_level] = {0};
 
 		typedef std::list<I_TraceCallback*> T_Callbacks;
 		T_Callbacks	g_Callbacks;
 
+		static void CalcMaskedRuntimeLevelContextMask()
+		{
+			for(unsigned l = 0; l < e_max_trace_level; ++l)
+			{
+				g_MaskedRuntimeLevelContextMask[l] = g_RuntimeLevelContextMask[l] & GetRuntimeContextMask();
+			}
+		}
 
 		// setup and utils
 		void SetAppName (char const * name) { g_AppName = name; }
 		char const * GetAppName () { return g_AppName; }
 
-		void SetRuntimeLevel (level_t level) { g_RuntimeLevel = level; }
+		void SetRuntimeLevel (level_t level)
+		{
+			unsigned maxAllowedLevel = min(level, e_max_trace_level - 1);
+			unsigned l = 0;
+			for(; l <= maxAllowedLevel; ++l)
+			{
+				g_RuntimeLevelContextMask[l] = ~(0U);
+			}
+			for(; l < e_max_trace_level; ++l)
+			{
+				g_RuntimeLevelContextMask[l] = 0;
+			}
+			CalcMaskedRuntimeLevelContextMask();
+		}
+
 		level_t GetRuntimeLevel () { return g_RuntimeLevel; }
 
 		void SetRuntimeBuffering (bool buffered) { g_RuntimeBuffering = buffered; }
@@ -37,8 +60,29 @@
 		void SetDataTypeState(E_DataType dataType, E_DataState state) { assert(dataType < e_DT_Last); g_DataTypeState[dataType] = state; }
 		E_DataState GetDataTypeState(E_DataType dataType) { assert(dataType < e_DT_Last); return g_DataTypeState[dataType]; }
 
-		void SetRuntimeContextMask (context_t mask) { g_RuntimeContextMask = mask; }
+		void SetRuntimeContextMask (context_t mask) { g_RuntimeContextMask = mask; CalcMaskedRuntimeLevelContextMask(); }
 		context_t GetRuntimeContextMask () { return g_RuntimeContextMask; }
+
+		void SetRuntimeContextLevel(context_t ctxId, level_t level)
+		{
+			unsigned maxAllowedLevel = min(level, e_max_trace_level - 1);
+			unsigned l = 0;
+			for(; l <= maxAllowedLevel; ++l)
+			{
+				g_RuntimeLevelContextMask[l] |= ctxId;
+			}
+			for(; l < e_max_trace_level; ++l)
+			{
+				g_RuntimeLevelContextMask[l] &= ~ctxId;
+			}
+			CalcMaskedRuntimeLevelContextMask();
+		}
+
+		context_t GetMakedRuntimeContextLevelMask(level_t level)
+		{
+			assert(level < e_max_trace_level);
+			return g_MaskedRuntimeLevelContextMask[level];
+		}
 
 		inline void SetCustomUserDictionnary (CtxDictPair const * ptr, size_t n);
 		inline void SetCustomUserDictionnary (LvlDictPair const * ptr, size_t n);

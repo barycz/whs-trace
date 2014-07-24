@@ -37,6 +37,8 @@ struct FilterMgrBase : FilterBase
 	virtual void applyConfig ();
 	virtual void clear ();
 
+	void setConnection(Connection * connection);
+
 	template <class ArchiveT>
 	void serialize (ArchiveT & ar, unsigned const version)
 	{

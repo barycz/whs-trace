@@ -83,7 +83,7 @@ void FilterFileLine::loadConfig (QString const & path)
 	FilterFileLine ffl;
 	if (!::loadConfigTemplate(ffl, fname))
 		defaultConfig();
-	m_enabled = ffl.m_enabled;
+	enable(ffl.enabled());
 	mergeWithConfig(ffl.m_data);
 }
 
