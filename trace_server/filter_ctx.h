@@ -19,9 +19,14 @@ struct FilteredContext {
 	int m_state;
 	int m_level;
 
+	static context_t ContextToNumber(const QString str)
+	{
+		return str.toULongLong(nullptr, 16);
+	}
+
 	FilteredContext (): m_ctx(0), m_is_enabled(false), m_state(0), m_level(0) { }
 	FilteredContext (QString ctx, bool enabled, int state, int level = 0):
-		m_ctx_str(ctx), m_ctx(ctx.toULongLong(nullptr, 16)), m_is_enabled(enabled), m_state(state), m_level(level)
+		m_ctx_str(ctx), m_ctx(ContextToNumber(m_ctx_str)), m_is_enabled(enabled), m_state(state), m_level(level)
 	{ }
 
 	template <class ArchiveT>
@@ -31,13 +36,18 @@ struct FilteredContext {
 		ar & boost::serialization::make_nvp("ctx", m_ctx);
 		if(version < 2 && ArchiveT::is_loading::value)
 		{
-			m_ctx = m_ctx_str.toULongLong(nullptr, 16);
+			m_ctx = ContextToNumber(m_ctx_str);
 		}
 		ar & boost::serialization::make_nvp("is_enabled", m_is_enabled);
 		ar & boost::serialization::make_nvp("state", m_state);
 		if(version > 0)
 		{
 			ar & boost::serialization::make_nvp("level", m_level);
+		}
+		else if(ArchiveT::is_loading::value)
+		{
+			GlobalConfig defaultConfig;
+			m_level = defaultConfig.m_level;
 		}
 	}
 };
@@ -84,6 +94,7 @@ public:
 	void resetFilterData(const ctx_filters_t & filterData = ctx_filters_t());
 	void appendFilteredContext(const FilteredContext & filteredCtx);
 	bool isCtxPresent(QString const & ctx, bool & enabled) const;
+	bool shouldPassFilter(const context_t ctx, const int lvl) const;
 	/// update existing or insert new filtered context
 	void updateFilteredContext(const FilteredContext & ctx);
 	void setAllToEnabled(bool enabled = true);

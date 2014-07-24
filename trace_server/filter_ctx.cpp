@@ -38,13 +38,18 @@ void FilterCtx::doneUI ()
 
 bool FilterCtx::accept (DecodedCommand const & cmd) const
 {
-	QString ctx;
-	if (!cmd.getString(tlv::tag_ctx, ctx))
+	QString ctxstr;
+	if (!cmd.getString(tlv::tag_ctx, ctxstr))
 		return true;
 
-	bool ctx_enabled = true;
-	bool const ctx_present = isCtxPresent(ctx, ctx_enabled);
-	return ctx_enabled;
+	QString lvlstr;
+	int lvl = 0;
+	if (cmd.getString(tlv::tag_lvl, lvlstr))
+	{
+		lvl = lvlstr.toInt();
+	}
+
+	return model().shouldPassFilter(FilteredContext::ContextToNumber(ctxstr), lvl);
 }
 
 
@@ -246,14 +251,22 @@ bool FilterCtxModel::setData( const QModelIndex & index, const QVariant & value,
 	FilteredContext & ctx = filterData()[id];
 	if(index.column() == E_C_Name && role == Qt::CheckStateRole)
 	{
+		auto oldVal = ctx.m_is_enabled;
 		ctx.m_is_enabled = value.toInt() != Qt::Unchecked;
-		emit dataChanged(index, index);
+		if(oldVal != ctx.m_is_enabled)
+		{
+			emit dataChanged(index, index);
+		}
 		return true;
 	}
 	else if(index.column() == E_C_Level && role == Qt::EditRole)
 	{
+		auto oldVal = ctx.m_level;
 		ctx.m_level = value.toInt();
-		emit dataChanged(index, index);
+		if(oldVal != ctx.m_level)
+		{
+			emit dataChanged(index, index);
+		}
 		return true;
 	}
 
@@ -345,6 +358,19 @@ bool FilterCtxModel::isCtxPresent( QString const & ctx, bool & enabled ) const
 		}
 	}
 	return false;
+}
+
+bool FilterCtxModel::shouldPassFilter( const context_t ctx, const int lvl ) const
+{
+	foreach(const FilteredContext & it, filterData())
+	{
+		if(it.m_ctx == ctx)
+		{
+			return it.m_level >= lvl && it.m_is_enabled;
+		}
+	}
+
+	return true;
 }
 
 void FilterCtxModel::updateFilteredContext( const FilteredContext & ctx )
