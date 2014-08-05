@@ -395,7 +395,8 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttScopeBgnVA_Impl(level, context, tag_buff, max_size, fmt, args);
 		}
-		ScopedGantt::ScopedGantt (level_t level, context_t context, char const * fmt, ...)
+		ScopedGantt::ScopedGantt (level_t level, context_t context, char const * fmt, ...):
+			m_level(level), m_context(context)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -408,7 +409,8 @@
 			WriteGanttEnd(m_level, m_context, "%s", m_tag);
 		}
 
-		ScopedGanttFrame::ScopedGanttFrame (level_t level, context_t context, char const * fmt, ...)
+		ScopedGanttFrame::ScopedGanttFrame (level_t level, context_t context, char const * fmt, ...):
+			m_level(level), m_context(context)
 		{
 			va_list args;
 			va_start(args, fmt);
