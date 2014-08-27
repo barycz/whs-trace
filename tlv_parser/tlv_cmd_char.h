@@ -52,9 +52,11 @@ namespace tlv {
 		tlvs_t tlvs;						/// array of TLV
 		char concat_values[max_buff_size];	/// internal concantenated values from list of TLV
 	
-		Command () : hdr(1, 0, 0), tlvs_count(0) { }
+		Command() : hdr(1, 0, 0), tlvs_count(0) { Reset(); }
 		void Reset ()
 		{
+			memset(tlvs, 0, sizeof(tlvs));
+			memset(concat_values, 0, sizeof(concat_values));
 			hdr.Reset();
 			tlvs_count = 0;
 		}
