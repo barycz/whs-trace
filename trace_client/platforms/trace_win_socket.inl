@@ -144,7 +144,7 @@ namespace trace {
 			case tlv::cmd_set_level:
 				if(cmd.tlvs_count > 0)
 				{
-					printf("level changed!\n");
+					printf("trace level changed\n");
 					SetRuntimeLevel(static_cast<trace::level_t>(atoi(cmd.tlvs[0].m_val)));
 				}
 				break;
