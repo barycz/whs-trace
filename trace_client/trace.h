@@ -53,6 +53,7 @@
 
 #include "common.h"
 #include "../sysfn/enum_factory.h"
+#include "../sysfn/printf_format_check.h"
 
 /**	@macro		TRACE_CONFIG_INCLUDE
  *	@brief		overrides default config with user-specified one
@@ -333,11 +334,7 @@
 		/**@fn		Write to log
 		 * @brief	write to log of the form (fmt, ...)
 		 **/
-#if defined __GCC__ || defined __MINGW32__ || defined __linux__
-		TRACE_API void Write (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...) __attribute__ ((format(printf, 6, 7) ));
-#elif defined _MSC_VER
-		TRACE_API void Write (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...);
-#endif
+		TRACE_API void Write (level_t level, context_t context, char const * file, int line, char const * fn, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(6, 7);
 
 		/**@fn		WritePlot
 		 * @brief	writes data to be plotted in server part
@@ -359,9 +356,9 @@
 		 *		plot "my_plot"
 		 *		third value of -1 will take place into another plot widget.
 		 */
-		TRACE_API void WritePlot (level_t level, context_t context, float x, float y, char const * fmt, ...);
-		TRACE_API void WritePlot (level_t level, context_t context, float x, float y, float z, char const * fmt, ...);
-		TRACE_API void WritePlotClear (level_t level, context_t context, char const * fmt, ...);
+		TRACE_API void WritePlot (level_t level, context_t context, float x, float y, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(5, 6);
+		TRACE_API void WritePlot (level_t level, context_t context, float x, float y, float z, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(6, 7);
+		TRACE_API void WritePlotClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 
 		/**@class	ScopedLog
 		 * @brief	RAII class for logging entry on construction and exit on destruction **/
@@ -375,7 +372,7 @@
 			char const * m_fn;
 			unsigned long long m_start;
 
-			ScopedLog (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...);
+			ScopedLog (level_t level, context_t context, char const * file, int line, char const * fn, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(6, 7);
 			~ScopedLog ();
 		};
 
@@ -399,17 +396,17 @@
 		 *	sets a,b,c to columns of new row and 0 to 4th column
 		 *
 		 **/
-		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, char const * fmt, ...);
+		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(5, 6);
 		struct Color {
 			unsigned char r,g,b,a;
 			Color (unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 0xff) : r(red), g(green), b(blue), a(alpha) {  }
 		};
-		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, Color c, char const * fmt, ...);
-		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, Color fg, Color bg, char const * fmt, ...);
-		TRACE_API void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, char const * fmt, ...);
-		TRACE_API void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, Color bg, char const * fmt, ...);
-		TRACE_API void WriteTableSetHHeader (level_t level, context_t context, int x, char const * name, char const * fmt, ...);
-		TRACE_API void WriteTableClear (level_t level, context_t context, char const * fmt, ...);
+		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, Color c, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(6, 7);
+		TRACE_API void WriteTable (level_t level, context_t context, int x, int y, Color fg, Color bg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(7, 8);
+		TRACE_API void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(6, 7);
+		TRACE_API void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, Color bg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(7, 8);
+		TRACE_API void WriteTableSetHHeader (level_t level, context_t context, int x, char const * name, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(5, 6);
+		TRACE_API void WriteTableClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 
 
 		/**@fn		WriteBgnGanttVA
@@ -418,24 +415,16 @@
 
 		/**@fn		WriteGanttBgn
 		 * @brief	write begin to gantt evet in form (fmt, ...) **/
-#if defined __GCC__ || defined __MINGW32__ || defined __linux__
-		TRACE_API void WriteGanttBgn (level_t level, context_t context, char const * fmt, ...) __attribute__ ((format(printf, 3, 4) ));
-#elif defined _MSC_VER
-		TRACE_API void WriteGanttBgn (level_t level, context_t context, char const * fmt, ...);
-#endif
+		TRACE_API void WriteGanttBgn (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 		//TRACE_API void WriteGanttBgn (level_t level, context_t context);
 		//TRACE_API void WriteGanttEnd (level_t level, context_t context);
-		TRACE_API void WriteGanttEnd (level_t level, context_t context, char const * fmt, ...);
+		TRACE_API void WriteGanttEnd (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 
-#if defined __GCC__ || defined __MINGW32__ || defined __linux__
-		TRACE_API void WriteGanttFrameBgn (level_t level, context_t context, char const * fmt, ...) __attribute__ ((format(printf, 3, 4) ));
-#elif defined _MSC_VER
-		TRACE_API void WriteGanttFrameBgn (level_t level, context_t context, char const * fmt, ...);
-#endif
+		TRACE_API void WriteGanttFrameBgn (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 		TRACE_API void WriteGanttFrameBgn (level_t level, context_t context);
 		TRACE_API void WriteGanttFrameEnd (level_t level, context_t context);
-		TRACE_API void WriteGanttFrameEnd (level_t level, context_t context, char const * fmt, ...);
-		TRACE_API void WriteGanttClear (level_t level, context_t context, char const * fmt, ...);
+		TRACE_API void WriteGanttFrameEnd (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
+		TRACE_API void WriteGanttClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 
 		/**@class	ScopedGantt
 		 * @brief	RAII class for gantt begin on construction and gantt end on destruction **/
@@ -445,7 +434,7 @@
 			context_t m_context;
 			char m_tag[256];
 
-			TRACE_API ScopedGantt (level_t level, context_t context, char const * fmt, ...);
+			TRACE_API ScopedGantt (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 			TRACE_API ~ScopedGantt ();
 		};
 		/**@class	ScopedGanttFrame
@@ -456,7 +445,7 @@
 			context_t m_context;
 			char m_tag[256];
 
-			TRACE_API ScopedGanttFrame (level_t level, context_t context, char const * fmt, ...);
+			TRACE_API ScopedGanttFrame (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...) TRACE_PRINTF_ATTRIBUTE(3, 4);
 			TRACE_API ~ScopedGanttFrame ();
 		};
 	}
