@@ -127,7 +127,7 @@
 			}
 		}
 
-		void Write (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...)
+		void Write (level_t level, context_t context, char const * file, int line, char const * fn, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -136,14 +136,14 @@
 		}
 
 		inline void WriteScopeVA (ScopedLog::E_Type type, level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, va_list args);
-		inline void WriteScope (ScopedLog::E_Type type, level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...)
+		inline void WriteScope (ScopedLog::E_Type type, level_t level, context_t context, char const * file, int line, char const * fn, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
 			WriteScopeVA(type, level, context, file, line, fn, fmt, args);
 			va_end(args);
 		}
-		ScopedLog::ScopedLog (level_t level, context_t context, char const * file, int line, char const * fn, char const * fmt, ...)
+		ScopedLog::ScopedLog (level_t level, context_t context, char const * file, int line, char const * fn, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 			: m_level(level), m_context(context), m_file(file), m_line(line), m_fn(fn), m_start(sys::queryTime_us())
 		{
 			if (RuntimeFilterPredicate(e_DT_Logs, level, context))
@@ -168,7 +168,7 @@
 			if (RuntimeFilterPredicate(e_DT_Plots, level, context))
 				WritePlot_impl(level, context, x, y, fmt, args);
 		}
-		void WritePlot (level_t level, context_t context, float x, float y, char const * fmt, ...)
+		void WritePlot (level_t level, context_t context, float x, float y, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -182,7 +182,7 @@
 			if (RuntimeFilterPredicate(e_DT_Plots, level, context))
 				WritePlotClear_impl(level, context, fmt, args);
 		}
-		void WritePlotClear (level_t level, context_t context, char const * fmt, ...)
+		void WritePlotClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -198,7 +198,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTable_impl(level, context, x, y, fmt, args);
 		}
-		void WriteTable (level_t level, context_t context, int x, int y, char const * fmt, ...)
+		void WriteTable (level_t level, context_t context, int x, int y, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -212,7 +212,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTable_impl(level, context, x, y, c, fmt, args);
 		}
-		void WriteTable (level_t level, context_t context, int x, int y, Color c, char const * fmt, ...)
+		void WriteTable (level_t level, context_t context, int x, int y, Color c, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -226,7 +226,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTable_impl(level, context, x, y, fg, bg, fmt, args);
 		}
-		void WriteTable (level_t level, context_t context, int x, int y, Color fg, Color bg, char const * fmt, ...)
+		void WriteTable (level_t level, context_t context, int x, int y, Color fg, Color bg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -240,7 +240,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTableSetColor_impl(level, context, x, y, fg, fmt, args);
 		}
-		void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, char const * fmt, ...)
+		void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -254,7 +254,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTableSetColor_impl(level, context, x, y, fg, bg, fmt, args);
 		}
-		void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, Color bg, char const * fmt, ...)
+		void WriteTableSetColor (level_t level, context_t context, int x, int y, Color fg, Color bg, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -268,7 +268,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTableSetHHeader_impl(level, context, x, name, fmt, args);
 		}
-		void WriteTableSetHHeader (level_t level, context_t context, int x,  char const * name, char const * fmt, ...)
+		void WriteTableSetHHeader (level_t level, context_t context, int x,  char const * name, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -281,7 +281,7 @@
 			if (RuntimeFilterPredicate(e_DT_Tables, level, context))
 				WriteTableClear_impl(level, context, fmt, args);
 		}
-		void WriteTableClear (level_t level, context_t context, char const * fmt, ...)
+		void WriteTableClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -299,7 +299,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttBgnVA_Impl(level, context, fmt, args);
 		}
-		void WriteGanttBgn (level_t level, context_t context, char const * fmt, ...)
+		void WriteGanttBgn (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -320,7 +320,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttEndVA_Impl(level, context, fmt, args);
 		}
-		void WriteGanttEnd (level_t level, context_t context, char const * fmt, ...)
+		void WriteGanttEnd (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -341,7 +341,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttFrameBgnVA_Impl(level, context, fmt, args);
 		}
-		void WriteGanttFrameBgn (level_t level, context_t context, char const * fmt, ...)
+		void WriteGanttFrameBgn (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -361,7 +361,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttFrameEndVA_Impl(level, context, fmt, args);
 		}
-		void WriteGanttFrameEnd (level_t level, context_t context, char const * fmt, ...)
+		void WriteGanttFrameEnd (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -381,7 +381,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttClearVA_Impl(level, context, fmt, args);
 		}
-		void WriteGanttClear (level_t level, context_t context, char const * fmt, ...)
+		void WriteGanttClear (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...)
 		{
 			va_list args;
 			va_start(args, fmt);
@@ -395,7 +395,7 @@
 			if (RuntimeFilterPredicate(e_DT_Gantts, level, context))
 				WriteGanttScopeBgnVA_Impl(level, context, tag_buff, max_size, fmt, args);
 		}
-		ScopedGantt::ScopedGantt (level_t level, context_t context, char const * fmt, ...):
+		ScopedGantt::ScopedGantt (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...):
 			m_level(level), m_context(context)
 		{
 			va_list args;
@@ -409,7 +409,7 @@
 			WriteGanttEnd(m_level, m_context, "%s", m_tag);
 		}
 
-		ScopedGanttFrame::ScopedGanttFrame (level_t level, context_t context, char const * fmt, ...):
+		ScopedGanttFrame::ScopedGanttFrame (level_t level, context_t context, TRACE_PRINTF_FORMAT_STRING char const * fmt, ...):
 			m_level(level), m_context(context)
 		{
 			va_list args;
