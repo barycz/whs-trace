@@ -135,6 +135,7 @@ signals:
 	void newMessage (QString const & from, QString const & message);
 	void handleCommands ();
 	void levelChanged(int level);
+	void postponeReadyRead();
 	
 public slots:
 	void onHandleCommands ();
@@ -274,7 +275,7 @@ private:
 	qint64 m_file_size;
 
 	// data receiving stuff
-	enum { e_ringbuff_size = 128 * 1024 };
+	enum { e_ringbuff_size = 256 * 1024 };
 	boost::circular_buffer<char> m_buffer;
 	DecodedCommand m_current_cmd;
 	enum { e_ringcmd_size = 16384 };

@@ -214,6 +214,8 @@ int Connection::processStream (T * t, T_Ret (T::*read_member_fn)(T_Arg0, T_Arg1)
 
 		emit onHandleCommandsStart();
 		bool data_in_stream = true;
+		const int maxCommands = 50;
+		int  commandsProcessed = 0;
 		while (data_in_stream)
 		{
 			// read data into ring buffer
@@ -276,6 +278,11 @@ int Connection::processStream (T * t, T_Ret (T::*read_member_fn)(T_Arg0, T_Arg1)
 							//qDebug("CONN: hdr_sz=%u payload_sz=%u buff_sz=%u ",  tlv::Header::e_Size, m_current_cmd.hdr.len, m_buffer.size());
 							m_decoded_cmds.push_back(m_current_cmd);
 							m_decoded_cmds.back().decode_postprocess();
+
+							if (m_decoded_cmds.size() > maxCommands)
+							{
+								break;
+							}
 						}
 						else
 						{
@@ -289,8 +296,16 @@ int Connection::processStream (T * t, T_Ret (T::*read_member_fn)(T_Arg0, T_Arg1)
 				}
 			}
 
+			commandsProcessed += m_decoded_cmds.size();
 			if (m_decoded_cmds.size() > 0)
 				emit handleCommands();
+
+			// exit when maxCommands commands has been processed to refresh UI
+			if (commandsProcessed > maxCommands)
+			{
+				emit postponeReadyRead();
+				break;
+			}
 		}
 		
 		emit onHandleCommandsCommit();

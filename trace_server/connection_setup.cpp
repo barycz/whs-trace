@@ -103,7 +103,7 @@ bool Connection::handleSetupCommand (DecodedCommand const & cmd)
 	}
 
 	qDebug("Server::incomingConnection buffering not enabled, notifying client");
-	onBufferingStateChanged(m_config.m_buffered);
+	onBufferingStateChanged(m_config.m_buffered ? Qt::Checked : Qt::Unchecked);
 
 	sendStateChangeCommand(tlv::cmd_set_logs_state, m_config.m_logs_recv_level);
 	sendStateChangeCommand(tlv::cmd_set_plots_state, m_config.m_plots_recv_level);
