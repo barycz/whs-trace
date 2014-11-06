@@ -1,6 +1,16 @@
 A. Boost
 ========
 
+A0-A. Pre-build binaries
+----------------------
+Do not build boost by yourself, unless you really want.
+You can download pre-build binaries for various boost versions from:
+
+	http://sourceforge.net/projects/boost/files/boost-binaries/1.56.0/boost_1_56_0-msvc-12.0-64.exe/download
+
+A0-B. Manuall build
+-------------------
+
 General boost build instructions:
 
 	http://www.boost.org/doc/libs/1_54_0/more/getting_started/windows.html#install-boost-build
@@ -12,13 +22,6 @@ To get 64b version details:
 Toolset selection:
 
 	bjam --toolset=msvc-11.0 address-model=64 --build-type=complete stage
-
-
-A0. Pre-build binaries
-----------------------
-You can download pre-build binaries for various boost versions from:
-
-	http://sourceforge.net/projects/boost/files/boost-binaries/1.54.0/
 
 A1. 32b build
 -------------
