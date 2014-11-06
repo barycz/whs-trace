@@ -20,7 +20,7 @@ namespace trace {
 
 		using namespace sys::socks;
 
-		typedef MessagePool<msg_t, 16384> message_pool_t;
+		typedef MessagePool<msg_t, 16384*4> message_pool_t;
 
 		sys::atomic32_t volatile g_Quit = 0;			/// request to quit
 		sys::atomic32_t volatile g_Flushed = 0;			/// request to quit
@@ -35,6 +35,8 @@ namespace trace {
 		sys::Timer g_ReconnectTimer;
 		sys::Timer g_ClottedTimer;
 
+		HANDLE g_WrtMtx = NULL;
+
 		inline msg_t & msg_buffer_at (size_t i)
 		{
 			return g_MessagePool[i];
@@ -42,7 +44,21 @@ namespace trace {
 
 		inline msg_t & acquire_msg_buffer ()
 		{
+			WaitForSingleObject(g_WrtMtx, INFINITE);
+
+			sys::atomic32_t tmp_wr = sys::atomic_get32(&m_wr_idx);
+			sys::atomic32_t tmp_rd = sys::atomic_get32(&m_rd_idx);
+
+			while ( tmp_wr - tmp_rd > message_pool_t::e_size - 1)
+			{
+				Sleep(128);
+				tmp_rd = sys::atomic_get32(&m_rd_idx);
+			}
+
 			sys::atomic32_t wr_idx = InterlockedIncrement(&m_wr_idx);
+
+			ReleaseMutex(g_WrtMtx);
+
 			return msg_buffer_at((wr_idx - 1) % message_pool_t::e_size);
 		}
 
@@ -59,18 +75,21 @@ namespace trace {
 			return false;
 		}
 
-		inline bool WriteToSocket (char const * buff, size_t ln)
+		inline bool WriteToSocket (char const * buff, size_t ln, bool buffered = false)
 		{
 			if (sys::socks::is_connected(socks::g_Socket))
 			{
 				int result = SOCKET_ERROR;
 				if (!g_ClottedTimer.enabled())
+				{
 					result = send(g_Socket, buff, (int)ln, 0);
+				}
 				else
 				{
 					if (g_ClottedTimer.expired())
 					{
 						result = send(g_Socket, buff, (int)ln, 0);
+
 						if (result != SOCKET_ERROR && result > 0)
 						{
 							DBG_OUT("declotted\n");
@@ -85,7 +104,7 @@ namespace trace {
 						OutputDebugStringA("dropped some log messages!");
 #	endif
 #endif
-						return true;
+						return buffered ? false : true;
 					}
 				}
 
@@ -109,7 +128,7 @@ namespace trace {
 				{
 					DBG_OUT("socked clotted\n");
 					g_ClottedTimer.set_delay_ms(128);
-					return true;
+					return buffered ? false : true;
 				}
 			}
 #ifdef TRACE_WINDOWS_SOCKET_FAILOVER_TO_FILE
@@ -237,26 +256,31 @@ namespace trace {
 					else
 						g_ReconnectTimer.set_delay_ms(250);
 				}
+
 				sys::atomic32_t wr_idx = sys::atomic_get32(&m_wr_idx);
 				sys::atomic32_t rd_idx = m_rd_idx;
 				// @TODO: wraparound
-				if (rd_idx < wr_idx)
+				if (rd_idx < (wr_idx - 1))
 				{
 
 					//DBG_OUT("rd_idx=%10i, wr_idx=%10i, diff=%10i \n", rd_idx, wr_idx, wr_idx - rd_idx);
 					msg_t & msg = socks::msg_buffer_at(rd_idx % message_pool_t::e_size);
 					msg.ReadLock();
 
-					bool const write_ok = socks::WriteToSocket(msg.m_data, msg.m_length);
+					bool const write_ok = socks::WriteToSocket(msg.m_data, msg.m_length, true);
+
+					if (!write_ok)
+					{
+						do
+						{
+							Sleep(128);
+						} while (!socks::WriteToSocket(msg.m_data, msg.m_length, true));
+					}
+
 					msg.m_length = 0;
 					msg.ReadUnlockAndClean();
 					sys::atomic_faa32(&m_rd_idx, 1);
 
-					if (!write_ok)
-					{
-						g_ReconnectTimer.set_delay_ms(250);
-						//break;
-					}
 					counter = 0;
 				}
 
@@ -272,7 +296,7 @@ namespace trace {
 			{
 				sys::atomic32_t const wr_idx = sys::atomic_get32(&m_wr_idx);
 				sys::atomic32_t const rd_idx = sys::atomic_get32(&m_rd_idx);
-				if (rd_idx < wr_idx)
+				if (rd_idx < (wr_idx - 1))
 					sys::delay_execution(counter);
 				else
 					break;
@@ -291,6 +315,11 @@ namespace trace {
 			encode_setup(msg, GetRuntimeLevel(), GetRuntimeContextMask());
 
 			socks::connect("localhost", "13127", g_Socket);
+
+			if (!g_WrtMtx)
+			{
+				g_WrtMtx = CreateMutex(NULL, FALSE, NULL);
+			}
 
 			if (socks::is_connected(socks::g_Socket))
 			{
